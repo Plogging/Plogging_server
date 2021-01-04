@@ -9,7 +9,7 @@ let dbConfig = {
     password: "password",
     database: "디비 이름",
     multipleStatements : true,
-    connectionLimit: 50
+    connectionLimit: 10
 };
 
 module.exports.getMysqlPool=mysql.createPool(dbConfig);
