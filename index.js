@@ -3,6 +3,7 @@ const app = express();
 
 const UserInferface = require("./router/user.js");
 const TrashInferface = require('./router/trash.js');
+const RankingInterface = require('./router/ranking.js');
 const bodyParser = require('body-parser');
 const poolCallback = require("./config/mysqlConfig.js").getMysqlPool; // callback
 const poolAsyncAwait = require("./config/mysqlConfig.js").getMysqlPool2; // async await
@@ -49,6 +50,8 @@ app.use("/", function(req, res, next) {
 
 app.use('/user', new UserInferface(globalOption)); // 유저 관려 api는 user.js로 포워딩
 app.use('/trash', new TrashInferface(globalOption)); // 쓰레기 관련 api는 trash.js로 포워딩
+app.use('/rank', new RankingInterface(globalOption)); // 랭킹 관련 api는 ranking.js로 포워딩
+
 
 app.listen(globalOption.PORT, function(req, res) {
     console.log(`server on ${globalOption.PORT} !`);
