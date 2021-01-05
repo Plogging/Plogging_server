@@ -8,6 +8,7 @@ const bodyParser = require('body-parser');
 const poolCallback = require("./config/mysqlConfig.js").getMysqlPool; // callback
 const poolAsyncAwait = require("./config/mysqlConfig.js").getMysqlPool2; // async await
 const redisCilent = require("./config/redisConfig.js");
+const MongoClient = require("./config/mongoConfig.js");
 const session = require('express-session');
 const { info } = require('./config/redisConfig.js');
 const redisStore = require('connect-redis')(session);
