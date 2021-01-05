@@ -1,15 +1,11 @@
+/**
+ * MongoClient는 내부적으로 connection pooling을 이용한다. ( default 5개 )
+ * connection release를 어떻게 해줘야되는지 ? 
+ * 참고 - https://hot-time.tistory.com/160
+ */
 
-const { MongoClient } = require('mongodb');
+ const { MongoClient } = require('mongodb'); 
 const url = "mongodb://localhost:27017/";
+const client = new MongoClient(url, {useUnifiedTopology: true});
 
-try {
-    (async() =>  {
-        const mongoConnection = await MongoClient.connect(url, {useUnifiedTopology: true});
-        const db = mongoConnection.db("test");
-        await db.collection("users").insertOne({name : 1234});
-    })();
-    } catch(err) {
-        console.log(err);
-}
-
-module.exports = MongoClient;
+module.exports = client;

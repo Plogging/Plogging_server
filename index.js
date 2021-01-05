@@ -9,8 +9,8 @@ const poolCallback = require("./config/mysqlConfig.js").getMysqlPool; // callbac
 const poolAsyncAwait = require("./config/mysqlConfig.js").getMysqlPool2; // async await
 const redisCilent = require("./config/redisConfig.js");
 const MongoClient = require("./config/mongoConfig.js");
+
 const session = require('express-session');
-const { info } = require('./config/redisConfig.js');
 const redisStore = require('connect-redis')(session);
 
 app.use(bodyParser.urlencoded({extended: false}));
@@ -35,6 +35,7 @@ globalOption.mysqlPool2=poolAsyncAwait;
 globalOption.redisCilent=redisCilent;
 
 // 이 로직은 아래 /user, /trash를 타기전에 탄다. spring insterceptor 개념이라고 보면됨 ( 여기서 api들어가기전에 먼저 처리해야될 로직 있으면 처리.. ex. 유저 세션체크..)
+/*
 app.use("/", function(req, res, next) {
     // 세션 체크 공통 모듈
     console.log("인터셉터 !");
@@ -48,11 +49,23 @@ app.use("/", function(req, res, next) {
         }
     } 
  );
+ */
 
 app.use('/user', new UserInferface(globalOption)); // 유저 관려 api는 user.js로 포워딩
-app.use('/trash', new TrashInferface(globalOption)); // 쓰레기 관련 api는 trash.js로 포워딩
 app.use('/rank', new RankingInterface(globalOption)); // 랭킹 관련 api는 ranking.js로 포워딩
 
+async function main( ) {
+    try {
+        await MongoClient.connect();
+        let db = MongoClient.db('test');
+        globalOption.MongoClient=db;
+        app.use('/trash', new TrashInferface(globalOption)); // 쓰레기 관련 api는 trash.js로 포워딩        
+    } catch(e) {
+        console.log(e);
+    } 
+}
+
+main().catch(console.error);
 
 app.listen(globalOption.PORT, function(req, res) {
     console.log(`server on ${globalOption.PORT} !`);
