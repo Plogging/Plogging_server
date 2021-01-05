@@ -1,5 +1,5 @@
-let mysql = require('mysql'); // callback용
-const mysql2 = require('mysql2/promise'); // async await 용
+const mysql = require('mysql'); // callback용
+const mysql2 = require('mysql2'); // async await 용
 
 //커넥션 연결
 let dbConfig = {
