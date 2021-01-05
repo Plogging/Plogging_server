@@ -56,9 +56,8 @@ app.use('/rank', new RankingInterface(globalOption)); // 랭킹 관련 api는 ra
 
 async function main( ) {
     try {
-        await MongoClient.connect();
-        let db = MongoClient.db('test');
-        globalOption.MongoClient=db;
+        const mongoConnectioPool = await MongoClient.connect();
+        globalOption.MongoPool=mongoConnectioPool;
         app.use('/trash', new TrashInferface(globalOption)); // 쓰레기 관련 api는 trash.js로 포워딩        
     } catch(e) {
         console.log(e);
