@@ -20,9 +20,8 @@ const TrashInferface = function(config) {
           destination: function (req, file, cb) {
             const userId = req.body.userId; // 세션체크 완료하면 값 받아옴
             const dir = `E:/file_test/trash/${userId}`;
-
+    
             if (!fs.existsSync(dir)){
-                console.log(dir);
                 fs.mkdirSync(dir);
             }
             cb(null, dir);
@@ -75,20 +74,32 @@ TrashInferface.prototype.readTrash = async function(req, res) {
 
 /**
  * 산책 이력 등록
- *  
+ * - img는 optional. 만약, 입력안하면 baseImg로 세팅
  */
 TrashInferface.prototype.writeTrash = async function(req, res) {
     console.log("trash write api !");
 
+    let returnResult = { rc: 200, rcmsg: "success" };
+
     let userId = req.get("userId"); // header에 있는 값 받아옴
     let trashObj = req.body.floggingObj;
+    
+    if(trashObj === undefined) {
+        returnResult.rc = 400;
+        returnResult.rcmsg = "요청 파라미터를 확인해주세요.";
+        res.status(400).send(returnResult);
+        return;
+    }
+
     trashObj = JSON.parse(trashObj);
 
     trashObj.meta.user_id = userId;
     trashObj.meta.create_time = util.getCurrentDateTime();
-    trashObj.meta.trash_img = `http://localhost:20000/trash/${userId}/flogging_${trashObj.meta.create_time}.PNG`; // file server 찔러서 이미지 가져옴
 
-    let returnResult = { rc: 200, rcmsg: "success" };
+    //이미지가 없을때는 baseImg insert
+    if(req.file===undefined) trashObj.meta.trash_img = `http://localhost:20000/baseImg.PNG`;
+    else trashObj.meta.trash_img = `http://localhost:20000/trash/${userId}/flogging_${trashObj.meta.create_time}.PNG`;
+
     let mongoConnection = null;
     try {
         mongoConnection = this.MongoPool.db('test');
