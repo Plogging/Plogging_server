@@ -12,9 +12,12 @@ const MongoClient = require("./config/mongoConfig.js");
 
 const session = require('express-session');
 const redisStore = require('connect-redis')(session);
+const multer  = require('multer')
 
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
+
+app.use(express.static('E:/file_test')); // 정적파일 제공
 
 // redis sessionStorage 설정
 app.use(session({
@@ -33,6 +36,7 @@ globalOption.PORT = 20000;
 globalOption.mysqlPool=poolCallback;
 globalOption.mysqlPool2=poolAsyncAwait;
 globalOption.redisCilent=redisCilent;
+globalOption.fileInterface = multer;
 
 // 이 로직은 아래 /user, /trash를 타기전에 탄다. spring insterceptor 개념이라고 보면됨 ( 여기서 api들어가기전에 먼저 처리해야될 로직 있으면 처리.. ex. 유저 세션체크..)
 /*
