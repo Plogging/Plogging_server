@@ -51,17 +51,23 @@ const TrashInferface = function(config) {
 TrashInferface.prototype.readTrash = async function(req, res) {
     console.log("trash read api !");
 
-    let userId = req.body.userId;
+    let userId = req.get("userId"); // header에 있는 값 받아옴
     let query = {"meta.user_id": userId};
     let options = {sort: {"meta.created_time": -1}}; // 최신순
     let mongoConnection = null;
+    let returnResult = { rc: 200, rcmsg: "success" };
 
     try {
         mongoConnection = this.MongoPool.db('test');
         let trash = await mongoConnection.collection('trash').find(query, options).toArray();
-        res.send(trash);
+       
+        returnResult.flogging_list = trash;
+        res.status(200).send(returnResult);
     } catch(e) {
         console.log(e);
+        returnResult.rc = 500;
+        returnResult = e.message;
+        res.status(500).send(returnResult);
     } finally {
         mongoConnection=null;
     }
@@ -69,25 +75,30 @@ TrashInferface.prototype.readTrash = async function(req, res) {
 
 /**
  * 산책 이력 등록
- * 
+ *  
  */
 TrashInferface.prototype.writeTrash = async function(req, res) {
     console.log("trash write api !");
 
-    let userId = req.body.userId;
-    let trashObj = req.body.trashObj;
+    let userId = req.get("userId"); // header에 있는 값 받아옴
+    let trashObj = req.body.floggingObj;
     trashObj = JSON.parse(trashObj);
 
     trashObj.meta.user_id = userId;
     trashObj.meta.create_time = util.getCurrentDateTime();
     trashObj.meta.trash_img = `http://localhost:20000/trash/${userId}/flogging_${trashObj.meta.create_time}.PNG`; // file server 찔러서 이미지 가져옴
 
+    let returnResult = { rc: 200, rcmsg: "success" };
     let mongoConnection = null;
     try {
         mongoConnection = this.MongoPool.db('test');
         await mongoConnection.collection('trash').insertOne(trashObj);
+        res.status(200).send(returnResult);
     } catch(e) {
         console.log(e);
+        returnResult.rc = 500;
+        returnResult.rcmsg = e.message;
+        res.status(500).send(returnResult);
     } finally {
         mongoConnection=null;
     }
@@ -101,10 +112,11 @@ TrashInferface.prototype.writeTrash = async function(req, res) {
 TrashInferface.prototype.deleteTrash = async function(req, res) {
     console.log("trash delete api !");
 
-    let userId = req.body.userId;
+    let userId = req.get("userId"); // header에 있는 값 받아옴
     let mongoObjectId = req.body.objectId;
     let query = null;
 
+    let returnResult = { rc: 200, rcmsg: "success" };
     let mongoConnection = null;
     try {
         mongoConnection = this.MongoPool.db('test');
@@ -117,12 +129,16 @@ TrashInferface.prototype.deleteTrash = async function(req, res) {
             query = {"meta.user_id": userId};
             await mongoConnection.collection('trash').deleteMany(query);
         }
+
+        res.status(200).send(returnResult);
     } catch(e) {
         console.log(e);
+        returnResult.rc = 500;
+        returnResult.rcmsg = e.message;
+        res.status(500).send(returnResult);
     } finally {
         mongoConnection=null;
     }
 }
-
 
 module.exports = TrashInferface;
