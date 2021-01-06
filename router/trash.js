@@ -2,6 +2,7 @@ const express = require('express');
 const cors=require('cors');
 const fs = require('fs');
 const util = require('../util/common.js');
+const { ObjectId } = require('mongodb');
 
 const TrashInferface = function(config) {
     const router = express.Router();
@@ -40,11 +41,18 @@ const TrashInferface = function(config) {
     return this.router;
 };
 
-// 산책 이력 조회
+/**
+ * 산책 이력조회 
+ *  case 1. 유저 id 기준으로 최신순 조회
+ *  case 2. 유저 id 기준으로 이동거리 많은순 조회
+ *  case 3. 유저 id 기준으로 쓰레기 많이 주운순 조회
+ *  case 4. 유저 id 기준으로 칼로리 소모 많은순 조회
+ */
 TrashInferface.prototype.readTrash = async function(req, res) {
     console.log("trash read api !");
 
-    let query = {"meta.user_id": "xowns4817@naver.com-naver"};
+    let userId = req.body.userId;
+    let query = {"meta.user_id": userId};
     let options = {sort: {"meta.created_time": -1}}; // 최신순
     let mongoConnection = null;
 
@@ -59,25 +67,20 @@ TrashInferface.prototype.readTrash = async function(req, res) {
     }
 }
 
-// 산책 이력 등록
+/**
+ * 산책 이력 등록
+ * 
+ */
 TrashInferface.prototype.writeTrash = async function(req, res) {
     console.log("trash write api !");
 
-    let trashObj = { };
     let userId = req.body.userId;
+    let trashObj = req.body.trashObj;
+    trashObj = JSON.parse(trashObj);
 
-    trashObj.meta = { };
     trashObj.meta.user_id = userId;
     trashObj.meta.create_time = util.getCurrentDateTime();
-    trashObj.meta.distance = 1.5;
-    trashObj.meta.calorie = 200;
-    trashObj.meta.flogging_time = 20;
-
     trashObj.meta.trash_img = `http://localhost:20000/trash/${userId}/flogging_${trashObj.meta.create_time}.PNG`; // file server 찔러서 이미지 가져옴
-
-    trashObj.trash_list = [ ];
-    trashObj.trash_list[0] = {"trash_type": 2, "pick_count": 100};
-    trashObj.trash_list[1] = {"trash_type": 1, "pick_count": 200};
 
     let mongoConnection = null;
     try {
@@ -90,17 +93,30 @@ TrashInferface.prototype.writeTrash = async function(req, res) {
     }
 }
 
-// 산책 이력 삭제 -> 유저가 해당 이력을 삭제하거나, 회원 탈퇴했을때
+/*
+ * 산책 이력삭제
+ *   case 1. 유저가 특정 산책 이력을 삭제하거나(1개 삭제) - 산책이력의 objectId값을 파라미터로 전달
+ *   case 2. 회원 탈퇴했을때(해당 회원 산책이력 모두 삭제) - 산책이력의 objectId값을 파라미터로 전달하지 않음
+ */
 TrashInferface.prototype.deleteTrash = async function(req, res) {
     console.log("trash delete api !");
 
     let userId = req.body.userId;
-    let query = {"meta.user_id": userId};
+    let mongoObjectId = req.body.objectId;
+    let query = null;
 
     let mongoConnection = null;
     try {
         mongoConnection = this.MongoPool.db('test');
-        await mongoConnection.collection('trash').deleteMany(query);
+
+        if(mongoObjectId) { // 해당 이력만 삭제
+            query = {"_id": ObjectId(mongoObjectId)};
+            await mongoConnection.collection('trash').deleteOne(query);
+        }
+        else { // 전체이력 삭제
+            query = {"meta.user_id": userId};
+            await mongoConnection.collection('trash').deleteMany(query);
+        }
     } catch(e) {
         console.log(e);
     } finally {
