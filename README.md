@@ -29,6 +29,54 @@
  ## 실행 방법
   - package.json 파일이 의존성 관리 파일
   - npm install  ( package.json에 있는 의존성 불러와서 로컬에 설치될거에요. )
-  - node index.js
+
+
+ ## fork mode
+  - instance 1개 띄움
+  // start.config.js
+  ```
+  module.exports = {
+    apps : [
+        {
+          name: "plogging server",
+          script: "./index.js",
+          watch: true,
+          out_file: "/dev/null",
+          error_file: "/dev/null",
+          env: {
+              "NODE_ENV": "development"
+          },
+          env_production: {
+            "NODE_ENV": "production"
+          }
+        }
+    ]
+  }
+  ```
+  ![pm2 fork mode](https://user-images.githubusercontent.com/21052356/104002925-14027c80-51e5-11eb-9abe-2e3d41287111.PNG)
+  
+ ## cluster mode
+   - instance 여러개 띄움
+   // start.config.cluster.json
+   ```
+   {
+    "apps": [
+      {
+        "name": "plogging server cluster",
+        "script": "./index.js",
+        "watch": true,
+        "out_file": "/dev/null",
+        "error_file": "/dev/null",
+        "instances": 3,
+        "exec_mode": "cluster",
+        "env": {
+          "NODE_ENV": "production"
+        }
+      }
+    ]
+  } 
+   ```
+   ![pm2 cluster mode](https://user-images.githubusercontent.com/21052356/104002938-18c73080-51e5-11eb-9181-1f2dbb707038.PNG)
+   
   
   
