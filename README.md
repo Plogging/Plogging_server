@@ -30,10 +30,6 @@
   - package.json 파일이 의존성 관리 파일
   - npm install  ( package.json에 있는 의존성 불러와서 로컬에 설치될거에요. )
  
-  ## 실행 방법
-  - package.json 파일이 의존성 관리 파일
-  - npm install  ( package.json에 있는 의존성 불러와서 로컬에 설치될거에요. )
-
  ## fork mode
   - instance 1개 띄움
   - start.config.js
@@ -81,7 +77,3 @@
    ```
    ![pm2 cluster mode](https://user-images.githubusercontent.com/21052356/104002938-18c73080-51e5-11eb-9181-1f2dbb707038.PNG)
    
-  
-  
-  
-  
