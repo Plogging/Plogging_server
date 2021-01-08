@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 
 const UserInferface = require("./router/user.js");
-const TrashInferface = require('./router/trash.js');
+const PloggingInferface = require('./router/plogging.js');
 const RankingInterface = require('./router/ranking.js');
 const bodyParser = require('body-parser');
 const poolCallback = require("./config/mysqlConfig.js").getMysqlPool; // callback
@@ -17,7 +17,7 @@ const multer  = require('multer')
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 
-app.use(express.static('E:/file_test')); // 정적파일 제공
+app.use(express.static('/mnt/Nexters_Flogging/images')); // 정적파일 제공
 
 // redis sessionStorage 설정
 app.use(session({
@@ -38,7 +38,7 @@ globalOption.mysqlPool2=poolAsyncAwait;
 globalOption.redisCilent=redisCilent;
 globalOption.fileInterface = multer;
 
-// 이 로직은 아래 /user, /trash를 타기전에 탄다. spring insterceptor 개념이라고 보면됨 ( 여기서 api들어가기전에 먼저 처리해야될 로직 있으면 처리.. ex. 유저 세션체크..)
+// 이 로직은 아래 /user, /plogging를 타기전에 탄다. spring insterceptor 개념이라고 보면됨 ( 여기서 api들어가기전에 먼저 처리해야될 로직 있으면 처리.. ex. 유저 세션체크..)
 /*
 app.use("/", function(req, res, next) {
     // 세션 체크 공통 모듈
@@ -62,7 +62,7 @@ async function main( ) {
     try {
         const mongoConnectioPool = await MongoClient.connect();
         globalOption.MongoPool=mongoConnectioPool;
-        app.use('/trash', new TrashInferface(globalOption)); // 쓰레기 관련 api는 trash.js로 포워딩        
+        app.use('/plogging', new PloggingInferface(globalOption)); // 쓰레기 관련 api는 plogging.js로 포워딩        
     } catch(e) {
         console.log(e);
     } 
