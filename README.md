@@ -33,7 +33,7 @@
 
  ## fork mode
   - instance 1개 띄움
-  // start.config.js
+  - start.config.js
   ```
   module.exports = {
     apps : [
@@ -56,8 +56,8 @@
   ![pm2 fork mode](https://user-images.githubusercontent.com/21052356/104002925-14027c80-51e5-11eb-9abe-2e3d41287111.PNG)
   
  ## cluster mode
-   - instance 여러개 띄움
-   // start.config.cluster.json
+   - instance 여러개 띄움 ( 3개 )
+   - start.config.cluster.json
    ```
    {
     "apps": [
