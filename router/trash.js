@@ -41,7 +41,7 @@ const TrashInferface = function(config) {
 };
 
 /**
- * 산책 이력조회 
+ * 산책 이력조회  (페이징 처리 필요)
  *  case 1. 유저 id 기준으로 최신순 조회
  *  case 2. 유저 id 기준으로 이동거리 많은순 조회
  *  case 3. 유저 id 기준으로 쓰레기 많이 주운순 조회
@@ -104,6 +104,11 @@ TrashInferface.prototype.writeTrash = async function(req, res) {
     try {
         mongoConnection = this.MongoPool.db('test');
         await mongoConnection.collection('trash').insertOne(trashObj);
+        
+        // 해당 산책의 plogging 점수
+        let ploggingScore = calcPloggingScore(trashObj);
+        // 랭킹서버에 insert
+
         res.status(200).send(returnResult);
     } catch(e) {
         console.log(e);
@@ -135,10 +140,12 @@ TrashInferface.prototype.deleteTrash = async function(req, res) {
         if(mongoObjectId) { // 해당 이력만 삭제
             query = {"_id": ObjectId(mongoObjectId)};
             await mongoConnection.collection('trash').deleteOne(query);
+            // 산책 이력 이미지 삭제
         }
         else { // 전체이력 삭제
             query = {"meta.user_id": userId};
             await mongoConnection.collection('trash').deleteMany(query);
+            // 산책 이력 이미지 삭제
         }
 
         res.status(200).send(returnResult);
@@ -151,5 +158,28 @@ TrashInferface.prototype.deleteTrash = async function(req, res) {
         mongoConnection=null;
     }
 }
+
+// 산책 점수 계산
+function calcPloggingScore(ploggingObj) {
+    let score = 0;
+    const trash_score_list = [1, 2, 3, 4, 5];
+
+    const distance = ploggingObj.meta.distance;
+    const calorie = ploggingObj.meta.calorie;
+    const flogging_time = ploggingObj.meta.flogging_time;
+    const pick_list = ploggingObj.pick_list; // array
+
+    for(let i=0; i<pick_list.length; i++) {
+        const trash_type = pick_list[i].trash_type;
+        const pick_count = pick_list[i].pick_count;
+
+        if(trash_type === 0) score += pick_count * trash_score_list[0];
+        else if(trash_type === 1) score += (pick_count * trash_score_list[1]);
+        else if(trash_type === 2) score += (pick_count * trash_score_list[2]);
+        else if(trash_type === 3) score += (pick_count * trash_score_list[3]);
+    }
+
+    return score;
+};
 
 module.exports = TrashInferface;
