@@ -14,6 +14,28 @@ const session = require('express-session');
 const redisStore = require('connect-redis')(session);
 const multer  = require('multer')
 
+// node-swageer
+const swaggerUi = require('swagger-ui-express');
+const swaggerJSDoc = require('swagger-jsdoc');
+
+const swaggerDefinition = {
+    info: { // API informations (required)
+      title: 'Plogging ', // Title (required)
+      version: '1.0.0', // Version (required)
+      description: 'Plogging API docs', // Description (optional)
+    },
+    host: 'localhost:20000', // Host (optional)
+    basePath: '/', // Base path (optional)
+}
+const swaggerOptions = {
+    // Import swaggerDefinitions
+    swaggerDefinition: swaggerDefinition,
+    // Path to the API docs
+    apis: ['./router/plogging.js', './router/ranking.js', './router/user.js']
+  }
+
+  const swaggerSpec = swaggerJSDoc(swaggerOptions);
+
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 
@@ -38,6 +60,15 @@ globalOption.mysqlPool2=poolAsyncAwait;
 globalOption.redisCilent=redisCilent;
 globalOption.fileInterface = multer;
 
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec)); // node-swaggwer
+
+app.use("/", function(req, res, next) {
+    // 세션 체크 공통 모듈
+    console.log("인터셉터 !");
+    req.userId = req.get("userId");
+    next();
+});
+ 
 // 이 로직은 아래 /user, /plogging를 타기전에 탄다. spring insterceptor 개념이라고 보면됨 ( 여기서 api들어가기전에 먼저 처리해야될 로직 있으면 처리.. ex. 유저 세션체크..)
 /*
 app.use("/", function(req, res, next) {
@@ -47,6 +78,7 @@ app.use("/", function(req, res, next) {
     if(req.path === '/user/login' || req.path === '/user/logout') next();
     else 
         if(req.session.userId === "xowns9418") {  // 세션 값이 있는 경우
+            req.body.userId = 세선키로 redis에서 조회한 userId
             next();
         } else { // 세션 값이 없는 경우
             res.send("로그인 후 서비스를 사용해 주세요.");

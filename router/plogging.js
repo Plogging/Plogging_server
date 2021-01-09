@@ -1,6 +1,7 @@
 const express = require('express');
 const cors=require('cors');
 const fs = require('fs');
+const { promisify } = require('util');
 const util = require('../util/common.js');
 const { ObjectId } = require('mongodb');
 
@@ -18,7 +19,7 @@ const PloggingInferface = function(config) {
     const upload = this.fileInterface({
         storage: this.fileInterface.diskStorage({
           destination: function (req, file, cb) {
-            const userId = req.body.userId; // 세션체크 완료하면 값 받아옴
+            const userId = req.userId; // 세션체크 완료하면 값 받아옴
             //const dir = `/mnt/Nexters_Flogging/images/plogging/${userId}`;
             const dir = `E:file_test/${userId}`;
             if (!fs.existsSync(dir)){
@@ -38,7 +39,7 @@ const PloggingInferface = function(config) {
     router.post("/", upload.single('ploggingImg'), (req, res) => this.writePlogging(req, res)); // create
     router.delete("/", (req, res) => this.deletePlogging(req,res)); // delete
 
-    this.redisAsyncZrem = promisify(this.redisClient.zrem).bind(this.redisClient);
+    //this.redisAsyncZrem = promisify(this.redisClient.zrem).bind(this.redisClient);
 
     return this.router;
 };
@@ -50,11 +51,110 @@ const PloggingInferface = function(config) {
  *  case 3. 유저 id 기준으로 쓰레기 많이 주운순 조회
  *  case 4. 유저 id 기준으로 칼로리 소모 많은순 조회
  */
+/**
+* @swagger
+ * /plogging:
+ *   get:
+ *     summary: 산책이력 가져오기
+ *     tags: [Plogging]
+ *     parameters:
+ *       - in: header
+ *         name: userId
+ *         type: string
+ *         required: true
+ *         description: 유저 SessionKey
+ *     responses:
+ *       200:
+ *         description: Success 
+ *         schema:
+ *          type: object
+ *          properties:
+ *              rc:
+ *                  type: number
+ *                  example: 200
+ *              rcmsg:
+ *                  type: string
+ *                  example: 산책이력 정보에 성공했습니다.
+ *              plogging_list:
+ *                  type: array
+ *                  items:
+ *                      type: object
+ *                      properties:
+ *                          _id:
+ *                              type: string
+ *                              example: "5ff53c3ff9789143b86f863b"
+ *                          meta:
+ *                              type: object
+ *                              properties:
+ *                                  user_id:
+ *                                      type: string
+ *                                      example: xowns4817@naver.com-naver
+ *                                  create_time:
+ *                                      type: string
+ *                                      format: date-time
+ *                                      example: 20210106132743
+ *                                  distance:
+ *                                      type: number
+ *                                      example: 1500
+ *                                  calories:
+ *                                      type: numer
+ *                                      example: 200
+ *                                  plogging_time:
+ *                                      type: number
+ *                                      example: 20
+ *                                  plogging_img:
+ *                                      type: string
+ *                                      example: "http://localhost:20000/plogging/xowns4817@naver.com-naver/plogging_20210106132743.PNG"
+ *                          trash_list:
+ *                              type: array
+ *                              items:
+ *                                  type: object
+ *                                  properties:
+ *                                      trash_type:
+ *                                          type: integer
+ *                                          exmaple: 2
+ *                                      pick_count:
+ *                                          type: integer
+ *                                          example: 100
+ *    
+ *       400:
+ *         description: Bad Request(parameter error)
+ *         schema:
+ *             type: object
+ *             properties:
+ *                 rc:
+ *                     type: number
+ *                     example: 400
+ *                 rcmsg:
+ *                     type: string
+ *                     example: 파라미터 값을 확인해주세요.
+ *       404:
+ *         description: Bad Request(url error)
+ *         schema:
+ *             type: object
+ *             properties:
+ *                 rc:
+ *                     type: number
+ *                     example: 404
+ *                 rcmsg:
+ *                     type: string
+ *                     example: 요청 url을 확인해 주세요.
+ *       500:
+ *         description: server error
+ *         schema:
+ *             type: object
+ *             properties:
+ *                 rc:
+ *                     type: number
+ *                     example: 500
+ *                 rcmsg:
+ *                     type: string
+ *                     example: 서버 오류.
+ */
 PloggingInferface.prototype.readPlogging = async function(req, res) {
     console.log("plogging read api !");
 
-    //let userId = req.get("userId"); // header에 있는 값 받아옴
-    let userId = req.body.userId;
+    let userId = req.userId;
     let query = {"meta.user_id": userId};
     let options = {sort: {"meta.created_time": -1}}; // 최신순
     let mongoConnection = null;
@@ -80,14 +180,90 @@ PloggingInferface.prototype.readPlogging = async function(req, res) {
  * 산책 이력 등록
  * - img는 optional. 만약, 입력안하면 baseImg로 세팅
  */
+/**
+ * @swagger
+ * /plogging:
+ *   post:
+ *     summary: 산책 이력 등록하기
+ *     tags: [Plogging]
+ *     consumes:
+ *      - multipart/form-data
+ *     produces:
+ *      - application/json
+ *     parameters:
+ *       - in: header
+ *         name: userId
+ *         type: string
+ *         required: true
+ *       - in: formData
+ *         name: ploggingImg
+ *         type: file
+ *         description: 산책 인증샷
+ *         required: false
+ *       - in: formData
+ *         name: ploggingData
+ *         type: string
+ *         required: true
+ *         example : '{"meta": { "distance": 1500, "calorie": 200, "flogging_time":20}, "pick_list": [ { "trash_type": 2, "pick_count":100}, {"trash_type":1, "pick_count":200}] }'
+ *         description: 산책이력 데이터
+ * 
+ *     responses:
+ *       200:
+ *         description: Success
+ *         schema:
+ *          type: object
+ *          properties:
+ *              plogging:
+ *                  type: object
+ *                  properties:
+ *                      rc:
+ *                          type: number
+ *                          example: 200
+ *                      rcmsg:
+ *                          type: string
+ *                          example: 산책이력 등록 성공
+ *       400:
+ *         description: Bad Request(parameter error)
+ *         schema:
+ *             type: object
+ *             properties:
+ *                 rc:
+ *                     type: number
+ *                     example: 400
+ *                 rcmsg:
+ *                     type: string
+ *                     example: 파라미터 값을 확인해주세요.
+ *       404:
+ *         description: Bad Request(url error)
+ *         schema:
+ *             type: object
+ *             properties:
+ *                 rc:
+ *                     type: number
+ *                     example: 404
+ *                 rcmsg:
+ *                     type: string
+ *                     example: 요청 url을 확인해 주세요.
+ *       500:
+ *         description: server error
+ *         schema:
+ *             type: object
+ *             properties:
+ *                 rc:
+ *                     type: number
+ *                     example: 500
+ *                 rcmsg:
+ *                     type: string
+ *                     example: 서버 오류.
+ * 
+ */
 PloggingInferface.prototype.writePlogging = async function(req, res) {
     console.log("plogging write api !");
 
     let returnResult = { rc: 200, rcmsg: "success" };
 
-    //let userId = req.get("userId"); // header에 있는 값 받아옴
-    let userId = req.body.userId;
-    let ploggingObj = req.body.ploggingObj;
+    let userId = req.userId;
+    let ploggingObj = req.body.ploggingData;
     
     if(ploggingObj === undefined) {
         returnResult.rc = 400;
@@ -136,11 +312,79 @@ PloggingInferface.prototype.writePlogging = async function(req, res) {
  *   case 1. 유저가 특정 산책 이력을 삭제하거나(1개 삭제) - 산책이력의 objectId값을 파라미터로 전달
  *   case 2. 회원 탈퇴했을때(해당 회원 산책이력 모두 삭제) - 산책이력의 objectId값을 파라미터로 전달하지 않음
  */
+/**
+ * @swagger
+ * /plogging:
+ *   delete:
+ *     summary: 산책정보 삭제
+ *     tags: [Plogging]
+ *     parameters:
+ *       - in: header
+ *         name: userId
+ *         type: string
+ *         required: true
+ *         description: 유저 SessionKey
+ *       - in: query
+ *         name: objectId
+ *         type: string
+ *         required: false
+ *         example: "5ff53c3ff9789143b86f863b"
+ *         description: 산책이력 식별키
+ *     responses:
+ *       200:
+ *         description: Success
+ *         schema:
+ *          type: object
+ *          properties:
+ *             plogging:
+ *              type: object
+ *              properties:
+ *                  rc:
+ *                      type: number
+ *                      example: 200
+ *                  rcmsg:
+ *                      type: string
+ *                      example: 산책이력 삭제 성공
+ *             
+ *       400:
+ *         description: Bad Request(parameter error)
+ *         schema:
+ *             type: object
+ *             properties:
+ *                 rc:
+ *                     type: number
+ *                     example: 400
+ *                 rcmsg:
+ *                     type: string
+ *                     example: 파라미터 값을 확인해주세요.
+ *       404:
+ *         description: Bad Request(url error)
+ *         schema:
+ *             type: object
+ *             properties:
+ *                 rc:
+ *                     type: number
+ *                     example: 404
+ *                 rcmsg:
+ *                     type: string
+ *                     example: 요청 url을 확인해 주세요.
+ *       500:
+ *         description: server error
+ *         schema:
+ *             type: object
+ *             properties:
+ *                 rc:
+ *                     type: number
+ *                     example: 500
+ *                 rcmsg:
+ *                     type: string
+ *                     example: 서버 오류.
+ * 
+ */
 PloggingInferface.prototype.deletePlogging = async function(req, res) {
     console.log("plogging delete api !");
 
-    //let userId = req.get("userId"); // header에 있는 값 받아옴
-    let userId = req.body.userId;
+    let userId = req.userId;
     let mongoObjectId = req.body.objectId;
     let query = null;
 
@@ -214,6 +458,5 @@ function addExtraScorePerKm(distance) {
     for(let i=1; i<=hopCnt; i++) extraScore += (i*10);
     return extraScore;
 }
-
 
 module.exports = PloggingInferface;
