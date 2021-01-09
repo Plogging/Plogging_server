@@ -19,15 +19,15 @@ const PloggingInferface = function(config) {
         storage: this.fileInterface.diskStorage({
           destination: function (req, file, cb) {
             const userId = req.body.userId; // 세션체크 완료하면 값 받아옴
-            const dir = `/mnt/Nexters_Flogging/images/plogging/${userId}`;
-    
+            //const dir = `/mnt/Nexters_Flogging/images/plogging/${userId}`;
+            const dir = `E:file_test/${userId}`;
             if (!fs.existsSync(dir)){
                 fs.mkdirSync(dir);
             }
             cb(null, dir);
           },
           filename: function (req, file, cb) {
-            cb(null, `flogging_${util.getCurrentDateTime()}.PNG`);
+            cb(null, `plogging_${util.getCurrentDateTime()}.PNG`);
           }
         }),
         limits: {fileSize: 1*1000*5000}, // file upload 5MB 제한
@@ -37,6 +37,9 @@ const PloggingInferface = function(config) {
     router.get("/", (req, res) => this.readPlogging(req, res));// read
     router.post("/", upload.single('ploggingImg'), (req, res) => this.writePlogging(req, res)); // create
     router.delete("/", (req, res) => this.deletePlogging(req,res)); // delete
+
+    this.redisAsyncZrem = promisify(this.redisClient.zrem).bind(this.redisClient);
+
     return this.router;
 };
 
@@ -50,7 +53,8 @@ const PloggingInferface = function(config) {
 PloggingInferface.prototype.readPlogging = async function(req, res) {
     console.log("plogging read api !");
 
-    let userId = req.get("userId"); // header에 있는 값 받아옴
+    //let userId = req.get("userId"); // header에 있는 값 받아옴
+    let userId = req.body.userId;
     let query = {"meta.user_id": userId};
     let options = {sort: {"meta.created_time": -1}}; // 최신순
     let mongoConnection = null;
@@ -81,7 +85,8 @@ PloggingInferface.prototype.writePlogging = async function(req, res) {
 
     let returnResult = { rc: 200, rcmsg: "success" };
 
-    let userId = req.get("userId"); // header에 있는 값 받아옴
+    //let userId = req.get("userId"); // header에 있는 값 받아옴
+    let userId = req.body.userId;
     let ploggingObj = req.body.ploggingObj;
     
     if(ploggingObj === undefined) {
@@ -107,8 +112,13 @@ PloggingInferface.prototype.writePlogging = async function(req, res) {
         
         // 해당 산책의 plogging 점수
         let ploggingScore = calcPloggingScore(ploggingObj);
+        returnResult.score = { };
+        returnResult.score.activityScore = ploggingScore[0];
+        returnResult.score.envrionmentScore = ploggingScore[1];
+
+        let ploggingRankScore = ploggingScore[0] + ploggingScore[1];
         //let queryKey = "Plogging";
-        //await this.redisClient.zadd(queryKey, ploggingScore, userId); // 랭킹서버에 insert
+        //await this.redisClient.zadd(queryKey, ploggingRankScore, userId); // 랭킹서버에 insert
  
         res.status(200).send(returnResult);
     } catch(e) {
@@ -129,7 +139,8 @@ PloggingInferface.prototype.writePlogging = async function(req, res) {
 PloggingInferface.prototype.deletePlogging = async function(req, res) {
     console.log("plogging delete api !");
 
-    let userId = req.get("userId"); // header에 있는 값 받아옴
+    //let userId = req.get("userId"); // header에 있는 값 받아옴
+    let userId = req.body.userId;
     let mongoObjectId = req.body.objectId;
     let query = null;
 
@@ -140,12 +151,26 @@ PloggingInferface.prototype.deletePlogging = async function(req, res) {
 
         if(mongoObjectId) { // 해당 이력만 삭제
             query = {"_id": ObjectId(mongoObjectId)};
+
+            // 산책이력 삭제
             await mongoConnection.collection('plogging').deleteOne(query);
             // 산책 이력 이미지 삭제
+            // _id로 trash_img url조회후 해당 url의 이미지 삭제
+
+            // 해당 산책의 점수 랭킹점수 삭제
+            //let queryKey = "Plogging";
+            //await this.redisAsyncZrem(queryKey, userId);
         } else { // 전체이력 삭제
             query = {"meta.user_id": userId};
+
+            //산책 이력 삭제
             await mongoConnection.collection('plogging').deleteMany(query);
+
             // 산책 이력 이미지 삭제
+             // _id로 trash_img url조회후 해당 url의 이미지 삭제
+        
+             // 해당 산책의 점수 랭킹점수 삭제
+            //await this.redisAsyncZrem(queryKey, userId);
         }
         res.status(200).send(returnResult);
     } catch(e) {
@@ -158,27 +183,37 @@ PloggingInferface.prototype.deletePlogging = async function(req, res) {
     }
 }
 
-// 산책 점수 계산
+// 산책 점수 계산 ( 운동점수, 환경점수 )
 function calcPloggingScore(ploggingObj) {
-    let score = 0;
-    const trash_score_list = [1, 2, 3, 4, 5];
-
-    const distance = ploggingObj.meta.distance;
-    const calorie = ploggingObj.meta.calorie;
-    const flogging_time = ploggingObj.meta.flogging_time;
-    const pick_list = ploggingObj.pick_list; // array
-
-    for(let i=0; i<pick_list.length; i++) {
-        const trash_type = pick_list[i].trash_type;
-        const pick_count = pick_list[i].pick_count;
-
-        if(trash_type === 0) score += pick_count * trash_score_list[0];
-        else if(trash_type === 1) score += (pick_count * trash_score_list[1]);
-        else if(trash_type === 2) score += (pick_count * trash_score_list[2]);
-        else if(trash_type === 3) score += (pick_count * trash_score_list[3]);
+    let score = [ ]; // score[0]: 운동점수, score[1]: 환경점수
+    const pivotDistance = 300; // 300m
+    const movePerScore = 1; // 10m 이동시 1점 증가
+    const maxCountDistance = 10000; // 10km
+    const pickPerScore = 10; // 쓰레기 1개 주울때마다 10점 증가
+    
+    const distance = ploggingObj.meta.distance; // 플로깅 거리
+    const pick_list = ploggingObj.pick_list; // 주운 쓰레기 리스트
+    
+    if(distance < pivotDistance) score[0] = 0; //300m 이하는 거리점수 없음
+    else {
+        if(maxCountDistance < distance) distance = maxCountDistance; // 10km 넘어가면 그 이상 거리점수 없음
+        score[0] = ((Math.floor(distance/10))*movePerScore) + addExtraScorePerKm(distance);
     }
+
+    let pickCount=0;
+    for(let i=0; i<pick_list.length; i++) pickCount += pick_list[i].pick_count;
+    score[1]= pickCount*pickPerScore;
 
     return score;
 };
+
+// 1km 마다 기본점수 폭 늘려준다. 해당 거리의 경우 추가되는 총 점수
+function addExtraScorePerKm(distance) {
+    const hopCnt = Math.floor(distance/1000);
+    let extraScore=0;
+    for(let i=1; i<=hopCnt; i++) extraScore += (i*10);
+    return extraScore;
+}
+
 
 module.exports = PloggingInferface;
