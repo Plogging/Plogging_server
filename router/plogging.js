@@ -4,6 +4,7 @@ const fs = require('fs');
 const { promisify } = require('util');
 const util = require('../util/common.js');
 const { ObjectId } = require('mongodb');
+const filePath = "E:file_test/";
 
 const PloggingInferface = function(config) {
     const router = express.Router();
@@ -20,8 +21,7 @@ const PloggingInferface = function(config) {
         storage: this.fileInterface.diskStorage({
           destination: function (req, file, cb) {
             const userId = req.userId; // 세션체크 완료하면 값 받아옴
-            //const dir = `/mnt/Nexters_Flogging/images/plogging/${userId}`;
-            const dir = `E:file_test/${userId}`;
+            const dir = `${filePath}${userId}`;
             if (!fs.existsSync(dir)){
                 fs.mkdirSync(dir);
             }
@@ -59,10 +59,15 @@ const PloggingInferface = function(config) {
  *     tags: [Plogging]
  *     parameters:
  *       - in: header
- *         name: userId
+ *         name: sessionKey
  *         type: string
  *         required: true
  *         description: 유저 SessionKey
+ *       - in: query
+ *         name: userId
+ *         type: string
+ *         required: false
+ *         description: 조회할 유저 id
  *     responses:
  *       200:
  *         description: Success 
@@ -161,8 +166,8 @@ PloggingInferface.prototype.readPlogging = async function(req, res) {
     let returnResult = { rc: 200, rcmsg: "success" };
 
     try {
-        mongoConnection = this.MongoPool.db('test');
-        let PloggingList = await mongoConnection.collection('plogging').find(query, options).toArray();
+        mongoConnection = this.MongoPool.db('plogging');
+        let PloggingList = await mongoConnection.collection('record').find(query, options).toArray();
        
         returnResult.plogging_list = PloggingList;
         res.status(200).send(returnResult);
@@ -283,8 +288,8 @@ PloggingInferface.prototype.writePlogging = async function(req, res) {
 
     let mongoConnection = null;
     try {
-        mongoConnection = this.MongoPool.db('test');
-        await mongoConnection.collection('plogging').insertOne(ploggingObj);
+        mongoConnection = this.MongoPool.db('plogging');
+        await mongoConnection.collection('record').insertOne(ploggingObj);
         
         // 해당 산책의 plogging 점수
         let ploggingScore = calcPloggingScore(ploggingObj);
@@ -385,34 +390,37 @@ PloggingInferface.prototype.deletePlogging = async function(req, res) {
     console.log("plogging delete api !");
 
     let userId = req.userId;
-    let mongoObjectId = req.body.objectId;
+    let mongoObjectId = req.query.objectId;
+    let ploggingImgPath = req.query.ploggingImgPath;
     let query = null;
 
     let returnResult = { rc: 200, rcmsg: "success" };
     let mongoConnection = null;
     try {
-        mongoConnection = this.MongoPool.db('test');
+        mongoConnection = this.MongoPool.db('plogging');
 
         if(mongoObjectId) { // 해당 이력만 삭제
             query = {"_id": ObjectId(mongoObjectId)};
 
             // 산책이력 삭제
-            await mongoConnection.collection('plogging').deleteOne(query);
-            // 산책 이력 이미지 삭제
-            // _id로 trash_img url조회후 해당 url의 이미지 삭제
+            await mongoConnection.collection('record').deleteOne(query);
+         
+            // 산책이력 이미지 삭제
+            if(ploggingImgPath) fs.unlinkSync(ploggingImgPath);
 
             // 해당 산책의 점수 랭킹점수 삭제
             //let queryKey = "Plogging";
+
             //await this.redisAsyncZrem(queryKey, userId);
-        } else { // 전체이력 삭제
+        } else { // 전체이력 삭제 -> 회원탈퇴
             query = {"meta.user_id": userId};
 
-            //산책 이력 삭제
-            await mongoConnection.collection('plogging').deleteMany(query);
+            // 탈퇴 유저의 이력 전체 삭제
+            await mongoConnection.collection('record').deleteMany(query);
 
-            // 산책 이력 이미지 삭제
-             // _id로 trash_img url조회후 해당 url의 이미지 삭제
-        
+            // 탈퇴 유저의 산책이력 이미지 전체 삭제
+            fs.rmdirSync(`${filePath}${userId}`, { recursive: true });
+
              // 해당 산책의 점수 랭킹점수 삭제
             //await this.redisAsyncZrem(queryKey, userId);
         }
