@@ -66,6 +66,15 @@ app.use("/", function(req, res, next) {
     // 세션 체크 공통 모듈
     console.log("인터셉터 !");
     req.userId = req.get("userId");
+    
+    /**
+     * step 1. userId가 파라미터로 들어왔는지 확인 ( req.body.userId )
+     * step 2. 
+     *    2-1. 파라미터로 안들어왔다면 redis에서 조회한 
+     * 값으로 userId 세팅 ( 산책이력 등록, 산책이력 삭제 )
+     *    2-2. 파라미터로 들어왔다면 파리미터로 들어온 값으로 userId 세팅 ( 산책이력 조회 ) 
+     * 
+     */
     next();
 });
  
