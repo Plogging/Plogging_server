@@ -6,11 +6,11 @@ let dbConfig = {
     host: "localhost",
     port: "3306",
     user: "root",
-    password: "password",
-    database: "디비 이름",
+    password: "dkwmfrjdns1!",
+    database: "plogging",
     multipleStatements : true,
     connectionLimit: 10
 };
 
 module.exports.getMysqlPool=mysql.createPool(dbConfig);
-module.exports.getMysql2Pool=mysql2.createPool(dbConfig);
+module.exports.getMysqlPool2=mysql2.createPool(dbConfig);
