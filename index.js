@@ -1,5 +1,6 @@
 const express = require('express');
 const app = express();
+const { promisify } = require('util');
 
 const UserInferface = require("./router/user.js");
 const PloggingInferface = require('./router/plogging.js');
@@ -57,8 +58,11 @@ const globalOption = {};
 globalOption.PORT = 20000;
 globalOption.mysqlPool=poolCallback;
 globalOption.mysqlPool2=poolAsyncAwait;
-globalOption.redisCilent=redisCilent;
+//globalOption.redisCilent=redisCilent;
 globalOption.fileInterface = multer;
+
+//redis 
+globalOption.redisZdel = promisify(redisCilent.zrem).bind(redisCilent);
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec)); // node-swaggwer
 
