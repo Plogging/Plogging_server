@@ -1,0 +1,16 @@
+{
+    "apps": [
+      {
+        "name": "plogging server cluster",
+        "script": "./index.js",
+        "watch": true,
+        "out_file": "/dev/null",
+        "error_file": "/dev/null",
+        "instances": 3,
+        "exec_mode": "cluster",
+        "env": {
+          "NODE_ENV": "production"
+        }
+      }
+    ]
+  } 

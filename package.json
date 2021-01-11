@@ -1,0 +1,25 @@
+{
+  "name": "floggin-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "connect-redis": "^5.0.0",
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "express-session": "^1.17.1",
+    "hiredis": "^0.5.0",
+    "mongodb": "^3.6.3",
+    "multer": "^1.4.2",
+    "mysql": "^2.18.1",
+    "mysql2": "^2.2.5",
+    "mysql2-promise": "^0.1.4",
+    "pm2": "^4.5.1",
+    "redis": "^3.0.2"
+  }
+}
