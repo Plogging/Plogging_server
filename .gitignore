@@ -3,3 +3,4 @@
 
 ## 라이브러리 파일 제외
 ./node_modules
+node_modules
