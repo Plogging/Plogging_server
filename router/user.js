@@ -61,8 +61,7 @@ UserInterface.prototype.signIn = async function(req, res) {
             const findUserQuery = `SELECT * FROM ${USER_TABLE} WHERE user_id = ?`;
             const findUserValues = [userId];
             conn.query(findUserQuery, findUserValues, function(err, result) {
-                if (!result) {
-
+                if (result.length === 0) {
                     // set nickname
                     let nickName = user.displayName;
                     if(!user.displayName) nickName = "쓰담이";
@@ -83,6 +82,8 @@ UserInterface.prototype.signIn = async function(req, res) {
                             returnResult.rcmsg = "Success creating user";
                             returnResult.session = userId;
                             returnResult.userImg = userImg;
+                            returnResult.userName = result[0].display_name;
+                            console.log(result)
                             res.send(returnResult);
                         };
                     });
@@ -92,7 +93,7 @@ UserInterface.prototype.signIn = async function(req, res) {
                     returnResult.rcmsg = "Success getting user";
                     returnResult.session = req.session.key;
                     returnResult.userImg = result[0].profile_img;
-                    returnResult.userName = result[0].user_display_name;
+                    returnResult.userName = result[0].display_name;
                     res.send(returnResult);
                 };
             });
@@ -118,6 +119,12 @@ UserInterface.prototype.update = async function(req, res) {
     let updateUserQuery
     let updateUserValues
     try {
+        if(!user.display_name && !user.file) {
+            returnResult.rc = 400;
+            returnResult.rcmsg = "no parameter";
+            res.status(400).send(returnResult);
+            return;
+        }
         if(user.display_name && req.file){
             const profileImg = req.file.path
             updateUserQuery = `UPDATE ${USER_TABLE} SET display_name = ?, profile_img = ?, update_datetime = ? WHERE user_id = ?`
