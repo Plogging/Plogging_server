@@ -7,7 +7,7 @@ const RankingInterface = require('./router/ranking.js');
 const bodyParser = require('body-parser');
 const poolCallback = require("./config/mysqlConfig.js").getMysqlPool; // callback
 const poolAsyncAwait = require("./config/mysqlConfig.js").getMysqlPool2; // async await
-const redisCilent = require("./config/redisConfig.js");
+const redisClient = require("./config/redisConfig.js");
 const MongoClient = require("./config/mongoConfig.js");
 
 const session = require('express-session');
@@ -44,7 +44,7 @@ app.use(express.static('/mnt/Nexters_Flogging/images')); // 정적파일 제공
 // redis sessionStorage 설정
 app.use(session({
     store : new redisStore({ // default는 메모리에 저장
-        client: redisCilent,
+        client: redisClient,
         ttl: 60*30 // expires ( per in second ) - 30분
     }),
     secret: "Flogging", // sessionId를 만들때 key로 쓰이는거 같음
@@ -57,7 +57,7 @@ const globalOption = {};
 globalOption.PORT = 20000;
 globalOption.mysqlPool=poolCallback;
 globalOption.mysqlPool2=poolAsyncAwait;
-globalOption.redisCilent=redisCilent;
+globalOption.redisClient=redisClient;
 globalOption.fileInterface = multer;
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec)); // node-swaggwer
