@@ -116,36 +116,33 @@ UserInterface.prototype.update = async function(req, res) {
     let returnResult = { rc: 200, rcmsg: "success" };
     const user = req.body;
     const currentTime = util.getCurrentDateTime();
-    let updateUserQuery
-    let updateUserValues
+    
     try {
-        if(!user.display_name && !user.file) {
+        if(!user.display_name || !req.file) {
             returnResult.rc = 400;
             returnResult.rcmsg = "no parameter";
             res.status(400).send(returnResult);
             return;
-        }
-        if(user.display_name && req.file){
+        }else{
             const profileImg = req.file.path
-            updateUserQuery = `UPDATE ${USER_TABLE} SET display_name = ?, profile_img = ?, update_datetime = ? WHERE user_id = ?`
-            updateUserValues = [user.display_name, profileImg, currentTime, req.session.key];
-            returnResult.displayName = user.display_name;
-            returnResult.profile_img = profileImg;
-        }else if(user.display_name && !req.file){
-            updateUserQuery = `UPDATE ${USER_TABLE} SET display_name = ?, update_datetime = ? WHERE user_id = ?`
-            updateUserValues = [user.display_name, currentTime, req.session.key];
-            returnResult.displayName = user.display_name;
-        }else if(!user.display_name && req.file){
-            const profileImg = req.file.path
-            updateUserQuery = `UPDATE ${USER_TABLE} SET profile_img = ?, update_datetime = ? WHERE user_id = ?`
-            updateUserValues = [profileImg, currentTime, req.session.key];
-            returnResult.profile_img = profileImg;
+            let updateUserQuery = `UPDATE ${USER_TABLE} SET display_name = ?, profile_img = ?, update_datetime = ? WHERE user_id = ?`
+            let updateUserValues = [user.display_name, profileImg, currentTime, req.session.key];
+            
+            pool.query(updateUserQuery, updateUserValues, function(err, result) {
+                if(err){
+                    returnResult.rc = 600;
+                    returnResult.rcmsg = err.message;
+                    res.send(returnResult);
+                    return;
+                }
+                returnResult.rc = 200;
+                console.log(result)
+                returnResult.rcmsg = "Success user updated";
+                returnResult.displayName = user.display_name;
+                returnResult.profile_img = profileImg;
+                res.send(returnResult);
+            })
         }
-        pool.query(updateUserQuery, updateUserValues, function(err, result) {
-            returnResult.rc = 200;
-            returnResult.rcmsg = "Success user updated";
-            res.send(returnResult);
-        })
         
     } catch (error) {
         returnResult.rc = 500;
