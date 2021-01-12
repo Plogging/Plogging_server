@@ -1,9 +1,13 @@
 const express = require('express');
-const { promisify } = require('util')
-const cors=require('cors');
+const cors = require('cors');
+const { client } = require('../config/redisConfig');
 
 const weeklyRankingKey = "weekly"
 const monthlyRankingKey = "monthly"
+
+const rankReqSchema = {
+
+}
 
 const RankingInterface = function(config) {
     const router = express.Router();
@@ -13,11 +17,6 @@ const RankingInterface = function(config) {
     this.mysqlPool = config.mysqlPool;
     this.mysqlPool2 = config.mysqlPool2;
     this.redisClient = config.redisClient;
-
-    const zcountAsync = promisify(this.redisClient.zcount).bind(this.redisClient)
-    const zrevrangeAsync = promisify(this.redisClient.zrevrange).bind(this.redisClient)
-    this.zcount = zcountAsync
-    this.zrevrange = zrevrangeAsync
 
     // 랭킹 관련 api 구현
     router.get("/:rankType", (req, res) => this.getRank(req, res));
@@ -99,13 +98,21 @@ RankingInterface.prototype.getRank = async function(req, res) {
     let rankType = req.params.rankType
     let offset = req.query.offset
     let limit = req.query.limit
-    let count = await this.zcount(rankType, "-inf", "+inf")
-    let rankWithScores = await this.zrevrange(rankType, offset, offset+limit-1, "withscores")
-    let rankData = buildRankData(rankWithScores)
-    let returnResult = {rc: 200, rcmsg: "success"}
-    returnResult.count = count
-    returnResult.rankData = rankData
-    res.status(200).json(returnResult)
+    let returnResult
+    this.redisClient.multi()
+    .zcount(rankType, "-inf", "+inf")
+    .zrevrange(rankType, offset, offset+limit-1, "withscores")
+    .exec((error, replies) => {
+        if (error) {
+            returnResult = {rc: 500, rcmsg: "internal server error"}
+            res.status(500).json(returnResult)
+        } else {
+            let count = replies[0]
+            let rankData = buildRankData(replies[1])
+            returnResult = {rc: 200, rcmsg: "success", count: count, rankData: rankData}
+            res.status(200).json(returnResult)
+        }
+    })
 }
 
 const buildRankData = rankWithScores => {
