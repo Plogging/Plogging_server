@@ -12,7 +12,7 @@ const UserInterface = function(config) {
     router.all('*'  ,cors());
     this.router = router;
     this.mysqlPool = config.mysqlPool;
-    this.sqlConnection = config.sqlConnection;
+    this.pool = config.pool;
     this.redisClient = config.redisClient;
     this.fileInterface = config.fileInterface;
 
@@ -43,7 +43,7 @@ const UserInterface = function(config) {
 
 UserInterface.prototype.signIn = async function(req, res) {
 
-    const conn = this.sqlConnection;
+    const pool = this.pool;
     let returnResult = { rc: 200, rcmsg: "success" };
     const user = req.body;
     try {
@@ -60,7 +60,7 @@ UserInterface.prototype.signIn = async function(req, res) {
             const userId = user.email + ':' + user.type
             const findUserQuery = `SELECT * FROM ${USER_TABLE} WHERE user_id = ?`;
             const findUserValues = [userId];
-            conn.query(findUserQuery, findUserValues, function(err, result) {
+            pool.query(findUserQuery, findUserValues, function(err, result) {
                 if (result.length === 0) {
                     // set nickname
                     let nickName = user.displayName;
@@ -71,8 +71,8 @@ UserInterface.prototype.signIn = async function(req, res) {
                     const createDateline = util.getCurrentDateTime();
                     const createUserQuery = `INSERT INTO ${USER_TABLE}(user_id, display_name, profile_img, type, email, update_datetime, create_datetime) VALUES(?, ?, ?, ?, ?, ?, ?)`;
                     const createUserValues = [userId, nickName, userImg, user.type, user.email, createDateline, createDateline];
-                    conn.query(createUserQuery, createUserValues, function(err, result){
-                        if(!result) {
+                    pool.query(createUserQuery, createUserValues, function(err, result){
+                        if(err) {
                             returnResult.rc = 500;
                             returnResult.rcmsg = "Failed to creating user";
                             res.send(returnResult);
@@ -80,7 +80,7 @@ UserInterface.prototype.signIn = async function(req, res) {
                             req.session.key = userId
                             returnResult.rc = 200;
                             returnResult.rcmsg = "Success creating user";
-                            returnResult.session = userId;
+                            returnResult.session = req.session;
                             returnResult.userImg = userImg;
                             returnResult.userName = result[0].display_name;
                             console.log(result)
@@ -112,7 +112,7 @@ UserInterface.prototype.signIn = async function(req, res) {
 
 UserInterface.prototype.update = async function(req, res) {
     
-    const conn = this.sqlConnection;
+    const pool = this.pool;
     let returnResult = { rc: 200, rcmsg: "success" };
     const user = req.body;
     const currentTime = util.getCurrentDateTime();
@@ -141,7 +141,7 @@ UserInterface.prototype.update = async function(req, res) {
             updateUserValues = [profileImg, currentTime, req.session.key];
             returnResult.profile_img = profileImg;
         }
-        conn.query(updateUserQuery, updateUserValues, function(err, result) {
+        pool.query(updateUserQuery, updateUserValues, function(err, result) {
             returnResult.rc = 200;
             returnResult.rcmsg = "Success user updated";
             res.send(returnResult);
