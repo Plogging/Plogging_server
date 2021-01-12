@@ -6,7 +6,7 @@ const PloggingInferface = require('./router/plogging.js');
 const RankingInterface = require('./router/ranking.js');
 const bodyParser = require('body-parser');
 const poolCallback = require("./config/mysqlConfig.js").getMysqlPool; // callback
-const sqlConnection = require("./config/mysqlConfig.js").sqlConnection; // async await
+const pool = require("./config/mysqlConfig.js").getMysqlPool2; // async await
 const redisCilent = require("./config/redisConfig.js");
 const MongoClient = require("./config/mongoConfig.js");
 
@@ -34,7 +34,7 @@ app.use(session({
 const globalOption = {};
 globalOption.PORT = 20000;
 globalOption.mysqlPool=poolCallback;
-globalOption.sqlConnection=sqlConnection;
+globalOption.pool=pool;
 globalOption.redisCilent=redisCilent;
 globalOption.fileInterface = multer;
 
@@ -45,7 +45,7 @@ app.use("/", function(req, res, next) {
     console.log("인터셉터 !");
     if(req.path === '/user/signIn' || req.path === '/user/signOut') next();
     else
-        if(req.session.key) {  // 세션 값이 있는 경우
+        if(req.session.id) {  // 세션 값이 있는 경우
             next();
         } else { // 세션 값이 없는 경우
             let returnResult = { rc: 401, rcmsg: "unauthorized" };
