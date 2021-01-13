@@ -1,7 +1,9 @@
 ## config 파일 제외
-./config
 config
 
 ## 라이브러리 파일 제외
-./node_modules
 node_modules
+
+## 기타 파일 제외
+.vscode
+package-lock.json

@@ -12,7 +12,7 @@ const UserInterface = function(config) {
     router.all('*'  ,cors());
     this.router = router;
     this.mysqlPool = config.mysqlPool;
-    this.pool = config.pool;
+    this.pool = config.mysqlPool2;
     this.redisClient = config.redisClient;
     this.fileInterface = config.fileInterface;
 
