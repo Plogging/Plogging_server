@@ -13,7 +13,7 @@ const PloggingInferface = function(config) {
     this.router = router;
     this.mysqlPool = config.mysqlPool;
     this.mysqlPool2 = config.mysqlPool2;
-    //this.redisClient = config.redisClient;
+    this.redisClient = config.redisClient;
     this.MongoPool = config.MongoPool;
     this.fileInterface = config.fileInterface;
 
@@ -39,7 +39,7 @@ const PloggingInferface = function(config) {
     router.post("/", upload.single('ploggingImg'), (req, res) => this.writePlogging(req, res)); // create
     router.delete("/", (req, res) => this.deletePlogging(req,res)); // delete
 
-   this.redisAsyncZrem = config.redisZdel;
+   this.redisAsyncZrem = promisify(this.redisClient.zrem).bind(this.redisClient);
 
     return this.router;
 };
