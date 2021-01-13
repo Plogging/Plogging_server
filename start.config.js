@@ -17,7 +17,8 @@ module.exports = {
               "REDIS_PASSWORD":"password",
               "MARIADB_INFO": "127.0.0.1:3306",
               "MARIADB_PASSWORD": "password",
-              "IMG_FILE_PATH": "E:file_test/"
+              "IMG_FILE_PATH": "E:file_test/",
+              "SERVER_REQ_INFO": "http://localhost:20000/plogging/"
           },
           env_development: { // tb ( 라즈베리파이 서버 )
             "NODE_ENV": "development",
@@ -30,7 +31,9 @@ module.exports = {
             "REDIS_PASSWORD":"password",
             "MARIADB_INFO": "172.17.0.1:3306",
             "MARIADB_PASSWORD": "password",
-            "IMG_FILE_PATH": "/home/ubuntu/exhard/ploggingImgs"
+            "IMG_FILE_PATH": "/home/ubuntu/exhard/ploggingImgs",
+            "SERVER_REQ_INFO": "http://121.131.220.217:20000/plogging/"
+
           },
           env_production: { // 상용 ( 클라우드 서버 )
             "NODE_ENV": "production",
