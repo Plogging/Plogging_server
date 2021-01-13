@@ -30,7 +30,7 @@ const RankingInterface = function(config) {
  * /rank:
  *   get:
  *     summary: 랭킹 가져오기
- *     tags: [Plogging]
+ *     tags: [Ranking]
  *     parameters:
  *       - name: rankType
  *         in: path

@@ -1,12 +1,15 @@
 const mysql = require('mysql'); // callback용
 const mysql2 = require('mysql2'); // async await 용
+const mariadbInfo = process.env.MARIADB_INFO;
+const ip = mariadbInfo.split(":")[0];
+const port = mariadbInfo.split(":")[1];
 
 //커넥션 연결
 let dbConfig = {
-    host: "localhost",
-    port: "3306",
+    host: ip,
+    port: port,
     user: "root",
-    password: "dkwmfrjdns1!",
+    password: `${process.env.MARIADB_PASSWORD}`,
     database: "plogging",
     multipleStatements : true,
     connectionLimit: 10

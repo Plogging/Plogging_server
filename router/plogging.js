@@ -4,7 +4,7 @@ const fs = require('fs');
 const { promisify } = require('util');
 const util = require('../util/common.js');
 const { ObjectId } = require('mongodb');
-const filePath = "E:file_test/";
+const filePath = process.env.IMG_FILE_PATH;
 
 const PloggingInferface = function(config) {
     const router = express.Router();

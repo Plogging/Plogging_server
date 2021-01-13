@@ -1,7 +1,11 @@
 const redis = require('redis');
+const redisInfo = process.env.REDIS_INFO;
+const ip = redisInfo.split(":")[0];
+const port = redisInfo.split(":")[1];
+
 const redisClient = redis.createClient({  
-	host: "127.0.0.1",
-	port: 6379
+	host: ip,
+	port: port
 });
 
 module.exports =  redisClient;

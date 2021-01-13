@@ -55,7 +55,7 @@ app.use(session({
 
 // 전역 설정
 const globalOption = {};
-globalOption.PORT = 20000;
+globalOption.PORT = process.env.PORT;
 globalOption.mysqlPool=poolCallback;
 globalOption.mysqlPool2=poolAsyncAwait;
 globalOption.redisClient=redisClient;
@@ -65,17 +65,18 @@ globalOption.fileInterface = multer;
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec)); // node-swaggwer
 
 /**
-* step 1. userId가 파라미터로 들어왔는지 확인 ( req.body.userId )
+* step 1. userId가 파라미터로 들어왔는지 확인 ( req.query.userId )
 * step 2. 
-*    2-1. 파라미터로 안들어왔다면 redis에서 조회한 
-* 값으로 userId 세팅 ( 산책이력 등록, 산책이력 삭제 )
+*    2-1. 파라미터로 안들어왔다면 redis에서 조회한 값으로 userId 세팅 ( 산책이력 조회, 산책이력 등록, 산책이력 삭제 )
 *    2-2. 파라미터로 들어왔다면 파리미터로 들어온 값으로 userId 세팅 ( 산책이력 조회 ) 
 * 
 */
 app.use("/", function(req, res, next) {
     // 세션 체크 공통 모듈
     console.log("인터셉터 !");
-    req.userId = req.get("userId");
+    
+    //req.userId = req.session.key;
+    req.userId = req.get("sessionKey");
     
 
     next();
@@ -93,7 +94,7 @@ app.use("/", function(req, res, next) {
         if(req.session.userId === "xowns9418") {  // 세션 값이 있는 경우
             //req.body.userId = 세선키로 redis에서 조회한 userId
             next();
-        } else { // 세션 값이 없는 경우
+        } else { // 세션 값이 없는 경우 -> 403 에러
             res.send("로그인 후 서비스를 사용해 주세요.");
         }
     } 

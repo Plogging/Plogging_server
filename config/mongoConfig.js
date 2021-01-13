@@ -3,8 +3,8 @@
  * connection release를 어떻게 해줘야되는지 ? 
  * 참고 - https://hot-time.tistory.com/160
  */
- const { MongoClient } = require('mongodb'); 
-const url = "mongodb://localhost:27017/";
+const { MongoClient } = require('mongodb'); 
+const url = `mongodb://${process.env.MONGODB_INFO}`;
 const client = new MongoClient(url, {
     useUnifiedTopology: true,
     'native_parser':true,
