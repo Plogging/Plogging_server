@@ -36,7 +36,7 @@ const PloggingInferface = function(config) {
       })
 
     // 플로깅 관련 api 구현
-    router.get("/", (req, res) => this.readPlogging(req, res));// read
+    router.get("/:searchType", (req, res) => this.readPlogging(req, res));// read
     router.post("/", upload.single('ploggingImg'), (req, res) => this.writePlogging(req, res)); // create
     router.delete("/", (req, res) => this.deletePlogging(req,res)); // delete
 
@@ -69,6 +69,12 @@ const PloggingInferface = function(config) {
  *         type: string
  *         required: false
  *         description: 조회할 유저 id
+ *       - in: path
+ *         name: searchType
+ *         type: string
+ *         enum: [0, 1, 2]
+ *         required: true
+ *         description: 조회 type ( 최신순 / 점수순 / 거리순)
  *     responses:
  *       200:
  *         description: Success 
@@ -111,9 +117,15 @@ const PloggingInferface = function(config) {
  *                                  plogging_img:
  *                                      type: string
  *                                      example: "http://localhost:20000/plogging/xowns4817@naver.com-naver/plogging_20210106132743.PNG"
- *                                  plogging_score:
+ *                                  plogging_total_score:
  *                                      type: number
  *                                      example: 100000
+ *                                  plogging_activity_score:
+ *                                      type: number
+ *                                      example: 50000
+ *                                  plogging_environment_score:
+ *                                      type: number
+ *                                      example: 50000
  *                          trash_list:
  *                              type: array
  *                              items:
@@ -164,14 +176,17 @@ PloggingInferface.prototype.readPlogging = async function(req, res) {
     console.log("plogging read api !");
 
     let userId = req.userId;
+    let searchType = req.params.searchType; // 최신순(0), 점수순(1), 거리순(2)
     let query = {"meta.user_id": userId};
-    let options = {sort: {"meta.created_time": -1}}; // 최신순
+    let options = [{sort: {"meta.created_time": -1}},
+                   {sort: {"meta.plogging_total_score": -1}},
+                   {sort: {"meta.distance": -1}}];  // 최신순(0), 점수순(1),  거리순(2)
     let mongoConnection = null;
     let returnResult = { rc: 200, rcmsg: "success" };
 
     try {
         mongoConnection = this.MongoPool.db('plogging');
-        let PloggingList = await mongoConnection.collection('record').find(query, options).toArray();
+        let PloggingList = await mongoConnection.collection('record').find(query, options[searchType]).toArray();
        
         returnResult.plogging_list = PloggingList;
         res.status(200).send(returnResult);
@@ -231,6 +246,18 @@ PloggingInferface.prototype.readPlogging = async function(req, res) {
  *                      rcmsg:
  *                          type: string
  *                          example: 산책이력 등록 성공
+ *                      score:
+ *                          type: object
+ *                          properties:
+ *                              totalScore:
+ *                                  type: number
+ *                                  example: 3200
+ *                              activityScore:
+ *                                  type: number
+ *                                  example: 3000
+ *                              environmentScore:
+ *                                  type: number
+ *                                  example: 200            
  *       400:
  *         description: Bad Request(parameter error)
  *         schema:
@@ -298,9 +325,9 @@ PloggingInferface.prototype.writePlogging = async function(req, res) {
         const ploggingActivityScore =  Number(ploggingScoreArr[0]);
         const ploggingEnvironmentScore = Number(ploggingScoreArr[1]);
 
-        ploggingObj.meta.ploggingTotalScore = ploggingTotalScore;
-        ploggingObj.meta.ploggingActivityScore = ploggingActivityScore;
-        ploggingObj.meta.ploggingEnvironmentScore =  ploggingEnvironmentScore;
+        ploggingObj.meta.plogging_total_score = ploggingTotalScore;
+        ploggingObj.meta.plogging_activity_score = ploggingActivityScore;
+        ploggingObj.meta.plogging_environment_score =  ploggingEnvironmentScore;
       
         mongoConnection = this.MongoPool.db('plogging');
         await mongoConnection.collection('record').insertOne(ploggingObj);
