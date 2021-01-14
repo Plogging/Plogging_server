@@ -5,7 +5,6 @@
  */
 const { MongoClient } = require('mongodb'); 
 const jasypt = require('../util/common_jasypt.js');
-
 const mongoPassword = jasypt.decrypt(process.env.MONGODB_PASSWORD);
 const url = `mongodb://root:${mongoPassword}@${process.env.MONGODB_INFO}`;
 
