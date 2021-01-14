@@ -48,7 +48,7 @@ app.use(session({
         client: redisClient,
         ttl: 60*30 // expires ( per in second ) - 30분
     }),
-    secret: "Flogging", // sessionId를 만들때 key로 쓰이는거 같음
+    secret: "plogging", // sessionId를 만들때 key로 쓰이는거 같음
     resave: false,
     saveUninitialized: true,
 }));
@@ -73,31 +73,20 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec)); // node-swa
 */
 app.use("/", function(req, res, next) {
     // 세션 체크 공통 모듈
-    console.log("인터셉터 !");
-    
-    //req.userId = req.session.key;
-    req.userId = req.get("sessionKey");
-    
+    if(req.path === '/user/login') next();
+    else {
+        const sessionKey = req.get('sessionKey');
 
-    next();
-});
-
- 
-// 이 로직은 아래 /user, /plogging를 타기전에 탄다. spring insterceptor 개념이라고 보면됨 ( 여기서 api들어가기전에 먼저 처리해야될 로직 있으면 처리.. ex. 유저 세션체크..)
-
-app.use("/", function(req, res, next) {
-    // 세션 체크 공통 모듈
-    console.log("인터셉터 !");
-    if(req.path === '/user') next();
-    else
-        if(req.session.userId) {  // 세션 값이 있는 경우
+        if(sessionKey === req.session.id) {  // 세션 값이 있는 경우 ( 로그인이 되어있는 경우 )
+            req.userId = req.session.userId;
             next();
-        } else { // 세션 값이 없는 경우
+        } else { // 세션 값이 없는 경우 ( 로그인이 안되어 있는 경우 )
             let returnResult = { rc: 401, rcmsg: "unauthorized" };
             res.status(401).send(returnResult);
         }
-    } 
-);
+    }
+});
+
 
 app.use('/user', new UserInterface(globalOption)); // 유저 관려 api는 user.js로 포워딩
 app.use('/rank', new RankingInterface(globalOption)); // 랭킹 관련 api는 ranking.js로 포워딩
