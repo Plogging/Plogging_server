@@ -1,5 +1,6 @@
 const express = require('express');
 const app = express();
+const { promisify } = require('util');
 
 const UserInterface = require("./router/user.js");
 const PloggingInferface = require('./router/plogging.js');
@@ -54,29 +55,33 @@ app.use(session({
 
 // 전역 설정
 const globalOption = {};
-globalOption.PORT = 20000;
+globalOption.PORT = process.env.PORT;
 globalOption.mysqlPool=poolCallback;
 globalOption.mysqlPool2=poolAsyncAwait;
 globalOption.redisClient=redisClient;
 globalOption.fileInterface = multer;
 
+
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec)); // node-swaggwer
 
+/**
+* step 1. userId가 파라미터로 들어왔는지 확인 ( req.query.userId )
+* step 2. 
+*    2-1. 파라미터로 안들어왔다면 redis에서 조회한 값으로 userId 세팅 ( 산책이력 조회, 산책이력 등록, 산책이력 삭제 )
+*    2-2. 파라미터로 들어왔다면 파리미터로 들어온 값으로 userId 세팅 ( 산책이력 조회 ) 
+* 
+*/
 app.use("/", function(req, res, next) {
     // 세션 체크 공통 모듈
     console.log("인터셉터 !");
-    req.userId = req.get("userId");
     
-    /**
-     * step 1. userId가 파라미터로 들어왔는지 확인 ( req.body.userId )
-     * step 2. 
-     *    2-1. 파라미터로 안들어왔다면 redis에서 조회한 
-     * 값으로 userId 세팅 ( 산책이력 등록, 산책이력 삭제 )
-     *    2-2. 파라미터로 들어왔다면 파리미터로 들어온 값으로 userId 세팅 ( 산책이력 조회 ) 
-     * 
-     */
+    //req.userId = req.session.key;
+    req.userId = req.get("sessionKey");
+    
+
     next();
 });
+
  
 // 이 로직은 아래 /user, /plogging를 타기전에 탄다. spring insterceptor 개념이라고 보면됨 ( 여기서 api들어가기전에 먼저 처리해야될 로직 있으면 처리.. ex. 유저 세션체크..)
 
@@ -93,7 +98,6 @@ app.use("/", function(req, res, next) {
         }
     } 
 );
-
 
 app.use('/user', new UserInterface(globalOption)); // 유저 관려 api는 user.js로 포워딩
 app.use('/rank', new RankingInterface(globalOption)); // 랭킹 관련 api는 ranking.js로 포워딩

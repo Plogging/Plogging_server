@@ -4,7 +4,7 @@ const fs = require('fs');
 const { promisify } = require('util');
 const util = require('../util/common.js');
 const { ObjectId } = require('mongodb');
-const filePath = "E:file_test/";
+const filePath = process.env.IMG_FILE_PATH;
 
 const PloggingInferface = function(config) {
     const router = express.Router();
@@ -16,6 +16,7 @@ const PloggingInferface = function(config) {
     this.redisClient = config.redisClient;
     this.MongoPool = config.MongoPool;
     this.fileInterface = config.fileInterface;
+    this.lock = promisify(require('redis-lock')(this.redisClient));
 
     const upload = this.fileInterface({
         storage: this.fileInterface.diskStorage({
@@ -39,7 +40,7 @@ const PloggingInferface = function(config) {
     router.post("/", upload.single('ploggingImg'), (req, res) => this.writePlogging(req, res)); // create
     router.delete("/", (req, res) => this.deletePlogging(req,res)); // delete
 
-    //this.redisAsyncZrem = promisify(this.redisClient.zrem).bind(this.redisClient);
+   this.redisAsyncZrem = promisify(this.redisClient.zrem).bind(this.redisClient);
 
     return this.router;
 };
@@ -110,6 +111,9 @@ const PloggingInferface = function(config) {
  *                                  plogging_img:
  *                                      type: string
  *                                      example: "http://localhost:20000/plogging/xowns4817@naver.com-naver/plogging_20210106132743.PNG"
+ *                                  plogging_score:
+ *                                      type: number
+ *                                      example: 100000
  *                          trash_list:
  *                              type: array
  *                              items:
@@ -173,11 +177,10 @@ PloggingInferface.prototype.readPlogging = async function(req, res) {
         res.status(200).send(returnResult);
     } catch(e) {
         console.log(e);
+        mongoConnection=null;
         returnResult.rc = 500;
         returnResult = e.message;
         res.status(500).send(returnResult);
-    } finally {
-        mongoConnection=null;
     }
 }
 
@@ -197,9 +200,10 @@ PloggingInferface.prototype.readPlogging = async function(req, res) {
  *      - application/json
  *     parameters:
  *       - in: header
- *         name: userId
+ *         name: sessionKey
  *         type: string
  *         required: true
+ *         description: 유저 SessionKey
  *       - in: formData
  *         name: ploggingImg
  *         type: file
@@ -283,32 +287,48 @@ PloggingInferface.prototype.writePlogging = async function(req, res) {
     ploggingObj.meta.create_time = util.getCurrentDateTime();
 
     //이미지가 없을때는 baseImg insert
-    if(req.file===undefined) ploggingObj.meta.plogging_img = `http://localhost:20000/baseImg.PNG`;
-    else ploggingObj.meta.plogging_img = `http://localhost:20000/plogging/${userId}/flogging_${ploggingObj.meta.create_time}.PNG`;
+    if(req.file===undefined) ploggingObj.meta.plogging_img = `${process.env.SERVER_REQ_INFO}baseImg.PNG`;
+    else ploggingObj.meta.plogging_img = `${process.env.SERVER_REQ_INFO}${userId}/plogging_${ploggingObj.meta.create_time}.PNG`;
 
     let mongoConnection = null;
     try {
+        // 해당 산책의 plogging 점수
+        const ploggingScoreArr = calcPloggingScore(ploggingObj);
+        const ploggingTotalScore = Number(ploggingScoreArr[0] + ploggingScoreArr[1]);
+        const ploggingActivityScore =  Number(ploggingScoreArr[0]);
+        const ploggingEnvironmentScore = Number(ploggingScoreArr[1]);
+
+        ploggingObj.meta.ploggingTotalScore = ploggingTotalScore;
+        ploggingObj.meta.ploggingActivityScore = ploggingActivityScore;
+        ploggingObj.meta.ploggingEnvironmentScore =  ploggingEnvironmentScore;
+      
         mongoConnection = this.MongoPool.db('plogging');
         await mongoConnection.collection('record').insertOne(ploggingObj);
-        
-        // 해당 산책의 plogging 점수
-        let ploggingScore = calcPloggingScore(ploggingObj);
-        returnResult.score = { };
-        returnResult.score.activityScore = ploggingScore[0];
-        returnResult.score.envrionmentScore = ploggingScore[1];
 
-        let ploggingRankScore = ploggingScore[0] + ploggingScore[1];
-        //let queryKey = "Plogging";
-        //await this.redisClient.zadd(queryKey, ploggingRankScore, userId); // 랭킹서버에 insert
+        // 누적합 방식이라 조회후 기존점수에 현재 플로깅점수 더해서 다시저장
+        const queryKey = "plogging";
+        const unlock = await this.lock("plogging-lock"); // redis lock
+        let originScore = await this.redisClient.zscore(queryKey, userId);
+       
+        if(!originScore) originScore = Number(0);
+        const resultScore = Number(originScore)+Number(ploggingTotalScore);
+        await this.redisClient.zadd(queryKey, resultScore, userId); // 랭킹서버에 insert
+
+        unlock();
  
+        returnResult.score = { };
+        returnResult.score.totalScore = ploggingTotalScore;
+        returnResult.score.activityScore = ploggingActivityScore;
+        returnResult.score.environmentScore = ploggingEnvironmentScore;
+
         res.status(200).send(returnResult);
     } catch(e) {
         console.log(e);
+        unlock(); // lock을 걸고 오류가 날수도 있으므로 catch문에는 반드시 unlock을 걸어줘야함.
+        mongoConnection=null;
         returnResult.rc = 500;
         returnResult.rcmsg = e.message;
         res.status(500).send(returnResult);
-    } finally {
-        mongoConnection=null;
     }
 }
 
@@ -427,11 +447,10 @@ PloggingInferface.prototype.deletePlogging = async function(req, res) {
         res.status(200).send(returnResult);
     } catch(e) {
         console.log(e);
+        mongoConnection=null;
         returnResult.rc = 500;
         returnResult.rcmsg = e.message;
         res.status(500).send(returnResult);
-    } finally {
-        mongoConnection=null;
     }
 }
 
