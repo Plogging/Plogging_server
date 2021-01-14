@@ -4,7 +4,7 @@ const util = require('../util/common.js');
 const USER_TABLE = 'user';
 const fs = require('fs');
 const { uptime } = require('process');
-
+const filePath = process.env.IMG_FILE_PATH + "/profile/";
 
 const UserInterface = function(config) {
     const router = express.Router();
@@ -19,8 +19,8 @@ const UserInterface = function(config) {
     const upload = this.fileInterface({
         storage: this.fileInterface.diskStorage({
             destination: function (req, file, cb) {
-            const userId = req.body.userId; // 세션체크 완료하면 값 받아옴
-            const dir = `/Users/ganghee/Documents/capture/${userId}`;
+            const userId = req.userId; // 세션체크 완료하면 값 받아옴
+	    const dir = `${filePath}${userId}`;
     
             if (!fs.existsSync(dir)){
                 fs.mkdirSync(dir);
@@ -28,7 +28,7 @@ const UserInterface = function(config) {
             cb(null, dir);
             },
             filename: function (req, file, cb) {
-            cb(null, `flogging_${util.getCurrentDateTime()}.PNG`);
+            cb(null, `plogging_${util.getCurrentDateTime()}.PNG`);
             }
         }),
         limits: {fileSize: 1*1000*5000}, // file upload 5MB 제한
@@ -194,7 +194,7 @@ UserInterface.prototype.signIn = async function(req, res) {
  *     tags: [User]
  *     parameters:
  *       - in: header
- *         name: userId
+ *         name: sessionKey
  *         type: string
  *         required: true
  *         description: 유저 SessionKey
@@ -268,7 +268,6 @@ UserInterface.prototype.update = async function(req, res) {
     let returnResult = { rc: 200, rcmsg: "success" };
     const user = req.body;
     const currentTime = util.getCurrentDateTime();
-    console.log(req.session.userId)
     
     try {
         if(!user.display_name || !req.file) {
@@ -277,7 +276,8 @@ UserInterface.prototype.update = async function(req, res) {
             res.status(400).send(returnResult);
             return;
         }else{
-            const profileImg = req.file.path
+            //const profileImg = req.file.path
+	    const profileImg = `${process.env.SERVER_REQ_INFO}/profile/${userId}/profileImg.PNG`;
             let updateUserQuery = `UPDATE ${USER_TABLE} SET display_name = ?, profile_img = ?, update_datetime = ? WHERE user_id = ?`
             let updateUserValues = [user.display_name, profileImg, currentTime, req.session.userId];
             
@@ -318,7 +318,7 @@ UserInterface.prototype.update = async function(req, res) {
  *     tags: [User]
  *     parameters:
  *       - in: header
- *         name: userId
+ *         name: sessionKey
  *         type: string
  *         required: true
  *         description: 유저 SessionKey

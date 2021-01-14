@@ -25,7 +25,7 @@ const swaggerDefinition = {
       version: '1.0.0', // Version (required)
       description: 'Plogging API docs', // Description (optional)
     },
-    host: 'localhost:20000', // Host (optional)
+    host: '121.130.220.217:20000', // Host (optional)
     basePath: '/', // Base path (optional)
 }
 const swaggerOptions = {
@@ -40,7 +40,7 @@ const swaggerOptions = {
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 
-app.use(express.static('/mnt/Nexters_Flogging/images')); // 정적파일 제공
+app.use(express.static('/mnt/Plogging_server/images')); // 정적파일 제공
 
 // redis sessionStorage 설정
 app.use(session({
@@ -73,7 +73,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec)); // node-swa
 app.use("/", function(req, res, next) {
 
     // 세션 체크 공통 모듈
-    if(req.path === '/user/login') next();
+    if(req.path === '/user' && req.method === 'POST') next();
     else {
         const sessionKey = req.get('sessionKey');
 

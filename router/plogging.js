@@ -4,7 +4,7 @@ const fs = require('fs');
 const { promisify } = require('util');
 const util = require('../util/common.js');
 const { ObjectId } = require('mongodb');
-const filePath = process.env.IMG_FILE_PATH;
+const filePath = process.env.IMG_FILE_PATH + "/plogging/";
 
 const PloggingInferface = function(config) {
     const router = express.Router();
@@ -36,7 +36,7 @@ const PloggingInferface = function(config) {
       })
 
     // 플로깅 관련 api 구현
-    router.get("/:searchType", (req, res) => this.readPlogging(req, res));// read
+    router.get("/", (req, res) => this.readPlogging(req, res));// read
     router.post("/", upload.single('ploggingImg'), (req, res) => this.writePlogging(req, res)); // create
     router.delete("/", (req, res) => this.deletePlogging(req,res)); // delete
 
@@ -69,9 +69,9 @@ const PloggingInferface = function(config) {
  *         type: string
  *         required: false
  *         description: 조회할 유저 id
- *       - in: path
+ *       - in: query
  *         name: searchType
- *         type: string
+ *         type: number
  *         enum: [0, 1, 2]
  *         required: true
  *         description: 조회 type ( 최신순 / 점수순 / 거리순)
@@ -187,7 +187,7 @@ PloggingInferface.prototype.readPlogging = async function(req, res) {
     console.log("plogging read api !");
 
     let userId = req.userId;
-    let searchType = req.params.searchType; // 최신순(0), 점수순(1), 거리순(2)
+    let searchType = Number(req.query.searchType); // 최신순(0), 점수순(1), 거리순(2)
     let query = {"meta.user_id": userId};
     let options = [{sort: {"meta.created_time": -1}},
                    {sort: {"meta.plogging_total_score": -1}},
@@ -394,7 +394,7 @@ PloggingInferface.prototype.writePlogging = async function(req, res) {
  *     tags: [Plogging]
  *     parameters:
  *       - in: header
- *         name: userId
+ *         name: sessionKey
  *         type: string
  *         required: true
  *         description: 유저 SessionKey
@@ -404,6 +404,12 @@ PloggingInferface.prototype.writePlogging = async function(req, res) {
  *         required: false
  *         example: "5ff53c3ff9789143b86f863b"
  *         description: 산책이력 식별키
+ *       - in: query
+ *         name: ploggingImgPath
+ *         type: string
+ *         required: false
+ *         example: /plogging/xowns4817@naver.com-naver/plogging_20210106132743.PNG
+ *         description: 산책 인증사진 요청경로
  *     responses:
  *       200:
  *         description: Success
@@ -472,6 +478,8 @@ PloggingInferface.prototype.deletePlogging = async function(req, res) {
     let userId = req.userId;
     let mongoObjectId = req.query.objectId;
     let ploggingImgPath = req.query.ploggingImgPath;
+    ploggingImgPath += '/mnt/Plogging_server/images";
+
     let query = null;
 
     let returnResult = { rc: 200, rcmsg: "success" };
