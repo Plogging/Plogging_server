@@ -336,8 +336,8 @@ PloggingInferface.prototype.writePlogging = async function(req, res) {
     ploggingObj.meta.create_time = util.getCurrentDateTime();
 
     //이미지가 없을때는 baseImg insert
-    if(req.file===undefined) ploggingObj.meta.plogging_img = `${process.env.SERVER_REQ_INFO}baseImg.PNG`;
-    else ploggingObj.meta.plogging_img = `${process.env.SERVER_REQ_INFO}${userId}/plogging_${ploggingObj.meta.create_time}.PNG`;
+    if(req.file===undefined) ploggingObj.meta.plogging_img = `${process.env.SERVER_REQ_INFO}/plogging/baseImg.PNG`;
+    else ploggingObj.meta.plogging_img = `${process.env.SERVER_REQ_INFO}/plogging/${userId}/plogging_${ploggingObj.meta.create_time}.PNG`;
 
     let mongoConnection = null;
     try {
