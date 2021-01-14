@@ -16,7 +16,7 @@ module.exports = {
               "REDIS_INFO": "127.0.0.1:6379",
               "REDIS_PASSWORD":"password",
               "MARIADB_INFO": "127.0.0.1:3306",
-              "MARIADB_PASSWORD": "password",
+              "MARIADB_PASSWORD": "kim414gh8020",
               "IMG_FILE_PATH": "E:file_test/",
               "SERVER_REQ_INFO": "http://localhost:20000/plogging/"
           },

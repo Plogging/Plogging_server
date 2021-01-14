@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const { promisify } = require('util');
 
-const UserInferface = require("./router/user.js");
+const UserInterface = require("./router/user.js");
 const PloggingInferface = require('./router/plogging.js');
 const RankingInterface = require('./router/ranking.js');
 const bodyParser = require('body-parser');
@@ -15,7 +15,7 @@ const session = require('express-session');
 const redisStore = require('connect-redis')(session);
 const multer  = require('multer')
 
-// node-swageer
+// node-swagger
 const swaggerUi = require('swagger-ui-express');
 const swaggerJSDoc = require('swagger-jsdoc');
 
@@ -32,7 +32,7 @@ const swaggerOptions = {
     // Import swaggerDefinitions
     swaggerDefinition: swaggerDefinition,
     // Path to the API docs
-    apis: ['./router/plogging.js', './router/ranking.js', './router/user.js']
+    apis: ['./router/user.js', './router/plogging.js', './router/ranking.js']
   }
 
   const swaggerSpec = swaggerJSDoc(swaggerOptions);
@@ -84,25 +84,22 @@ app.use("/", function(req, res, next) {
 
  
 // 이 로직은 아래 /user, /plogging를 타기전에 탄다. spring insterceptor 개념이라고 보면됨 ( 여기서 api들어가기전에 먼저 처리해야될 로직 있으면 처리.. ex. 유저 세션체크..)
-/*
+
 app.use("/", function(req, res, next) {
     // 세션 체크 공통 모듈
     console.log("인터셉터 !");
-
-    if(req.path === '/user/login' || req.path === '/user/logout') next();
-    else 
-        if(req.session.userId === "xowns9418") {  // 세션 값이 있는 경우
-            //req.body.userId = 세선키로 redis에서 조회한 userId
+    if(req.path === '/user') next();
+    else
+        if(req.session.userId) {  // 세션 값이 있는 경우
             next();
-        } else { // 세션 값이 없는 경우 -> 403 에러
-            res.send("로그인 후 서비스를 사용해 주세요.");
+        } else { // 세션 값이 없는 경우
+            let returnResult = { rc: 401, rcmsg: "unauthorized" };
+            res.status(401).send(returnResult);
         }
     } 
- );
- */
- 
+);
 
-app.use('/user', new UserInferface(globalOption)); // 유저 관려 api는 user.js로 포워딩
+app.use('/user', new UserInterface(globalOption)); // 유저 관려 api는 user.js로 포워딩
 app.use('/rank', new RankingInterface(globalOption)); // 랭킹 관련 api는 ranking.js로 포워딩
 
 async function main( ) {
