@@ -14,7 +14,7 @@ const session = require('express-session');
 const redisStore = require('connect-redis')(session);
 const multer  = require('multer')
 
-// node-swageer
+// node-swagger
 const swaggerUi = require('swagger-ui-express');
 const swaggerJSDoc = require('swagger-jsdoc');
 
@@ -31,7 +31,7 @@ const swaggerOptions = {
     // Import swaggerDefinitions
     swaggerDefinition: swaggerDefinition,
     // Path to the API docs
-    apis: ['./router/plogging.js', './router/ranking.js', './router/user.js']
+    apis: ['./router/user.js', './router/plogging.js', './router/ranking.js']
   }
 
   const swaggerSpec = swaggerJSDoc(swaggerOptions);
@@ -57,7 +57,6 @@ const globalOption = {};
 globalOption.PORT = 20000;
 globalOption.mysqlPool=poolCallback;
 globalOption.mysqlPool2=poolAsyncAwait;
-globalOption.redisCilent=redisCilent;
 globalOption.redisClient=redisClient;
 globalOption.fileInterface = multer;
 
@@ -84,9 +83,9 @@ app.use("/", function(req, res, next) {
 app.use("/", function(req, res, next) {
     // 세션 체크 공통 모듈
     console.log("인터셉터 !");
-    if(req.path === '/user/signIn' || req.path === '/user/signOut') next();
+    if(req.path === '/user') next();
     else
-        if(req.session.id) {  // 세션 값이 있는 경우
+        if(req.session.userId) {  // 세션 값이 있는 경우
             next();
         } else { // 세션 값이 없는 경우
             let returnResult = { rc: 401, rcmsg: "unauthorized" };
