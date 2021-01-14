@@ -149,6 +149,17 @@ const PloggingInferface = function(config) {
  *                 rcmsg:
  *                     type: string
  *                     example: 파라미터 값을 확인해주세요.
+ *       401:
+ *         description: Unauthorized
+ *         schema:
+ *              type: object
+ *              properties:
+ *                  rc:
+ *                      type: number
+ *                      example: 401
+ *                  rcmsg:
+ *                      type: string
+ *                      example: 권한이 없습니다.(로그인을 해주세요.)
  *       404:
  *         description: Bad Request(url error)
  *         schema:
@@ -269,6 +280,17 @@ PloggingInferface.prototype.readPlogging = async function(req, res) {
  *                 rcmsg:
  *                     type: string
  *                     example: 파라미터 값을 확인해주세요.
+ *       401:
+ *          description: Unauthorized
+ *          schema:
+ *              type: object
+ *              properties:
+ *                  rc:
+ *                      type: number
+ *                      example: 401
+ *                  rcmsg:
+ *                      type: string
+ *                      example: 권한이 없습니다.(로그인을 해주세요.)
  *       404:
  *         description: Bad Request(url error)
  *         schema:
@@ -368,7 +390,7 @@ PloggingInferface.prototype.writePlogging = async function(req, res) {
  * @swagger
  * /plogging:
  *   delete:
- *     summary: 산책정보 삭제
+ *     summary: 산책 이력 삭제하기
  *     tags: [Plogging]
  *     parameters:
  *       - in: header
@@ -409,6 +431,17 @@ PloggingInferface.prototype.writePlogging = async function(req, res) {
  *                 rcmsg:
  *                     type: string
  *                     example: 파라미터 값을 확인해주세요.
+ *       401:
+ *          description: Unauthorized
+ *          schema:
+ *              type: object
+ *              properties:
+ *                  rc:
+ *                      type: number
+ *                      example: 401
+ *                  rcmsg:
+ *                      type: string
+ *                      example: 권한이 없습니다.(로그인을 해주세요)
  *       404:
  *         description: Bad Request(url error)
  *         schema:
