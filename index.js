@@ -61,7 +61,6 @@ globalOption.mysqlPool2=poolAsyncAwait;
 globalOption.redisClient=redisClient;
 globalOption.fileInterface = multer;
 
-
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec)); // node-swaggwer
 
 /**
@@ -72,6 +71,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec)); // node-swa
 * 
 */
 app.use("/", function(req, res, next) {
+
     // 세션 체크 공통 모듈
     if(req.path === '/user/login') next();
     else {

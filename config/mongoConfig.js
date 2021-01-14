@@ -5,6 +5,9 @@
  */
 const { MongoClient } = require('mongodb'); 
 const url = `mongodb://${process.env.MONGODB_INFO}`;
+const jasypt = require('../util/common_jasypt.js');
+const mongoPassword = jasypt.decrypt(process.env.MONGODB_PASSWORD);
+
 const client = new MongoClient(url, {
     useUnifiedTopology: true,
     'native_parser':true,
