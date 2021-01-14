@@ -1,4 +1,3 @@
-//const redis = require('redis');
 const redis = require('ioredis');
 const redisInfo = process.env.REDIS_INFO;
 const ip = redisInfo.split(":")[0];
@@ -9,7 +8,6 @@ const redisPassword = jasypt.decrypt(process.env.REDIS_PASSWORD);
 const redisClient = redis.createClient({  
 	host: ip,
 	port: port,
-	db: 0,
 	password: redisPassword
 });
 

@@ -76,7 +76,7 @@ const UserInterface = function(config) {
  *                  type: string
  *                  example: 0q8DptSJiinhbspcQwK6wxUtvNkmNano
  *              userImg:
- *                  type: string
+ *                  type: string21f614df928f
  *                  example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
  *              userName:
  *                  type: string
@@ -267,6 +267,7 @@ UserInterface.prototype.update = async function(req, res) {
     const pool = this.pool;
     let returnResult = { rc: 200, rcmsg: "success" };
     const user = req.body;
+    const userId = req.userId;
     const currentTime = util.getCurrentDateTime();
     
     try {
@@ -276,10 +277,12 @@ UserInterface.prototype.update = async function(req, res) {
             res.status(400).send(returnResult);
             return;
         }else{
-            //const profileImg = req.file.path
-	    const profileImg = `${process.env.SERVER_REQ_INFO}/profile/${userId}/profileImg.PNG`;
+            //const profileImg = process.env.SERVER_REQ_INFO + '/' + req.file.path.split("/mnt/Plogging_server/images/")[1];
+	    //const profileImg = `${process.env.SERVER_REQ_INFO}/profile/${userId}/profileImg.PNG`;
+	    const profileImg = req.file.path;
+	    console.log(profileImg);
             let updateUserQuery = `UPDATE ${USER_TABLE} SET display_name = ?, profile_img = ?, update_datetime = ? WHERE user_id = ?`
-            let updateUserValues = [user.display_name, profileImg, currentTime, req.session.userId];
+            let updateUserValues = [user.display_name, profileImg, currentTime, userId];
             
             pool.execute(updateUserQuery, updateUserValues, function(err, result) {
                 console.log(result)
