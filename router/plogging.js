@@ -66,7 +66,7 @@ const PloggingInferface = function(config) {
  *         required: true
  *         description: 유저 SessionKey
  *       - in: query
- *         name: userId
+ *         name: targetUserId
  *         type: string
  *         required: false
  *         description: 조회할 유저 id
@@ -187,7 +187,16 @@ const PloggingInferface = function(config) {
 PloggingInferface.prototype.readPlogging = async function(req, res) {
     console.log("plogging read api !");
 
-    let userId = req.userId;
+    let userId = req.userId; // api를 call한 userId
+    let targetUserId = req.query.userId; // 산책이력을 조회를 할 userId
+
+    /**
+     * 1. 내 산책이력 조회 ( tartgetUserId 없으면 내 산책이력 조회 )
+     * 2. 상대방 산책이력 조회 ( targetUserId가 있으면 해당 유저의 산책이력 조회)
+     */
+
+    if(targetUserId) userId = targetUserId;
+
     let searchType = Number(req.query.searchType); // 최신순(0), 점수순(1), 거리순(2)
     let query = {"meta.user_id": userId};
     let options = [{sort: {"meta.created_time": -1}},
