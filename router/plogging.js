@@ -4,7 +4,8 @@ const fs = require('fs');
 const { promisify } = require('util');
 const util = require('../util/common.js');
 const { ObjectId } = require('mongodb');
-const filePath = process.env.IMG_FILE_PATH + "/plogging/";
+//const filePath = process.env.IMG_FILE_PATH + "/plogging/";
+const filePath = "/mnt/Plogging_server/images/plogging/";
 
 const PloggingInferface = function(config) {
     const router = express.Router();
@@ -65,7 +66,7 @@ const PloggingInferface = function(config) {
  *         required: true
  *         description: 유저 SessionKey
  *       - in: query
- *         name: userId
+ *         name: targetUserId
  *         type: string
  *         required: false
  *         description: 조회할 유저 id
@@ -186,7 +187,16 @@ const PloggingInferface = function(config) {
 PloggingInferface.prototype.readPlogging = async function(req, res) {
     console.log("plogging read api !");
 
-    let userId = req.userId;
+    let userId = req.userId; // api를 call한 userId
+    let targetUserId = req.query.userId; // 산책이력을 조회를 할 userId
+
+    /**
+     * 1. 내 산책이력 조회 ( tartgetUserId 없으면 내 산책이력 조회 )
+     * 2. 상대방 산책이력 조회 ( targetUserId가 있으면 해당 유저의 산책이력 조회)
+     */
+
+    if(targetUserId) userId = targetUserId;
+
     let searchType = Number(req.query.searchType); // 최신순(0), 점수순(1), 거리순(2)
     let query = {"meta.user_id": userId};
     let options = [{sort: {"meta.created_time": -1}},
@@ -337,7 +347,8 @@ PloggingInferface.prototype.writePlogging = async function(req, res) {
 
     //이미지가 없을때는 baseImg insert
     if(req.file===undefined) ploggingObj.meta.plogging_img = `${process.env.SERVER_REQ_INFO}/plogging/baseImg.PNG`;
-    else ploggingObj.meta.plogging_img = `${process.env.SERVER_REQ_INFO}/plogging/${userId}/plogging_${ploggingObj.meta.create_time}.PNG`;
+    else ploggingObj.meta.plogging_img = process.env.SERVER_REQ_INFO + '/' + req.file.path.split("/mnt/Plogging_server/images/")[1];
+    //else ploggingObj.meta.plogging_img = req.file.path;
 
     let mongoConnection = null;
     try {
@@ -355,13 +366,23 @@ PloggingInferface.prototype.writePlogging = async function(req, res) {
         await mongoConnection.collection('record').insertOne(ploggingObj);
 
         // 누적합 방식이라 조회후 기존점수에 현재 플로깅점수 더해서 다시저장
-        const queryKey = "plogging";
+        const weeklyRankingKey = "weekly"
+        const monthlyRankingKey = "monthly"
         const unlock = await this.lock("plogging-lock"); // redis lock
-        let originScore = await this.redisClient.zscore(queryKey, userId);
+
+        // 주간 합계
+        let originWeekScore = await this.redisClient.zscore(weeklyRankingKey, userId);
        
-        if(!originScore) originScore = Number(0);
-        const resultScore = Number(originScore)+Number(ploggingTotalScore);
-        await this.redisClient.zadd(queryKey, resultScore, userId); // 랭킹서버에 insert
+        if(!originWeekScore) originWeekScore = Number(0);
+        const resultWeekScore = Number(originWeekScore)+Number(ploggingTotalScore);
+        await this.redisClient.zadd(weeklyRankingKey, resultWeekScore, userId); // 랭킹서버에 insert
+
+        // 월간 합계
+        let originMonthScore = await this.redisClient.zscore(monthlyRankingKey, userId);
+       
+        if(!originMonthScore) originMonthScore = Number(0);
+        const resultMonthScore = Number(originMonthScore)+Number(ploggingTotalScore);
+        await this.redisClient.zadd(monthlyRankingKey, resultMonthScore, userId); // 랭킹서버에 insert
 
         unlock();
  
@@ -477,9 +498,8 @@ PloggingInferface.prototype.deletePlogging = async function(req, res) {
 
     let userId = req.userId;
     let mongoObjectId = req.query.objectId;
-    let ploggingImgPath = req.query.ploggingImgName; // plogging_20210106132743.PNG
-
-    ploggingImgPath = `${filePath}${userId}/${ploggingImgName}`; 
+    let ploggingImgName = req.query.ploggingImgName; // plogging_20210106132743.PNG
+    let ploggingImgPath = `${filePath}${userId}/${ploggingImgName}`; 
 
     let query = null;
 

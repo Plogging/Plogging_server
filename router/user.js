@@ -4,7 +4,8 @@ const util = require('../util/common.js');
 const USER_TABLE = 'user';
 const fs = require('fs');
 const { uptime } = require('process');
-const filePath = process.env.IMG_FILE_PATH + "/profile/";
+//const filePath = process.env.IMG_FILE_PATH + "/profile/";
+const filePath = "/mnt/Plogging_server/images/profile/";
 
 const UserInterface = function(config) {
     const router = express.Router();
@@ -28,7 +29,7 @@ const UserInterface = function(config) {
             cb(null, dir);
             },
             filename: function (req, file, cb) {
-            cb(null, `plogging_${util.getCurrentDateTime()}.PNG`);
+            cb(null, `profileImg.PNG`);
             }
         }),
         limits: {fileSize: 1*1000*5000}, // file upload 5MB 제한
@@ -76,7 +77,7 @@ const UserInterface = function(config) {
  *                  type: string
  *                  example: 0q8DptSJiinhbspcQwK6wxUtvNkmNano
  *              userImg:
- *                  type: string
+ *                  type: string21f614df928f
  *                  example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
  *              userName:
  *                  type: string
@@ -277,8 +278,9 @@ UserInterface.prototype.update = async function(req, res) {
             res.status(400).send(returnResult);
             return;
         }else{
-            //const profileImg = req.file.path
-	    const profileImg = `${process.env.SERVER_REQ_INFO}/profile/${userId}/profileImg.PNG`;
+            const profileImg = process.env.SERVER_REQ_INFO + '/' + req.file.path.split("/mnt/Plogging_server/images/")[1];
+	    //const profileImg = `${process.env.SERVER_REQ_INFO}/profile/${userId}/profileImg.PNG`;
+	    //const profileImg = req.file.path;
             let updateUserQuery = `UPDATE ${USER_TABLE} SET display_name = ?, profile_img = ?, update_datetime = ? WHERE user_id = ?`
             let updateUserValues = [user.display_name, profileImg, currentTime, userId];
             
