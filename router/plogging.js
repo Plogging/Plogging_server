@@ -188,7 +188,7 @@ PloggingInferface.prototype.readPlogging = async function(req, res) {
     console.log("plogging read api !");
 
     let userId = req.userId; // api를 call한 userId
-    let targetUserId = req.query.userId; // 산책이력을 조회를 할 userId
+    let targetUserId = req.query.targetUserId; // 산책이력을 조회를 할 userId
 
     /**
      * 1. 내 산책이력 조회 ( tartgetUserId 없으면 내 산책이력 조회 )
