@@ -357,13 +357,23 @@ PloggingInferface.prototype.writePlogging = async function(req, res) {
         await mongoConnection.collection('record').insertOne(ploggingObj);
 
         // 누적합 방식이라 조회후 기존점수에 현재 플로깅점수 더해서 다시저장
-        const queryKey = "plogging";
+        const weeklyRankingKey = "weekly"
+        const monthlyRankingKey = "monthly"
         const unlock = await this.lock("plogging-lock"); // redis lock
-        let originScore = await this.redisClient.zscore(queryKey, userId);
+
+        // 주간 합계
+        let originWeekScore = await this.redisClient.zscore(weeklyRankingKey, userId);
        
-        if(!originScore) originScore = Number(0);
-        const resultScore = Number(originScore)+Number(ploggingTotalScore);
-        await this.redisClient.zadd(queryKey, resultScore, userId); // 랭킹서버에 insert
+        if(!originWeekScore) originWeekScore = Number(0);
+        const resultWeekScore = Number(originWeekScore)+Number(ploggingTotalScore);
+        await this.redisClient.zadd(weeklyRankingKey, resultWeekScore, userId); // 랭킹서버에 insert
+
+        // 월간 합계
+        let originMonthScore = await this.redisClient.zscore(monthlyRankingKey, userId);
+       
+        if(!originMonthScore) originMonthScore = Number(0);
+        const resultMonthScore = Number(originMonthScore)+Number(ploggingTotalScore);
+        await this.redisClient.zadd(monthlyRankingKey, resultMonthScore, userId); // 랭킹서버에 insert
 
         unlock();
  
