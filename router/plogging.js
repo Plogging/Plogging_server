@@ -4,7 +4,8 @@ const fs = require('fs');
 const { promisify } = require('util');
 const util = require('../util/common.js');
 const { ObjectId } = require('mongodb');
-const filePath = process.env.IMG_FILE_PATH + "/plogging/";
+//const filePath = process.env.IMG_FILE_PATH + "/plogging/";
+const filePath = "/mnt/Plogging_server/images/plogging/";
 
 const PloggingInferface = function(config) {
     const router = express.Router();
@@ -317,7 +318,6 @@ PloggingInferface.prototype.readPlogging = async function(req, res) {
  */
 PloggingInferface.prototype.writePlogging = async function(req, res) {
     console.log("plogging write api !");
-    console.log(req.file.path);
 
     let returnResult = { rc: 200, rcmsg: "success" };
 
@@ -338,9 +338,8 @@ PloggingInferface.prototype.writePlogging = async function(req, res) {
 
     //이미지가 없을때는 baseImg insert
     if(req.file===undefined) ploggingObj.meta.plogging_img = `${process.env.SERVER_REQ_INFO}/plogging/baseImg.PNG`;
-    //else ploggingObj.meta.plogging_img = `${process.env.SERVER_REQ_INFO}/plogging/${userId}/plogging_${ploggingObj.meta.create_time}.PNG`;
-    //else ploggingObj.meta.plogging_img = process.env.SERVER_REQ_INFO + '/' + req.file.path.split("/mnt/Plogging_server/images/")[1];
-    else ploggingObj.meta.plogging_img = req.file.path;
+    else ploggingObj.meta.plogging_img = process.env.SERVER_REQ_INFO + '/' + req.file.path.split("/mnt/Plogging_server/images/")[1];
+    //else ploggingObj.meta.plogging_img = req.file.path;
 
     let mongoConnection = null;
     try {
