@@ -4,7 +4,9 @@ module.exports = {
           name: "plogging server",
           script: "./index.js",
           watch: false,
-	  instances: 2,
+          out_file: "/dev/null",
+          error_file: "/dev/null",
+	        instances: 2,
           exec_mode: "cluster",
           env: { // 로컬
               "NODE_ENV": "local",
