@@ -33,7 +33,7 @@ module.exports = {
             "REDIS_PASSWORD":"JjaoSaoP+IRVDBkXdDR4XMgTmkMut0VM",
             "MARIADB_INFO": "172.17.0.1:3306",
             "MARIADB_PASSWORD": "JjaoSaoP+IRVDBkXdDR4XMgTmkMut0VM",
-            "IMG_FILE_PATH": "/mnt/Plogging_server/images/",
+            "IMG_FILE_PATH": "/mnt/Plogging_server/images",
             "SERVER_REQ_INFO": "http://121.130.220.217:20000"
 
           },

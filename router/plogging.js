@@ -405,11 +405,11 @@ PloggingInferface.prototype.writePlogging = async function(req, res) {
  *         example: "5ff53c3ff9789143b86f863b"
  *         description: 산책이력 식별키
  *       - in: query
- *         name: ploggingImgPath
+ *         name: ploggingImgName
  *         type: string
  *         required: false
- *         example: /plogging/xowns4817@naver.com-naver/plogging_20210106132743.PNG
- *         description: 산책 인증사진 요청경로
+ *         example: plogging_20210106132743.PNG
+ *         description: 산책 인증사진 파일이름
  *     responses:
  *       200:
  *         description: Success
@@ -477,8 +477,9 @@ PloggingInferface.prototype.deletePlogging = async function(req, res) {
 
     let userId = req.userId;
     let mongoObjectId = req.query.objectId;
-    let ploggingImgPath = req.query.ploggingImgPath;
-    ploggingImgPath += '/mnt/Plogging_server/images";
+    let ploggingImgPath = req.query.ploggingImgName; // plogging_20210106132743.PNG
+
+    ploggingImgPath = `${filePath}${userId}/${ploggingImgName}`; 
 
     let query = null;
 

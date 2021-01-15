@@ -267,6 +267,7 @@ UserInterface.prototype.update = async function(req, res) {
     const pool = this.pool;
     let returnResult = { rc: 200, rcmsg: "success" };
     const user = req.body;
+    const userId = req.userId;
     const currentTime = util.getCurrentDateTime();
     
     try {
@@ -279,7 +280,7 @@ UserInterface.prototype.update = async function(req, res) {
             //const profileImg = req.file.path
 	    const profileImg = `${process.env.SERVER_REQ_INFO}/profile/${userId}/profileImg.PNG`;
             let updateUserQuery = `UPDATE ${USER_TABLE} SET display_name = ?, profile_img = ?, update_datetime = ? WHERE user_id = ?`
-            let updateUserValues = [user.display_name, profileImg, currentTime, req.session.userId];
+            let updateUserValues = [user.display_name, profileImg, currentTime, userId];
             
             pool.execute(updateUserQuery, updateUserValues, function(err, result) {
                 console.log(result)
