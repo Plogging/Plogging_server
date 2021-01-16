@@ -32,6 +32,11 @@ const RankingInterface = function(config) {
  *     summary: 랭킹 가져오기
  *     tags: [Ranking]
  *     parameters:
+ *       - in: header
+ *         name: sessionKey
+ *         type: string
+ *         required: true
+ *         description: 유저 SessionKey
  *       - name: rankType
  *         in: path
  *         type: string
