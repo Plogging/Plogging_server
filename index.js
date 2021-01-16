@@ -14,28 +14,11 @@ const MongoClient = require("./config/mongoConfig.js");
 const session = require('express-session');
 const redisStore = require('connect-redis')(session);
 const multer  = require('multer')
+const YAML = require('yamljs')
 
 // node-swagger
 const swaggerUi = require('swagger-ui-express');
-const swaggerJSDoc = require('swagger-jsdoc');
-
-const swaggerDefinition = {
-    info: { // API informations (required)
-      title: 'Plogging ', // Title (required)
-      version: '1.0.0', // Version (required)
-      description: 'Plogging API docs', // Description (optional)
-    },
-    host: '121.130.220.217:20000', // Host (optional)
-    basePath: '/', // Base path (optional)
-}
-const swaggerOptions = {
-    // Import swaggerDefinitions
-    swaggerDefinition: swaggerDefinition,
-    // Path to the API docs
-    apis: ['./router/user.js', './router/plogging.js', './router/ranking.js']
-  }
-
-  const swaggerSpec = swaggerJSDoc(swaggerOptions);
+const swaggerDocument = YAML.load('./swagger.yaml')
 
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
@@ -61,7 +44,7 @@ globalOption.mysqlPool2=poolAsyncAwait;
 globalOption.redisClient=redisClient;
 globalOption.fileInterface = multer;
 
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec)); // node-swaggwer
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument)); // node-swaggwer
 
 /**
 * step 1. userId가 파라미터로 들어왔는지 확인 ( req.query.userId )
