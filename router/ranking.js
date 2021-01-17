@@ -27,23 +27,21 @@ const RankingInterface = function(config) {
 };
 
 RankingInterface.prototype.getRank = async function(req, res) {
-    let rankType = req.params.rankType
-    let offset = req.query.offset
-    let limit = req.query.limit
-    const [zcountResult, zrevrangeResult] = await this.redisClient.pipeline()
-    .zcount(rankType, "-inf", "+inf")
-    .zrevrange(rankType, offset, offset+limit-1, "withscores")
-    .exec()
-
-    if (!zcountResult || !zrevrangeResult || zcountResult.length < 2 
-        || zrevrangeResult.length < 2) {
-        returnResult = {rc: 500, rcmsg: "internal server error"}
-        res.status(500).json(returnResult)
-    } else {
+    try {
+        let rankType = req.params.rankType
+        let offset = req.query.offset
+        let limit = req.query.limit
+        const [zcountResult, zrevrangeResult] = await this.redisClient.pipeline()
+        .zcount(rankType, "-inf", "+inf")
+        .zrevrange(rankType, offset, offset+limit-1, "withscores")
+        .exec()
         const count = zcountResult[1]
         const rankData = await this.buildRankData(zrevrangeResult[1])
         const returnResult = {rc: 200, rcmsg: "success", count: count, rankData: rankData}
         res.status(200).json(returnResult)
+    } catch(e) {
+        const returnResult = { rc: 500, rcmsg: e.message }
+        res.status(500).json(returnResult)
     }
 }
 
