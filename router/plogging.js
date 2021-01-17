@@ -82,12 +82,7 @@ PloggingInferface.prototype.readPlogging = async function(req, res) {
 
     try {
         mongoConnection = this.MongoPool.db('plogging');
-        let PloggingList = await mongoConnection.collection('record')
-                                                .find(query)
-                                                .sort(options[searchType])
-                                                .skip((pageNumber-1)*ploggingCntPerPage)
-                                                .limit(ploggingCntPerPage)
-                                                .toArray();
+        let PloggingList = await mongoConnection.collection('record').find(query,options[searchType]).skip((pageNumber-1)*ploggingCntPerPage).limit(ploggingCntPerPage).toArray();
         returnResult.plogging_list = PloggingList;
         res.status(200).send(returnResult);
     } catch(e) {
