@@ -4,6 +4,7 @@ const fs = require('fs');
 const { promisify } = require('util');
 const util = require('../util/common.js');
 const { ObjectId } = require('mongodb');
+const swaggerValidation = require('../util/validator')
 //const filePath = process.env.IMG_FILE_PATH + "/plogging/";
 const filePath = "/mnt/Plogging_server/images/plogging/";
 
@@ -37,9 +38,9 @@ const PloggingInferface = function(config) {
       })
 
     // 플로깅 관련 api 구현
-    router.get("/", (req, res) => this.readPlogging(req, res));// read
-    router.post("/", upload.single('ploggingImg'), (req, res) => this.writePlogging(req, res)); // create
-    router.delete("/", (req, res) => this.deletePlogging(req,res)); // delete
+    router.get("/", swaggerValidation.validate, (req, res) => this.readPlogging(req, res));// read
+    router.post("/", upload.single('ploggingImg'), swaggerValidation.validate, (req, res) => this.writePlogging(req, res)); // create
+    router.delete("/", swaggerValidation.validate, (req, res) => this.deletePlogging(req,res)); // delete
 
    this.redisAsyncZrem = promisify(this.redisClient.zrem).bind(this.redisClient);
 
@@ -101,13 +102,6 @@ PloggingInferface.prototype.writePlogging = async function(req, res) {
     let userId = req.userId;
     let ploggingObj = req.body.ploggingData;
     
-    if(ploggingObj === undefined) {
-        returnResult.rc = 400;
-        returnResult.rcmsg = "요청 파라미터를 확인해주세요.";
-        res.status(400).send(returnResult);
-        return;
-    }
-
     ploggingObj = JSON.parse(ploggingObj);
 
     ploggingObj.meta.user_id = userId;

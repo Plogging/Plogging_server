@@ -1,4 +1,4 @@
-openapi: 3.0.0
+swagger: "2.0"
 info:
   title: Plogging
   version: 1.0.0
@@ -16,7 +16,8 @@ paths:
           schema:
               type: object
               required:
-                - userName
+                - type
+                - email
               properties:
                 type:
                   type: string
@@ -124,7 +125,7 @@ paths:
                       example: 400
                   rcmsg:
                       type: string
-                      example: no parameter
+                      example: body should have required property 'email'
         500:
           description: user update error
           schema:
@@ -169,17 +170,6 @@ paths:
               rcmsg:
                   type: string
                   example: logout success
-        400:
-          description: Bad Request(parameter error)
-          schema:
-              type: object
-              properties:
-                  rc:
-                      type: number
-                      example: 400
-                  rcmsg:
-                      type: string
-                      example: no header key
         500:
           description: server error
           schema:
@@ -284,7 +274,7 @@ paths:
                       example: 400
                   rcmsg:
                       type: string
-                      example: 파라미터 값을 확인해주세요.
+                      example: body should have required property 'ploggingData'
         401:
           description: Unauthorized
           schema:
@@ -379,7 +369,7 @@ paths:
                       example: 400
                   rcmsg:
                       type: string
-                      example: 파라미터 값을 확인해주세요.
+                      example: query should have required property 'searchType'
         401:
           description: Unauthorized
           schema:
@@ -449,17 +439,6 @@ paths:
                   rcmsg:
                       type: string
                       example: 산책이력 삭제 성공
-        400:
-          description: Bad Request(parameter error)
-          schema:
-              type: object
-              properties:
-                  rc:
-                      type: number
-                      example: 400
-                  rcmsg:
-                      type: string
-                      example: 파라미터 값을 확인해주세요.
         401:
           description: Unauthorized
           schema:
@@ -493,7 +472,7 @@ paths:
                   rcmsg:
                       type: string
                       example: 서버 오류.
-  /rank:
+  /rank/{rankType}:
     get:
       summary: 랭킹 가져오기
       tags: [Ranking]
@@ -564,3 +543,14 @@ paths:
                     score: 13000
                   - userId: duri
                     score: 12000
+        400:
+          description: Bad Request(parameter error)
+          schema:
+              type: object
+              properties:
+                  rc:
+                      type: number
+                      example: 400
+                  rcmsg:
+                      type: string
+                      example: query should have required property 'offset'

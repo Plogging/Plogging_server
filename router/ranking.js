@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { client } = require('../config/redisConfig');
+const swaggerValidation = require('../util/validator')
 
 const weeklyRankingKey = "weekly"
 const monthlyRankingKey = "monthly"
@@ -19,7 +20,7 @@ const RankingInterface = function(config) {
     this.redisClient = config.redisClient;
 
     // 랭킹 관련 api 구현
-    router.get("/:rankType", (req, res) => this.getRank(req, res));
+    router.get("/:rankType", swaggerValidation.validate, (req, res) => this.getRank(req, res));
 
     return this.router;
 

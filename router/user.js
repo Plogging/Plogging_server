@@ -4,6 +4,7 @@ const util = require('../util/common.js');
 const USER_TABLE = 'user';
 const fs = require('fs');
 const { uptime } = require('process');
+const swaggerValidation = require('../util/validator')
 //const filePath = process.env.IMG_FILE_PATH + "/profile/";
 const filePath = "/mnt/Plogging_server/images/profile/";
 
@@ -36,9 +37,9 @@ const UserInterface = function(config) {
         })
 
     // 유저 관련 api 구현
-    router.post('', (req, res) => this.signIn(req, res));
-    router.get('/sign-out', (req, res) => this.signOut(req, res));
-    router.put('', upload.single('profile_img'), (req, res) => this.update(req, res));
+    router.post('', swaggerValidation.validate, (req, res) => this.signIn(req, res));
+    router.get('/sign-out', swaggerValidation.validate, (req, res) => this.signOut(req, res));
+    router.put('', upload.single('profile_img'), swaggerValidation.validate, (req, res) => this.update(req, res));
     return this.router;
 };
 
@@ -47,13 +48,6 @@ UserInterface.prototype.signIn = async function(req, res) {
     let returnResult = { rc: 500, rcmsg: "server error" };
     const user = req.body;
 
-    // case no parameter
-    if(!user.type || !user.email) {
-        returnResult.rc = 400;
-        returnResult.rcmsg = "no parameter";
-        res.status(400).send(returnResult);
-        return;
-    }
     // search userId in DB
     const userId = user.email + ':' + user.type
     const findUserQuery = `SELECT * FROM ${USER_TABLE} WHERE user_id = ?`;
@@ -119,39 +113,31 @@ UserInterface.prototype.update = async function(req, res) {
     const currentTime = util.getCurrentDateTime();
     
     try {
-        if(!user.display_name || !req.file) {
-            returnResult.rc = 400;
-            returnResult.rcmsg = "no parameter";
-            res.status(400).send(returnResult);
-            return;
-        }else{
-            const profileImg = process.env.SERVER_REQ_INFO + '/' + req.file.path.split("/mnt/Plogging_server/images/")[1];
+        const profileImg = process.env.SERVER_REQ_INFO + '/' + req.file.path.split("/mnt/Plogging_server/images/")[1];
 	    //const profileImg = `${process.env.SERVER_REQ_INFO}/profile/${userId}/profileImg.PNG`;
 	    //const profileImg = req.file.path;
-            let updateUserQuery = `UPDATE ${USER_TABLE} SET display_name = ?, profile_img = ?, update_datetime = ? WHERE user_id = ?`
-            let updateUserValues = [user.display_name, profileImg, currentTime, userId];
-            
-            pool.execute(updateUserQuery, updateUserValues, function(err, result) {
-                console.log(result)
-                if(result.affectedRows){
-                    returnResult.rc = 200;
-                    returnResult.rcmsg = "Success user updated";
-                    returnResult.displayName = user.display_name;
-                    returnResult.profile_img = profileImg;
-                    res.send(returnResult);
-                }else{
-                    returnResult.rc = 500;
-                    returnResult.rcmsg = "user update error";
-                    res.send(returnResult);
-                }
-                if(err){
-                    returnResult.rc = 600;
-                    returnResult.rcmsg = err.message;
-                    res.send(returnResult);
-                }
-            })
-        }
+        let updateUserQuery = `UPDATE ${USER_TABLE} SET display_name = ?, profile_img = ?, update_datetime = ? WHERE user_id = ?`
+        let updateUserValues = [user.display_name, profileImg, currentTime, userId];
         
+        pool.execute(updateUserQuery, updateUserValues, function(err, result) {
+            console.log(result)
+            if(result.affectedRows){
+                returnResult.rc = 200;
+                returnResult.rcmsg = "Success user updated";
+                returnResult.displayName = user.display_name;
+                returnResult.profile_img = profileImg;
+                res.send(returnResult);
+            }else{
+                returnResult.rc = 500;
+                returnResult.rcmsg = "user update error";
+                res.send(returnResult);
+            }
+            if(err){
+                returnResult.rc = 600;
+                returnResult.rcmsg = err.message;
+                res.send(returnResult);
+            }
+        })
     } catch (error) {
         returnResult.rc = 500;
         returnResult.rcmsg = error.message;
@@ -162,11 +148,6 @@ UserInterface.prototype.update = async function(req, res) {
 
 UserInterface.prototype.signOut = async function(req, res) {
     let returnResult = { rc: 200, rcmsg: "success sign out" };
-    if(!req.session){
-        returnResult.rc = 400;
-        returnResult.rcmsg = "no header key"
-        return;
-    }
     req.session.destroy(function(err) {
         if(err) {
             returnResult.rc = 500;
