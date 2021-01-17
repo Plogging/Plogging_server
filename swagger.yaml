@@ -247,7 +247,7 @@ paths:
                                           type: number
                                           example: 1500
                                       calories:
-                                          type: numer
+                                          type: number
                                           example: 200
                                       plogging_time:
                                           type: number
@@ -271,7 +271,7 @@ paths:
                                       properties:
                                           trash_type:
                                               type: integer
-                                              exmaple: 2
+                                              example: 2
                                           pick_count:
                                               type: integer
                                               example: 100
@@ -340,8 +340,8 @@ paths:
         - in: formData
           name: ploggingData
           type: string
+          example: {"meta": { "distance": 1500, "calorie": 200, "flogging_time":20}, "pick_list": [ { "trash_type": 2, "pick_count":100}, {"trash_type":1, "pick_count":200}] }
           required: true
-          example : '{"meta": { "distance": 1500, "calorie": 200, "flogging_time":20}, "pick_list": [ { "trash_type": 2, "pick_count":100}, {"trash_type":1, "pick_count":200}] }'
           description: 산책이력 데이터
       responses:
         200:
