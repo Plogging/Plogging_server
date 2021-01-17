@@ -20,9 +20,11 @@
     "mysql": "^2.18.1",
     "mysql2": "^2.2.5",
     "mysql2-promise": "^0.1.4",
+    "openapi-validator-middleware": "^3.2.1",
     "pm2": "^4.5.1",
     "redis-lock": "^0.1.4",
     "swagger-jsdoc": "^6.0.1",
-    "swagger-ui-express": "^4.1.6"
+    "swagger-ui-express": "^4.1.6",
+    "yamljs": "^0.3.0"
   }
 }

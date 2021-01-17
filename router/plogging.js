@@ -4,6 +4,7 @@ const fs = require('fs');
 const { promisify } = require('util');
 const util = require('../util/common.js');
 const { ObjectId } = require('mongodb');
+const swaggerValidation = require('../util/validator')
 //const filePath = process.env.IMG_FILE_PATH + "/plogging/";
 const filePath = "/mnt/Plogging_server/images/plogging/";
 
@@ -37,9 +38,9 @@ const PloggingInferface = function(config) {
       })
 
     // 플로깅 관련 api 구현
-    router.get("/", (req, res) => this.readPlogging(req, res));// read
-    router.post("/", upload.single('ploggingImg'), (req, res) => this.writePlogging(req, res)); // create
-    router.delete("/", (req, res) => this.deletePlogging(req,res)); // delete
+    router.get("/", swaggerValidation.validate, (req, res) => this.readPlogging(req, res));// read
+    router.post("/", upload.single('ploggingImg'), swaggerValidation.validate, (req, res) => this.writePlogging(req, res)); // create
+    router.delete("/", swaggerValidation.validate, (req, res) => this.deletePlogging(req,res)); // delete
 
    this.redisAsyncZrem = promisify(this.redisClient.zrem).bind(this.redisClient);
 
@@ -52,137 +53,6 @@ const PloggingInferface = function(config) {
  *  case 2. 유저 id 기준으로 이동거리 많은순 조회
  *  case 3. 유저 id 기준으로 쓰레기 많이 주운순 조회
  *  case 4. 유저 id 기준으로 칼로리 소모 많은순 조회
- */
-/**
-* @swagger
- * /plogging:
- *   get:
- *     summary: 산책이력 가져오기
- *     tags: [Plogging]
- *     parameters:
- *       - in: header
- *         name: sessionKey
- *         type: string
- *         required: true
- *         description: 유저 SessionKey
- *       - in: query
- *         name: targetUserId
- *         type: string
- *         required: false
- *         description: 조회할 유저 id
- *       - in: query
- *         name: searchType
- *         type: number
- *         enum: [0, 1, 2]
- *         required: true
- *         description: 조회 type ( 최신순 / 점수순 / 거리순)
- *     responses:
- *       200:
- *         description: Success 
- *         schema:
- *          type: object
- *          properties:
- *              rc:
- *                  type: number
- *                  example: 200
- *              rcmsg:
- *                  type: string
- *                  example: 산책이력 정보에 성공했습니다.
- *              plogging_list:
- *                  type: array
- *                  items:
- *                      type: object
- *                      properties:
- *                          _id:
- *                              type: string
- *                              example: "5ff53c3ff9789143b86f863b"
- *                          meta:
- *                              type: object
- *                              properties:
- *                                  user_id:
- *                                      type: string
- *                                      example: xowns4817@naver.com-naver
- *                                  create_time:
- *                                      type: string
- *                                      format: date-time
- *                                      example: 20210106132743
- *                                  distance:
- *                                      type: number
- *                                      example: 1500
- *                                  calories:
- *                                      type: numer
- *                                      example: 200
- *                                  plogging_time:
- *                                      type: number
- *                                      example: 20
- *                                  plogging_img:
- *                                      type: string
- *                                      example: "http://localhost:20000/plogging/xowns4817@naver.com-naver/plogging_20210106132743.PNG"
- *                                  plogging_total_score:
- *                                      type: number
- *                                      example: 100000
- *                                  plogging_activity_score:
- *                                      type: number
- *                                      example: 50000
- *                                  plogging_environment_score:
- *                                      type: number
- *                                      example: 50000
- *                          trash_list:
- *                              type: array
- *                              items:
- *                                  type: object
- *                                  properties:
- *                                      trash_type:
- *                                          type: integer
- *                                          exmaple: 2
- *                                      pick_count:
- *                                          type: integer
- *                                          example: 100
- *    
- *       400:
- *         description: Bad Request(parameter error)
- *         schema:
- *             type: object
- *             properties:
- *                 rc:
- *                     type: number
- *                     example: 400
- *                 rcmsg:
- *                     type: string
- *                     example: 파라미터 값을 확인해주세요.
- *       401:
- *         description: Unauthorized
- *         schema:
- *              type: object
- *              properties:
- *                  rc:
- *                      type: number
- *                      example: 401
- *                  rcmsg:
- *                      type: string
- *                      example: 권한이 없습니다.(로그인을 해주세요.)
- *       404:
- *         description: Bad Request(url error)
- *         schema:
- *             type: object
- *             properties:
- *                 rc:
- *                     type: number
- *                     example: 404
- *                 rcmsg:
- *                     type: string
- *                     example: 요청 url을 확인해 주세요.
- *       500:
- *         description: server error
- *         schema:
- *             type: object
- *             properties:
- *                 rc:
- *                     type: number
- *                     example: 500
- *                 rcmsg:
- *                     type: string
- *                     example: 서버 오류.
  */
 PloggingInferface.prototype.readPlogging = async function(req, res) {
     console.log("plogging read api !");
@@ -224,107 +94,6 @@ PloggingInferface.prototype.readPlogging = async function(req, res) {
  * 산책 이력 등록
  * - img는 optional. 만약, 입력안하면 baseImg로 세팅
  */
-/**
- * @swagger
- * /plogging:
- *   post:
- *     summary: 산책 이력 등록하기
- *     tags: [Plogging]
- *     consumes:
- *      - multipart/form-data
- *     produces:
- *      - application/json
- *     parameters:
- *       - in: header
- *         name: sessionKey
- *         type: string
- *         required: true
- *         description: 유저 SessionKey
- *       - in: formData
- *         name: ploggingImg
- *         type: file
- *         description: 산책 인증샷
- *         required: false
- *       - in: formData
- *         name: ploggingData
- *         type: string
- *         required: true
- *         example : '{"meta": { "distance": 1500, "calorie": 200, "flogging_time":20}, "pick_list": [ { "trash_type": 2, "pick_count":100}, {"trash_type":1, "pick_count":200}] }'
- *         description: 산책이력 데이터
- * 
- *     responses:
- *       200:
- *         description: Success
- *         schema:
- *          type: object
- *          properties:
- *              plogging:
- *                  type: object
- *                  properties:
- *                      rc:
- *                          type: number
- *                          example: 200
- *                      rcmsg:
- *                          type: string
- *                          example: 산책이력 등록 성공
- *                      score:
- *                          type: object
- *                          properties:
- *                              totalScore:
- *                                  type: number
- *                                  example: 3200
- *                              activityScore:
- *                                  type: number
- *                                  example: 3000
- *                              environmentScore:
- *                                  type: number
- *                                  example: 200            
- *       400:
- *         description: Bad Request(parameter error)
- *         schema:
- *             type: object
- *             properties:
- *                 rc:
- *                     type: number
- *                     example: 400
- *                 rcmsg:
- *                     type: string
- *                     example: 파라미터 값을 확인해주세요.
- *       401:
- *          description: Unauthorized
- *          schema:
- *              type: object
- *              properties:
- *                  rc:
- *                      type: number
- *                      example: 401
- *                  rcmsg:
- *                      type: string
- *                      example: 권한이 없습니다.(로그인을 해주세요.)
- *       404:
- *         description: Bad Request(url error)
- *         schema:
- *             type: object
- *             properties:
- *                 rc:
- *                     type: number
- *                     example: 404
- *                 rcmsg:
- *                     type: string
- *                     example: 요청 url을 확인해 주세요.
- *       500:
- *         description: server error
- *         schema:
- *             type: object
- *             properties:
- *                 rc:
- *                     type: number
- *                     example: 500
- *                 rcmsg:
- *                     type: string
- *                     example: 서버 오류.
- * 
- */
 PloggingInferface.prototype.writePlogging = async function(req, res) {
     console.log("plogging write api !");
 
@@ -333,13 +102,6 @@ PloggingInferface.prototype.writePlogging = async function(req, res) {
     let userId = req.userId;
     let ploggingObj = req.body.ploggingData;
     
-    if(ploggingObj === undefined) {
-        returnResult.rc = 400;
-        returnResult.rcmsg = "요청 파라미터를 확인해주세요.";
-        res.status(400).send(returnResult);
-        return;
-    }
-
     ploggingObj = JSON.parse(ploggingObj);
 
     ploggingObj.meta.user_id = userId;
@@ -406,92 +168,6 @@ PloggingInferface.prototype.writePlogging = async function(req, res) {
  * 산책 이력삭제
  *   case 1. 유저가 특정 산책 이력을 삭제하거나(1개 삭제) - 산책이력의 objectId값을 파라미터로 전달
  *   case 2. 회원 탈퇴했을때(해당 회원 산책이력 모두 삭제) - 산책이력의 objectId값을 파라미터로 전달하지 않음
- */
-/**
- * @swagger
- * /plogging:
- *   delete:
- *     summary: 산책 이력 삭제하기
- *     tags: [Plogging]
- *     parameters:
- *       - in: header
- *         name: sessionKey
- *         type: string
- *         required: true
- *         description: 유저 SessionKey
- *       - in: query
- *         name: objectId
- *         type: string
- *         required: false
- *         example: "5ff53c3ff9789143b86f863b"
- *         description: 산책이력 식별키
- *       - in: query
- *         name: ploggingImgName
- *         type: string
- *         required: false
- *         example: plogging_20210106132743.PNG
- *         description: 산책 인증사진 파일이름
- *     responses:
- *       200:
- *         description: Success
- *         schema:
- *          type: object
- *          properties:
- *             plogging:
- *              type: object
- *              properties:
- *                  rc:
- *                      type: number
- *                      example: 200
- *                  rcmsg:
- *                      type: string
- *                      example: 산책이력 삭제 성공
- *             
- *       400:
- *         description: Bad Request(parameter error)
- *         schema:
- *             type: object
- *             properties:
- *                 rc:
- *                     type: number
- *                     example: 400
- *                 rcmsg:
- *                     type: string
- *                     example: 파라미터 값을 확인해주세요.
- *       401:
- *          description: Unauthorized
- *          schema:
- *              type: object
- *              properties:
- *                  rc:
- *                      type: number
- *                      example: 401
- *                  rcmsg:
- *                      type: string
- *                      example: 권한이 없습니다.(로그인을 해주세요)
- *       404:
- *         description: Bad Request(url error)
- *         schema:
- *             type: object
- *             properties:
- *                 rc:
- *                     type: number
- *                     example: 404
- *                 rcmsg:
- *                     type: string
- *                     example: 요청 url을 확인해 주세요.
- *       500:
- *         description: server error
- *         schema:
- *             type: object
- *             properties:
- *                 rc:
- *                     type: number
- *                     example: 500
- *                 rcmsg:
- *                     type: string
- *                     example: 서버 오류.
- * 
  */
 PloggingInferface.prototype.deletePlogging = async function(req, res) {
     console.log("plogging delete api !");

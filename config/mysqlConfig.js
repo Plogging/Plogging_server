@@ -1,8 +1,7 @@
 const mysql = require('mysql'); // callback용
 const mysql2 = require('mysql2'); // async await 용
 const mariadbInfo = process.env.MARIADB_INFO;
-const ip = mariadbInfo.split(":")[0];
-const port = mariadbInfo.split(":")[1];
+const [ip, port] = mariadbInfo.split(":")
 const jasypt = require('../util/common_jasypt.js');
 const dbPassword = jasypt.decrypt(process.env.MARIADB_PASSWORD);
 
