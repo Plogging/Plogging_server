@@ -512,7 +512,7 @@ paths:
                 example: success
               count:
                 type: number
-                example: 10
+                example: 991
               rankData:
                 type: array
                 items:
