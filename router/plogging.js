@@ -53,13 +53,16 @@ const PloggingInferface = function(config) {
  *  case 2 .플로깅 점수순
  *  case 2. 플로깅 거리순
  */
+/**
+ * @swagger
+ */
 PloggingInferface.prototype.readPlogging = async function(req, res) {
     console.log("plogging read api !");
 
     let userId = req.userId; // api를 call한 userId
     let targetUserId = req.query.targetUserId; // 산책이력을 조회를 할 userId
     let ploggingCntPerPage = req.query.ploggingCntPerPage; // 한 페이지에 보여줄 산책이력 수
-    let pageNumber = req.query.pageNumer; // 조회할 페이지 Number
+    let pageNumber = req.query.pageNumber; // 조회할 페이지 Number
 
     // default -> 각 페이지에 4개씩, 1번 페이지 조회
     if(!ploggingCntPerPage) ploggingCntPerPage = 4;
@@ -80,7 +83,7 @@ PloggingInferface.prototype.readPlogging = async function(req, res) {
     let options = {
         sort: sort_option[searchType],
         skip: (pageNumber-1)*ploggingCntPerPage,
-        limit: ploggingActivityScore
+        limit: ploggingCntPerPage
     }
 
     let mongoConnection = null;
