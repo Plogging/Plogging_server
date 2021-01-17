@@ -6,7 +6,7 @@ const util = require('../util/common.js');
 const { ObjectId } = require('mongodb');
 const filePath = process.env.IMG_FILE_PATH;
 
-const PloggingInferface = function(config) {
+const PloggingInterface = function(config) {
     const router = express.Router();
     router.all('*',cors());
 
@@ -20,27 +20,27 @@ const PloggingInferface = function(config) {
 
     const upload = this.fileInterface({
         storage: this.fileInterface.diskStorage({
-          destination: function (req, file, cb) {
-            const userId = req.userId; // 세션체크 완료하면 값 받아옴
-            const dir = `${filePath}${userId}`;
-            if (!fs.existsSync(dir)){
-                fs.mkdirSync(dir);
+            destination: function (req, file, cb) {
+                const userId = req.userId; // 세션체크 완료하면 값 받아옴
+                const dir = `${filePath}${userId}`;
+                if (!fs.existsSync(dir)){
+                    fs.mkdirSync(dir);
+                }
+                cb(null, dir);
+            },
+            filename: function (req, file, cb) {
+                cb(null, `plogging_${util.getCurrentDateTime()}.PNG`);
             }
-            cb(null, dir);
-          },
-          filename: function (req, file, cb) {
-            cb(null, `plogging_${util.getCurrentDateTime()}.PNG`);
-          }
         }),
         limits: {fileSize: 1*1000*5000}, // file upload 5MB 제한
-      })
+    })
 
     // 플로깅 관련 api 구현
     router.get("/", (req, res) => this.readPlogging(req, res));// read
     router.post("/", upload.single('ploggingImg'), (req, res) => this.writePlogging(req, res)); // create
     router.delete("/", (req, res) => this.deletePlogging(req,res)); // delete
 
-   this.redisAsyncZrem = promisify(this.redisClient.zrem).bind(this.redisClient);
+    this.redisAsyncZrem = promisify(this.redisClient.zrem).bind(this.redisClient);
 
     return this.router;
 };
@@ -160,7 +160,7 @@ const PloggingInferface = function(config) {
  *                     type: string
  *                     example: 서버 오류.
  */
-PloggingInferface.prototype.readPlogging = async function(req, res) {
+PloggingInterface.prototype.readPlogging = async function(req, res) {
     console.log("plogging read api !");
 
     let userId = req.userId;
@@ -172,7 +172,7 @@ PloggingInferface.prototype.readPlogging = async function(req, res) {
     try {
         mongoConnection = this.MongoPool.db('plogging');
         let PloggingList = await mongoConnection.collection('record').find(query, options).toArray();
-       
+        
         returnResult.plogging_list = PloggingList;
         res.status(200).send(returnResult);
     } catch(e) {
@@ -266,7 +266,7 @@ PloggingInferface.prototype.readPlogging = async function(req, res) {
  *                     example: 서버 오류.
  * 
  */
-PloggingInferface.prototype.writePlogging = async function(req, res) {
+PloggingInterface.prototype.writePlogging = async function(req, res) {
     console.log("plogging write api !");
 
     let returnResult = { rc: 200, rcmsg: "success" };
@@ -301,7 +301,7 @@ PloggingInferface.prototype.writePlogging = async function(req, res) {
         ploggingObj.meta.ploggingTotalScore = ploggingTotalScore;
         ploggingObj.meta.ploggingActivityScore = ploggingActivityScore;
         ploggingObj.meta.ploggingEnvironmentScore =  ploggingEnvironmentScore;
-      
+        
         mongoConnection = this.MongoPool.db('plogging');
         await mongoConnection.collection('record').insertOne(ploggingObj);
 
@@ -309,13 +309,13 @@ PloggingInferface.prototype.writePlogging = async function(req, res) {
         const queryKey = "plogging";
         const unlock = await this.lock("plogging-lock"); // redis lock
         let originScore = await this.redisClient.zscore(queryKey, userId);
-       
+        
         if(!originScore) originScore = Number(0);
         const resultScore = Number(originScore)+Number(ploggingTotalScore);
         await this.redisClient.zadd(queryKey, resultScore, userId); // 랭킹서버에 insert
 
         unlock();
- 
+        
         returnResult.score = { };
         returnResult.score.totalScore = ploggingTotalScore;
         returnResult.score.activityScore = ploggingActivityScore;
@@ -406,27 +406,26 @@ PloggingInferface.prototype.writePlogging = async function(req, res) {
  *                     example: 서버 오류.
  * 
  */
-PloggingInferface.prototype.deletePlogging = async function(req, res) {
+PloggingInterface.prototype.deletePlogging = async function(req, res) {
     console.log("plogging delete api !");
 
     let userId = req.userId;
     let mongoObjectId = req.query.objectId;
-    let ploggingImgPath = req.query.ploggingImgPath;
+    let ploggingImgName = req.query.ploggingImgName;
     let query = null;
 
     let returnResult = { rc: 200, rcmsg: "success" };
     let mongoConnection = null;
     try {
         mongoConnection = this.MongoPool.db('plogging');
-
         if(mongoObjectId) { // 해당 이력만 삭제
             query = {"_id": ObjectId(mongoObjectId)};
-
+            
             // 산책이력 삭제
             await mongoConnection.collection('record').deleteOne(query);
-         
+            
             // 산책이력 이미지 삭제
-            if(ploggingImgPath) fs.unlinkSync(ploggingImgPath);
+            if(ploggingImgName) fs.unlinkSync(ploggingImgName);
 
             // 해당 산책의 점수 랭킹점수 삭제
             //let queryKey = "Plogging";
@@ -486,4 +485,4 @@ function addExtraScorePerKm(distance) {
     return extraScore;
 }
 
-module.exports = PloggingInferface;
+module.exports = PloggingInterface;
