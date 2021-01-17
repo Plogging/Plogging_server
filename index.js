@@ -3,7 +3,7 @@ const app = express();
 const { promisify } = require('util');
 
 const UserInterface = require("./router/user.js");
-const PloggingInferface = require('./router/plogging.js');
+const PloggingInterface = require('./router/plogging.js');
 const RankingInterface = require('./router/ranking.js');
 const bodyParser = require('body-parser');
 const poolCallback = require("./config/mysqlConfig.js").getMysqlPool; // callback
@@ -33,9 +33,9 @@ const swaggerOptions = {
     swaggerDefinition: swaggerDefinition,
     // Path to the API docs
     apis: ['./router/user.js', './router/plogging.js', './router/ranking.js']
-  }
+}
 
-  const swaggerSpec = swaggerJSDoc(swaggerOptions);
+const swaggerSpec = swaggerJSDoc(swaggerOptions);
 
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
@@ -88,7 +88,7 @@ app.use("/", function(req, res, next) {
 app.use("/", function(req, res, next) {
     // 세션 체크 공통 모듈
     console.log("인터셉터 !");
-    if(req.path === '/user') next();
+    if(req.method === 'POST' && req.path === '/user') next();
     else
         if(req.session.userId) {  // 세션 값이 있는 경우
             next();
@@ -96,17 +96,18 @@ app.use("/", function(req, res, next) {
             let returnResult = { rc: 401, rcmsg: "unauthorized" };
             res.status(401).send(returnResult);
         }
-    } 
+    }
 );
 
-app.use('/user', new UserInterface(globalOption)); // 유저 관려 api는 user.js로 포워딩
+
 app.use('/rank', new RankingInterface(globalOption)); // 랭킹 관련 api는 ranking.js로 포워딩
 
 async function main( ) {
     try {
-        const mongoConnectioPool = await MongoClient.connect();
-        globalOption.MongoPool=mongoConnectioPool;
-        app.use('/plogging', new PloggingInferface(globalOption)); // 쓰레기 관련 api는 plogging.js로 포워딩        
+        const mongoConnectionPool = await MongoClient.connect();
+        globalOption.MongoPool=mongoConnectionPool;
+        app.use('/user', new UserInterface(globalOption)); // 유저 관련 api는 user.js로 포워딩
+        app.use('/plogging', new PloggingInterface(globalOption)); // 쓰레기 관련 api는 plogging.js로 포워딩        
     } catch(e) {
         console.log(e);
     } 
