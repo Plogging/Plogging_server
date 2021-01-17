@@ -528,28 +528,52 @@ paths:
                   properties:
                     userId:
                       type: string
+                    displayName:
+                      type: string
+                    profileImg:
+                      type: string
                     score:
                       type: integer
                 example:
                   - userId: happy
-                    score: 18000
+                    displayName: 해피
+                    profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
+                    score: 19480
                   - userId: choco
+                    displayName: 초코
+                    profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
                     score: 17000
                   - userId: bori
+                    displayName: 보리
+                    profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
                     score: 16500
                   - userid: ttori
+                    displayName: 또리
+                    profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
                     score: 16000
                   - userId: momo
+                    displayName: 모모
+                    profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
                     score: 15500
                   - userid: congi
+                    displayName: 콩이
+                    profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
                     score: 14500
                   - userId: coco
+                    displayName: 코코
+                    profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
                     score: 14000
                   - userId: hoya
+                    displayName: 호야
+                    profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
                     score: 13500
                   - userId: zzangu
+                    displayName: 짱구
+                    profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
                     score: 13000
                   - userId: duri
+                    displayName: 두리
+                    profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
                     score: 12000
         400:
           description: Bad Request(parameter error)
