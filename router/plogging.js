@@ -49,16 +49,21 @@ const PloggingInferface = function(config) {
 
 /**
  * 산책 이력조회  (페이징 처리 필요)
- *  case 1. 유저 id 기준으로 최신순 조회
- *  case 2. 유저 id 기준으로 이동거리 많은순 조회
- *  case 3. 유저 id 기준으로 쓰레기 많이 주운순 조회
- *  case 4. 유저 id 기준으로 칼로리 소모 많은순 조회
+ *  case 1. 최신순
+ *  case 2 .플로깅 점수순
+ *  case 2. 플로깅 거리순
  */
 PloggingInferface.prototype.readPlogging = async function(req, res) {
     console.log("plogging read api !");
 
     let userId = req.userId; // api를 call한 userId
     let targetUserId = req.query.targetUserId; // 산책이력을 조회를 할 userId
+    let ploggingCntPerPage = req.query.ploggingCntPerPage; // 한 페이지에 보여줄 산책이력 수
+    let pageNumber = req.query.pageNumer; // 조회할 페이지 Number
+
+    // default -> 각 페이지에 4개씩, 1번 페이지 조회
+    if(!ploggingCntPerPage) ploggingCntPerPage = 4;
+    if(!pageNumber) pageNumber = 1;
 
     /**
      * 1. 내 산책이력 조회 ( tartgetUserId 없으면 내 산책이력 조회 )
@@ -77,8 +82,12 @@ PloggingInferface.prototype.readPlogging = async function(req, res) {
 
     try {
         mongoConnection = this.MongoPool.db('plogging');
-        let PloggingList = await mongoConnection.collection('record').find(query, options[searchType]).toArray();
-       
+        let PloggingList = await mongoConnection.collection('record')
+                                                .find(query)
+                                                .sort(options[searchType])
+                                                .skip((pageNumber-1)*ploggingCntPerPage)
+                                                .limit(ploggingCntPerPage)
+                                                .toArray();
         returnResult.plogging_list = PloggingList;
         res.status(200).send(returnResult);
     } catch(e) {

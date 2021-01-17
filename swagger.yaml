@@ -202,6 +202,17 @@ paths:
           enum: [0, 1, 2]
           required: true
           description: 조회 type ( 최신순 / 점수순 / 거리순)
+        - in: query 
+          name: ploggingCntPerPage
+          type: number
+          required: false
+          description: 한 페이지에 보여줄 산책이력 갯수 ( default - 4개 )
+        - in: query
+          name: pageNumber
+          type: number
+          required: false
+          description: 조회할 페이지 숫자 ( default - 1 )
+          
       responses:
         200:
           description: Success 
