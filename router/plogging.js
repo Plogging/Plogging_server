@@ -74,15 +74,21 @@ PloggingInferface.prototype.readPlogging = async function(req, res) {
 
     let searchType = Number(req.query.searchType); // 최신순(0), 점수순(1), 거리순(2)
     let query = {"meta.user_id": userId};
-    let options = [{sort: {"meta.created_time": -1}},
-                   {sort: {"meta.plogging_total_score": -1}},
-                   {sort: {"meta.distance": -1}}];  // 최신순(0), 점수순(1),  거리순(2)
+    let sort_option = [{"meta.created_time": -1},
+                       {"meta.plogging_total_score": -1},
+                       {"meta.distance": -1}];  
+    let options = {
+        sort: sort_option[searchType],
+        skip: (pageNumber-1)*ploggingCntPerPage,
+        limit: ploggingActivityScore
+    }
+
     let mongoConnection = null;
     let returnResult = { rc: 200, rcmsg: "success" };
 
     try {
         mongoConnection = this.MongoPool.db('plogging');
-        let PloggingList = await mongoConnection.collection('record').find(query,options[searchType]).skip((pageNumber-1)*ploggingCntPerPage).limit(ploggingCntPerPage).toArray();
+        let PloggingList = await mongoConnection.collection('record').find(query,options).toArray();
         returnResult.plogging_list = PloggingList;
         res.status(200).send(returnResult);
     } catch(e) {
