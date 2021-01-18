@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
-const { client } = require('../config/redisConfig');
 const swaggerValidation = require('../util/validator')
+const { USER_TABLE } = require('./user')
 
 const weeklyRankingKey = "weekly"
 const monthlyRankingKey = "monthly"
@@ -26,38 +26,57 @@ const RankingInterface = function(config) {
 
 };
 
-/**
- * @swagger
- */
 RankingInterface.prototype.getRank = async function(req, res) {
-    let rankType = req.params.rankType
-    let offset = req.query.offset
-    let limit = req.query.limit
-    let returnResult
-    this.redisClient.multi()
-    .zcount(rankType, "-inf", "+inf")
-    .zrevrange(rankType, offset, offset+limit-1, "withscores")
-    .exec((error, replies) => {
-        if (error) {
-            returnResult = {rc: 500, rcmsg: "internal server error"}
-            res.status(500).json(returnResult)
-        } else {
-            let count = replies[0]
-            let rankData = buildRankData(replies[1])
-            returnResult = {rc: 200, rcmsg: "success", count: count, rankData: rankData}
-            res.status(200).json(returnResult)
-        }
-    })
+    try {
+        let rankType = req.params.rankType
+        let offset = req.query.offset
+        let limit = req.query.limit
+        const [zcountResult, zrevrangeResult] = await this.redisClient.pipeline()
+        .zcount(rankType, "-inf", "+inf")
+        .zrevrange(rankType, offset, offset+limit-1, "withscores")
+        .exec()
+        const count = zcountResult[1]
+        const rankData = await this.buildRankData(zrevrangeResult[1])
+        const returnResult = {rc: 200, rcmsg: "success", count: count, rankData: rankData}
+        res.status(200).json(returnResult)
+    } catch(e) {
+        const returnResult = { rc: 500, rcmsg: e.message }
+        res.status(500).json(returnResult)
+    }
 }
 
-const buildRankData = rankWithScores => {
-    let rankData = []
-    let element
+RankingInterface.prototype.buildRankData = async function(rankWithScores) {
+    const userIds = []
+    const scores = []
     for (let i=0; i < rankWithScores.length / 2; i++) {
-        element = {userId: rankWithScores[2*i], score: rankWithScores[2*i+1]}
-        rankData.push(element)
+        userIds.push(rankWithScores[2*i])
+        scores.push(rankWithScores[2*i + 1])
+    }
+
+    const userInfos = await this.getUserInfos(userIds)
+
+    const rankData = []
+    for (let i=0; i < userIds.length; i++) {
+        userId = userIds[i]
+        score = scores[i]
+        userInfo = userInfos[userId]
+        userInfo.score = score
+        rankData.push(userInfo)
     }
     return rankData
+}
+
+RankingInterface.prototype.getUserInfos = async function(userIds) {
+    const query = `SELECT user_id, display_name, profile_img from ${USER_TABLE} WHERE user_id in 
+    (` + userIds.map(() => '?') + `)`
+    const [rows, _] = await this.mysqlPool2.promise().query(query, userIds)
+    const userInfos = {}
+    rows.forEach(row => {
+        const { user_id, display_name, profile_img } = row
+        userInfos[user_id] = { userId: user_id, displayName: display_name, 
+            profileImg: profile_img }
+    })
+    return userInfos
 }
 
 module.exports = RankingInterface;

@@ -163,3 +163,4 @@ UserInterface.prototype.signOut = async function(req, res) {
 }
 
 module.exports = UserInterface;
+module.exports.USER_TABLE = USER_TABLE;
