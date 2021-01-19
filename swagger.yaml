@@ -1,0 +1,746 @@
+swagger: "2.0"
+info:
+  title: Plogging
+  version: 1.0.0
+  description: Plogging API docs
+
+paths:
+  /user:
+    post:
+      summary: 로그인 하기
+      tags: [User]
+      parameters:
+        - in: body
+          name: user
+          description: userId는 email:type 으로 구분자 ':'를 사용합니다. 자체 로그인인 경우는 custom으로 하면됩니다. 자체로그인인 경우는 secretKey를 꼭 받아야 합니다.
+          schema:
+              type: object
+              required:
+                - userName
+                - userId
+              properties:
+                userId:
+                  type: string
+                  example: ganghee@naver.com:naver.com
+                userName:
+                  type: string
+                  example: 쓰담이
+                secretKey:
+                  type: string
+                  example: 1234qwer
+      responses:
+        200:
+          description: 신입 회원인 경우에 Success creating user 기존 회원인 경우에 Success getting user
+          schema:
+            type: object
+            properties:
+                rc:
+                    type: number
+                    example: 200
+                rcmsg:
+                    type: string
+                    example: Success create user
+                session:
+                    type: string
+                    example: 0q8DptSJiinhbspcQwK6wxUtvNkmNano
+                userImg:
+                    type: string
+                    example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
+                userName:
+                    type: string
+                    example: 쓰담이
+        400:
+          description: Bad Request(parameter error)
+          schema:
+              type: object
+              properties:
+                  rc:
+                      type: number
+                      example: 400
+                  rcmsg:
+                      type: string
+                      example: no parameter
+        401:
+          description: Bad Request(password error)
+          schema:
+              type: object
+              properties:
+                  rc:
+                      type: number
+                      example: 401
+                  rcmsg:
+                      type: string
+                      example: password error
+        500:
+          description: server error
+          schema:
+              type: object
+              properties:
+                  rc:
+                      type: number
+                      example: 500
+                  rcmsg:
+                      type: string
+                      example: server error
+        600:
+          description: DB error
+          schema:
+              type: object
+              properties:
+                  rc:
+                      type: number
+                      example: 600
+                  rcmsg:
+                      type: string
+                      example: DB error
+                      
+    get:
+      summary: 사용자 정보 가져오기
+      description: 사용자 id(email + type), 사용자 닉네임, 프로필 사진을 가져온다.
+      tags: [User]
+      parameters:
+        - in: header
+          name: userId
+          type: string
+          required: true
+          description: 유저 SessionKey
+      responses:
+        200:
+          description: 2개의 파라미터를 받아 성공적으로 변경
+          schema:
+            type: object
+            properties:
+                rc:
+                    type: number
+                    example: 200
+                rcmsg:
+                    type: string
+                    example: success
+                userId:
+                    type: string
+                    example: abc@naver.com:naver.com
+                userImg:
+                    type: string
+                    example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
+                userName:
+                    type: string
+                    example: 쓰담이
+        400:
+          description: Bad Request(parameter error)
+          schema:
+              type: object
+              properties:
+                  rc:
+                      type: number
+                      example: 400
+                  rcmsg:
+                      type: string
+                      example: no parameter
+        401:
+          description: Bad Request(session key error)
+          schema:
+              type: object
+              properties:
+                  rc:
+                      type: number
+                      example: 401
+                  rcmsg:
+                      type: string
+                      example: no header key
+        500:
+          description: server error
+          schema:
+              type: object
+              properties:
+                  rc:
+                      type: number
+                      example: 500
+                  rcmsg:
+                      type: string
+                      example: Getting user error
+        600:
+          description: DB error
+          schema:
+              type: object
+              properties:
+                  rc:
+                      type: number
+                      example: 600
+                  rcmsg:
+                      type: string
+                      example: DB error
+    put:
+      summary: 사용자 정보변경
+      description: 반드시 2개의 파라미터를 받아야한다. 
+      tags: [User]
+      parameters:
+        - in: header
+          name: userId
+          type: string
+          required: true
+          description: 유저 SessionKey
+        - in: formData
+          name: profile_img
+          type: file
+          description: 사용자의 사진을 업로드 합니다.
+          required: true
+        - in: formData
+          name: display_name
+          type: string
+          description: 사용자의 이름을 변경합니다.
+          required: true
+      responses:
+        200:
+          description: 2개의 파라미터를 받아 성공적으로 변경
+          schema:
+            type: object
+            properties:
+                rc:
+                    type: number
+                    example: 200
+                rcmsg:
+                    type: string
+                    example: success
+                userImg:
+                    type: string
+                    example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
+                userName:
+                    type: string
+                    example: 쓰담이
+        400:
+          description: Bad Request(parameter error)
+          schema:
+              type: object
+              properties:
+                  rc:
+                      type: number
+                      example: 400
+                  rcmsg:
+                      type: string
+                      example: no parameter
+        401:
+          description: Bad Request(session key error)
+          schema:
+              type: object
+              properties:
+                  rc:
+                      type: number
+                      example: 401
+                  rcmsg:
+                      type: string
+                      example: no header key
+        500:
+          description: user update error
+          schema:
+              type: object
+              properties:
+                  rc:
+                      type: number
+                      example: 500
+                  rcmsg:
+                      type: string
+                      example: user update error
+        600:
+          description: DB error
+          schema:
+              type: object
+              properties:
+                  rc:
+                      type: number
+                      example: 600
+                  rcmsg:
+                      type: string
+                      example: DB error
+  /user/sign-out:
+    get:
+      summary: 사용자 로그아웃
+      tags: [User]
+      parameters:
+        - in: header
+          name: userId
+          type: string
+          required: true
+          description: 유저 SessionKey
+      responses:
+        200:
+          description: 로그아웃 성공
+          schema:
+            type: object
+            properties:
+                rc:
+                    type: number
+                    example: 200
+                rcmsg:
+                    type: string
+                    example: logout success
+              
+        400:
+          description: Bad Request(parameter error)
+          schema:
+              type: object
+              properties:
+                  rc:
+                      type: number
+                      example: 400
+                  rcmsg:
+                      type: string
+                      example: no header key
+        401:
+          description: Bad Request(session key error)
+          schema:
+              type: object
+              properties:
+                  rc:
+                      type: number
+                      example: 401
+                  rcmsg:
+                      type: string
+                      example: no header key
+        500:
+          description: server error
+          schema:
+              type: object
+              properties:
+                  rc:
+                      type: number
+                      example: 500
+                  rcmsg:
+                      type: string
+                      example: server error
+    delete:
+      summary: 회원탈퇴
+      tags: [User]
+      parameters:
+        - in: header
+          name: userId
+          type: string
+          required: true
+          description: 유저 SessionKey
+      responses:
+        200:
+          description: 회원탈퇴 성공
+          schema:
+            type: object
+            properties:
+                rc:
+                    type: number
+                    example: 200
+                rcmsg:
+                    type: string
+                    example: success withdrawal
+                
+        400:
+          description: Bad Request(parameter error)
+          schema:
+              type: object
+              properties:
+                  rc:
+                      type: number
+                      example: 400
+                  rcmsg:
+                      type: string
+                      example: no header key
+        401:
+          description: Bad Request(session key error)
+          schema:
+              type: object
+              properties:
+                  rc:
+                      type: number
+                      example: 401
+                  rcmsg:
+                      type: string
+                      example: no header key
+        500:
+          description: server error
+          schema:
+              type: object
+              properties:
+                  rc:
+                      type: number
+                      example: 500
+                  rcmsg:
+                      type: string
+                      example: server error
+                  
+  /plogging:
+    get:
+      summary: 산책이력 가져오기
+      tags: [Plogging]
+      parameters:
+        - in: header
+          name: sessionKey
+          type: string
+          required: true
+          description: 유저 SessionKey
+        - in: query
+          name: targetUserId
+          type: string
+          required: false
+          description: 조회할 유저 id
+        - in: query
+          name: searchType
+          type: number
+          enum: [0, 1, 2]
+          required: true
+          description: 조회 type ( 최신순 / 점수순 / 거리순)
+        - in: query 
+          name: ploggingCntPerPage
+          type: number
+          required: false
+          description: 한 페이지에 보여줄 산책이력 갯수 ( default - 4개 )
+        - in: query
+          name: pageNumber
+          type: number
+          required: false
+          description: 조회할 페이지 숫자 ( default - 1 )
+          
+      responses:
+        200:
+          description: Success 
+          schema:
+              type: object
+              properties:
+                  rc:
+                      type: number
+                      example: 200
+                  rcmsg:
+                      type: string
+                      example: 산책이력 정보에 성공했습니다.
+                  plogging_list:
+                      type: array
+                      items:
+                          type: object
+                          properties:
+                              _id:
+                                  type: string
+                                  example: "5ff53c3ff9789143b86f863b"
+                              meta:
+                                  type: object
+                                  properties:
+                                      user_id:
+                                          type: string
+                                          example: xowns4817@naver.com-naver
+                                      create_time:
+                                          type: string
+                                          format: date-time
+                                          example: 20210106132743
+                                      distance:
+                                          type: number
+                                          example: 1500
+                                      calories:
+                                          type: number
+                                          example: 200
+                                      plogging_time:
+                                          type: number
+                                          example: 20
+                                      plogging_img:
+                                          type: string
+                                          example: "http://localhost:20000/plogging/xowns4817@naver.com-naver/plogging_20210106132743.PNG"
+                                      plogging_total_score:
+                                          type: number
+                                          example: 100000
+                                      plogging_activity_score:
+                                          type: number
+                                          example: 50000
+                                      plogging_environment_score:
+                                          type: number
+                                          example: 50000
+                              trash_list:
+                                  type: array
+                                  items:
+                                      type: object
+                                      properties:
+                                          trash_type:
+                                              type: integer
+                                              example: 2
+                                          pick_count:
+                                              type: integer
+                                              example: 100
+        400:
+          description: Bad Request(parameter error)
+          schema:
+              type: object
+              properties:
+                  rc:
+                      type: number
+                      example: 400
+                  rcmsg:
+                      type: string
+                      example: body should have required property 'ploggingData'
+        401:
+          description: Unauthorized
+          schema:
+              type: object
+              properties:
+                  rc:
+                      type: number
+                      example: 401
+                  rcmsg:
+                      type: string
+                      example: 권한이 없습니다.(로그인을 해주세요.)
+        404:
+          description: Bad Request(url error)
+          schema:
+              type: object
+              properties:
+                  rc:
+                      type: number
+                      example: 404
+                  rcmsg:
+                      type: string
+                      example: 요청 url을 확인해 주세요.
+        500:
+          description: server error
+          schema:
+              type: object
+              properties:
+                  rc:
+                      type: number
+                      example: 500
+                  rcmsg:
+                      type: string
+                      example: 서버 오류.
+    post:
+      summary: 산책 이력 등록하기
+      tags: [Plogging]
+      consumes:
+      - multipart/form-data
+      produces:
+      - application/json
+      parameters:
+        - in: header
+          name: sessionKey
+          type: string
+          required: true
+          description: 유저 SessionKey
+        - in: formData
+          name: ploggingImg
+          type: file
+          description: 산책 인증샷
+          required: false
+        - in: formData
+          name: ploggingData
+          type: string
+          example: {"meta": { "distance": 1500, "calorie": 200, "flogging_time":20}, "pick_list": [ { "trash_type": 2, "pick_count":100}, {"trash_type":1, "pick_count":200}] }
+          required: true
+          description: 산책이력 데이터
+      responses:
+        200:
+          description: Success
+          schema:
+              type: object
+              properties:
+                  plogging:
+                      type: object
+                      properties:
+                          rc:
+                              type: number
+                              example: 200
+                          rcmsg:
+                              type: string
+                              example: 산책이력 등록 성공
+                          score:
+                              type: object
+                              properties:
+                                  totalScore:
+                                      type: number
+                                      example: 3200
+                                  activityScore:
+                                      type: number
+                                      example: 3000
+                                  environmentScore:
+                                      type: number
+                                      example: 200            
+        400:
+          description: Bad Request(parameter error)
+          schema:
+              type: object
+              properties:
+                  rc:
+                      type: number
+                      example: 400
+                  rcmsg:
+                      type: string
+                      example: query should have required property 'searchType'
+        401:
+          description: Unauthorized
+          schema:
+              type: object
+              properties:
+                  rc:
+                      type: number
+                      example: 401
+                  rcmsg:
+                      type: string
+                      example: 권한이 없습니다.(로그인을 해주세요.)
+        404:
+          description: Bad Request(url error)
+          schema:
+              type: object
+              properties:
+                  rc:
+                      type: number
+                      example: 404
+                  rcmsg:
+                      type: string
+                      example: 요청 url을 확인해 주세요.
+        500:
+          description: server error
+          schema:
+              type: object
+              properties:
+                  rc:
+                      type: number
+                      example: 500
+                  rcmsg:
+                      type: string
+                      example: 서버 오류.
+    delete:
+      summary: 산책 이력 삭제하기
+      tags: [Plogging]
+      parameters:
+        - in: header
+          name: sessionKey
+          type: string
+          required: true
+          description: 유저 SessionKey
+        - in: query
+          name: objectId
+          type: string
+          required: false
+          example: "5ff53c3ff9789143b86f863b"
+          description: 산책이력 식별키
+        - in: query
+          name: ploggingImgName
+          type: string
+          required: false
+          example: plogging_20210106132743.PNG
+          description: 산책 인증사진 파일이름
+      responses:
+        200:
+          description: Success
+          schema:
+              type: object
+              properties:
+                  rc:
+                      type: number
+                      example: 200
+                  rcmsg:
+                      type: string
+                      example: 산책이력 삭제 성공
+        401:
+          description: Unauthorized
+          schema:
+              type: object
+              properties:
+                  rc:
+                      type: number
+                      example: 401
+                  rcmsg:
+                      type: string
+                      example: 권한이 없습니다.(로그인을 해주세요)
+        404:
+          description: Bad Request(url error)
+          schema:
+              type: object
+              properties:
+                  rc:
+                      type: number
+                      example: 404
+                  rcmsg:
+                      type: string
+                      example: 요청 url을 확인해 주세요.
+        500:
+          description: server error
+          schema:
+              type: object
+              properties:
+                  rc:
+                      type: number
+                      example: 500
+                  rcmsg:
+                      type: string
+                      example: 서버 오류.
+  /rank/{rankType}:
+    get:
+      summary: 랭킹 가져오기
+      tags: [Ranking]
+      parameters:
+        - in: header
+          name: sessionKey
+          type: string
+          required: true
+          description: 유저 SessionKey
+        - name: rankType
+          in: path
+          type: string
+          enum: [weekly, monthly]
+          required: true
+          description: 랭킹 유형 (주간 / 월간)
+        - name: offset
+          in: query
+          type: integer
+          required: true
+          description: 랭킹 offset
+        - name: limit
+          in: query
+          type: integer
+          required: true
+          description: 랭킹 limit (offset부터 몇 개의 데이터를 가져올건지)
+      responses:
+        200:
+          description: Success
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 200
+              rcmsg:
+                type: string
+                example: success
+              count:
+                type: number
+                example: 991
+              rankData:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    userId:
+                      type: string
+                    score:
+                      type: integer
+                example:
+                  - userId: happy
+                    score: 18000
+                  - userId: choco
+                    score: 17000
+                  - userId: bori
+                    score: 16500
+                  - userid: ttori
+                    score: 16000
+                  - userId: momo
+                    score: 15500
+                  - userid: congi
+                    score: 14500
+                  - userId: coco
+                    score: 14000
+                  - userId: hoya
+                    score: 13500
+                  - userId: zzangu
+                    score: 13000
+                  - userId: duri
+                    score: 12000
+        400:
+          description: Bad Request(parameter error)
+          schema:
+              type: object
+              properties:
+                  rc:
+                      type: number
+                      example: 400
+                  rcmsg:
+                      type: string
+                      example: query should have required property 'offset'

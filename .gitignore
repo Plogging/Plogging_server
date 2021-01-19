@@ -4,6 +4,9 @@ config/
 ## 라이브러리 파일 제외
 node_modules
 
+## exclude img files
+images/
+
 ## 기타 파일 제외
 .vscode
 package-lock.json

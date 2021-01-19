@@ -7,6 +7,7 @@ const { uptime } = require('process');
 const crypto = require('crypto');
 const { assert } = require('console');
 const filePath = process.env.IMG_FILE_PATH;
+const swaggerValidation = require('../util/validator')
 
 const UserInterface = function(config) {
     const router = express.Router();
@@ -22,16 +23,16 @@ const UserInterface = function(config) {
     const upload = this.fileInterface({
         storage: this.fileInterface.diskStorage({
             destination: function (req, file, cb) {
-            const userId = req.body.userId; // 세션체크 완료하면 값 받아옴
-            const dir = `${filePath}${userId}`;
-                
+            const userId = req.userId; // 세션체크 완료하면 값 받아옴
+	        const dir = `${filePath}${userId}`;
+    
             if (!fs.existsSync(dir)){
                 fs.mkdirSync(dir);
             }
             cb(null, dir);
             },
             filename: function (req, file, cb) {
-            cb(null, `flogging_${util.getCurrentDateTime()}.PNG`);
+            cb(null, `profileImg.PNG`);
             }
         }),
         limits: {fileSize: 1*1000*5000}, // file upload 5MB 제한
@@ -45,99 +46,6 @@ const UserInterface = function(config) {
     router.delete('', (req, res) => this.withdrawal(req, res));
     return this.router;
 };
-
-/**
- * @swagger
- * /user:
- *   post:
- *     summary: 로그인 하기
- *     tags: [User]
- *     parameters:
- *       - in: body
- *         name: user
- *         description: userId는 email:type 으로 구분자 ':'를 사용합니다. 자체 로그인인 경우는 custom으로 하면됩니다. 자체로그인인 경우는 secretKey를 꼭 받아야 합니다.
- *         schema:
- *              type: object
- *              required:
- *                - userName
- *                - userId
- *              properties:
- *                userId:
- *                  type: string
- *                  example: ganghee@naver.com:naver.com
- *                userName:
- *                  type: string
- *                  example: 쓰담이
- *                secretKey:
- *                  type: string
- *                  example: 1234qwer
- *     responses:
- *       200:
- *         description: 신입 회원인 경우에 Success creating user 기존 회원인 경우에 Success getting user
- *         schema:
- *          type: object
- *          properties:
- *              rc:
- *                  type: number
- *                  example: 200
- *              rcmsg:
- *                  type: string
- *                  example: Success create user
- *              session:
- *                  type: string
- *                  example: 0q8DptSJiinhbspcQwK6wxUtvNkmNano
- *              userImg:
- *                  type: string
- *                  example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
- *              userName:
- *                  type: string
- *                  example: 쓰담이
- *    
- *       400:
- *         description: Bad Request(parameter error)
- *         schema:
- *             type: object
- *             properties:
- *                 rc:
- *                     type: number
- *                     example: 400
- *                 rcmsg:
- *                     type: string
- *                     example: no parameter
- *       401:
- *         description: Bad Request(password error)
- *         schema:
- *             type: object
- *             properties:
- *                 rc:
- *                     type: number
- *                     example: 401
- *                 rcmsg:
- *                     type: string
- *                     example: password error
- *       500:
- *         description: server error
- *         schema:
- *             type: object
- *             properties:
- *                 rc:
- *                     type: number
- *                     example: 500
- *                 rcmsg:
- *                     type: string
- *                     example: server error
- *       600:
- *         description: DB error
- *         schema:
- *             type: object
- *             properties:
- *                 rc:
- *                     type: number
- *                     example: 600
- *                 rcmsg:
- *                     type: string
- *                     example: DB error
- */
 
 UserInterface.prototype.signIn = async function(req, res) {
 
@@ -240,86 +148,6 @@ UserInterface.prototype.signIn = async function(req, res) {
     });
 }
 
-/**
- * @swagger
- * /user:
- *   get:
- *     summary: 사용자 정보 가져오기
- *     description: 사용자 id(email + type), 사용자 닉네임, 프로필 사진을 가져온다.
- *     tags: [User]
- *     parameters:
- *       - in: header
- *         name: userId
- *         type: string
- *         required: true
- *         description: 유저 SessionKey
- *     responses:
- *       200:
- *         description: 2개의 파라미터를 받아 성공적으로 변경
- *         schema:
- *          type: object
- *          properties:
- *              rc:
- *                  type: number
- *                  example: 200
- *              rcmsg:
- *                  type: string
- *                  example: success
- *              userId:
- *                  type: string
- *                  example: abc@naver.com:naver.com
- *              userImg:
- *                  type: string
- *                  example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
- *              userName:
- *                  type: string
- *                  example: 쓰담이
- *     
- *       400:
- *         description: Bad Request(parameter error)
- *         schema:
- *             type: object
- *             properties:
- *                 rc:
- *                     type: number
- *                     example: 400
- *                 rcmsg:
- *                     type: string
- *                     example: no parameter
- *       401:
- *         description: Bad Request(session key error)
- *         schema:
- *             type: object
- *             properties:
- *                 rc:
- *                     type: number
- *                     example: 401
- *                 rcmsg:
- *                     type: string
- *                     example: no header key
- *       500:
- *         description: server error
- *         schema:
- *             type: object
- *             properties:
- *                 rc:
- *                     type: number
- *                     example: 500
- *                 rcmsg:
- *                     type: string
- *                     example: Getting user error
- *       600:
- *         description: DB error
- *         schema:
- *             type: object
- *             properties:
- *                 rc:
- *                     type: number
- *                     example: 600
- *                 rcmsg:
- *                     type: string
- *                     example: DB error
- */
 
 UserInterface.prototype.getUserInfo = async function(req, res) {
     
@@ -362,99 +190,12 @@ UserInterface.prototype.getUserInfo = async function(req, res) {
     }
 }
 
-/**
- * @swagger
- * /user:
- *   put:
- *     summary: 사용자 정보변경
- *     description: 반드시 2개의 파라미터를 받아야한다. 
- *     tags: [User]
- *     parameters:
- *       - in: header
- *         name: userId
- *         type: string
- *         required: true
- *         description: 유저 SessionKey
- *       - in: formData
- *         name: profile_img
- *         type: file
- *         description: 사용자의 사진을 업로드 합니다.
- *         required: true
- *       - in: formData
- *         name: display_name
- *         type: string
- *         description: 사용자의 이름을 변경합니다.
- *         required: true
- *     responses:
- *       200:
- *         description: 2개의 파라미터를 받아 성공적으로 변경
- *         schema:
- *          type: object
- *          properties:
- *              rc:
- *                  type: number
- *                  example: 200
- *              rcmsg:
- *                  type: string
- *                  example: success
- *              userImg:
- *                  type: string
- *                  example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
- *              userName:
- *                  type: string
- *                  example: 쓰담이
- *    
- *       400:
- *         description: Bad Request(parameter error)
- *         schema:
- *             type: object
- *             properties:
- *                 rc:
- *                     type: number
- *                     example: 400
- *                 rcmsg:
- *                     type: string
- *                     example: no parameter
- *       401:
- *         description: Bad Request(session key error)
- *         schema:
- *             type: object
- *             properties:
- *                 rc:
- *                     type: number
- *                     example: 401
- *                 rcmsg:
- *                     type: string
- *                     example: no header key
- *       500:
- *         description: user update error
- *         schema:
- *             type: object
- *             properties:
- *                 rc:
- *                     type: number
- *                     example: 500
- *                 rcmsg:
- *                     type: string
- *                     example: user update error
- *       600:
- *         description: DB error
- *         schema:
- *             type: object
- *             properties:
- *                 rc:
- *                     type: number
- *                     example: 600
- *                 rcmsg:
- *                     type: string
- *                     example: DB error
- */
-
 UserInterface.prototype.update = async function(req, res) {
     
     const pool = this.pool;
     let returnResult = { rc: 200, rcmsg: "success" };
     const user = req.body;
+    const userId = req.userId;
     const currentTime = util.getCurrentDateTime();
     if(!req.session){
         returnResult.rc = 401;
@@ -468,7 +209,7 @@ UserInterface.prototype.update = async function(req, res) {
             res.status(400).send(returnResult);
             return;
         }else{
-            const profileImg = req.file.path
+            const profileImg = process.env.SERVER_REQ_INFO + '/' + req.file.path.split("/mnt/Plogging_server/images/")[1];
             const updateUserQuery = `UPDATE ${USER_TABLE} SET display_name = ?, profile_img = ?, update_datetime = ? WHERE user_id = ?`
             const updateUserValues = [user.display_name, profileImg, currentTime, req.session.userId];
             
@@ -498,66 +239,6 @@ UserInterface.prototype.update = async function(req, res) {
     }
 }
 
-/**
- * @swagger
- * /user/sign-out:
- *   get:
- *     summary: 사용자 로그아웃
- *     tags: [User]
- *     parameters:
- *       - in: header
- *         name: userId
- *         type: string
- *         required: true
- *         description: 유저 SessionKey
- *     responses:
- *       200:
- *         description: 로그아웃 성공
- *         schema:
- *          type: object
- *          properties:
- *              rc:
- *                  type: number
- *                  example: 200
- *              rcmsg:
- *                  type: string
- *                  example: logout success
- *    
- *       400:
- *         description: Bad Request(parameter error)
- *         schema:
- *             type: object
- *             properties:
- *                 rc:
- *                     type: number
- *                     example: 400
- *                 rcmsg:
- *                     type: string
- *                     example: no header key
- *       401:
- *         description: Bad Request(session key error)
- *         schema:
- *             type: object
- *             properties:
- *                 rc:
- *                     type: number
- *                     example: 401
- *                 rcmsg:
- *                     type: string
- *                     example: no header key
- *       500:
- *         description: server error
- *         schema:
- *             type: object
- *             properties:
- *                 rc:
- *                     type: number
- *                     example: 500
- *                 rcmsg:
- *                     type: string
- *                     example: server error
- */
-
 UserInterface.prototype.signOut = async function(req, res) {
     let returnResult = { rc: 200, rcmsg: "success sign out" };
     if(!req.session){
@@ -575,66 +256,6 @@ UserInterface.prototype.signOut = async function(req, res) {
         }
     })
 }
-
-/**
- * @swagger
- * /user:
- *   delete:
- *     summary: 회원탈퇴
- *     tags: [User]
- *     parameters:
- *       - in: header
- *         name: userId
- *         type: string
- *         required: true
- *         description: 유저 SessionKey
- *     responses:
- *       200:
- *         description: 회원탈퇴 성공
- *         schema:
- *          type: object
- *          properties:
- *              rc:
- *                  type: number
- *                  example: 200
- *              rcmsg:
- *                  type: string
- *                  example: success withdrawal
- *    
- *       400:
- *         description: Bad Request(parameter error)
- *         schema:
- *             type: object
- *             properties:
- *                 rc:
- *                     type: number
- *                     example: 400
- *                 rcmsg:
- *                     type: string
- *                     example: no header key
- *       401:
- *         description: Bad Request(session key error)
- *         schema:
- *             type: object
- *             properties:
- *                 rc:
- *                     type: number
- *                     example: 401
- *                 rcmsg:
- *                     type: string
- *                     example: no header key
- *       500:
- *         description: server error
- *         schema:
- *             type: object
- *             properties:
- *                 rc:
- *                     type: number
- *                     example: 500
- *                 rcmsg:
- *                     type: string
- *                     example: server error
- */
 
 UserInterface.prototype.withdrawal = async function(req, res) {
     let returnResult = { rc: 200, rcmsg: "success withdrawal" };
