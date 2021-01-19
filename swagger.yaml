@@ -161,17 +161,17 @@ paths:
         600:
           description: DB error
           schema:
-              type: object
-              properties:
-                  rc:
-                      type: number
-                      example: 600
-                  rcmsg:
-                      type: string
-                      example: DB error
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 600
+              rcmsg:
+                type: string
+                example: DB error
     put:
       summary: 사용자 정보변경
-      description: 반드시 2개의 파라미터를 받아야한다. 
+      description: 반드시 2개의 파라미터를 받아야한다.
       tags: [User]
       parameters:
         - in: header
@@ -195,18 +195,18 @@ paths:
           schema:
             type: object
             properties:
-                rc:
-                    type: number
-                    example: 200
-                rcmsg:
-                    type: string
-                    example: success
-                userImg:
-                    type: string
-                    example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
-                userName:
-                    type: string
-                    example: 쓰담이
+              rc:
+                type: number
+                example: 200
+              rcmsg:
+                type: string
+                example: success
+              userImg:
+                type: string
+                example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
+              userName:
+                type: string
+                example: 쓰담이
         400:
           description: Bad Request(parameter error)
           schema:
@@ -232,25 +232,25 @@ paths:
         500:
           description: user update error
           schema:
-              type: object
-              properties:
-                  rc:
-                      type: number
-                      example: 500
-                  rcmsg:
-                      type: string
-                      example: user update error
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 500
+              rcmsg:
+                type: string
+                example: user update error
         600:
           description: DB error
           schema:
-              type: object
-              properties:
-                  rc:
-                      type: number
-                      example: 600
-                  rcmsg:
-                      type: string
-                      example: DB error
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 600
+              rcmsg:
+                type: string
+                example: DB error
   /user/sign-out:
     get:
       summary: 사용자 로그아웃
@@ -384,7 +384,7 @@ paths:
           enum: [0, 1, 2]
           required: true
           description: 조회 type ( 최신순 / 점수순 / 거리순)
-        - in: query 
+        - in: query
           name: ploggingCntPerPage
           type: number
           required: false
@@ -394,120 +394,120 @@ paths:
           type: number
           required: false
           description: 조회할 페이지 숫자 ( default - 1 )
-          
+
       responses:
         200:
-          description: Success 
+          description: Success
           schema:
-              type: object
-              properties:
-                  rc:
-                      type: number
-                      example: 200
-                  rcmsg:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 200
+              rcmsg:
+                type: string
+                example: 산책이력 정보에 성공했습니다.
+              plogging_list:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    _id:
                       type: string
-                      example: 산책이력 정보에 성공했습니다.
-                  plogging_list:
+                      example: "5ff53c3ff9789143b86f863b"
+                    meta:
+                      type: object
+                      properties:
+                        user_id:
+                          type: string
+                          example: xowns4817@naver.com-naver
+                        create_time:
+                          type: string
+                          format: date-time
+                          example: 20210106132743
+                        distance:
+                          type: number
+                          example: 1500
+                        calories:
+                          type: number
+                          example: 200
+                        plogging_time:
+                          type: number
+                          example: 20
+                        plogging_img:
+                          type: string
+                          example: "http://localhost:20000/plogging/xowns4817@naver.com-naver/plogging_20210106132743.PNG"
+                        plogging_total_score:
+                          type: number
+                          example: 100000
+                        plogging_activity_score:
+                          type: number
+                          example: 50000
+                        plogging_environment_score:
+                          type: number
+                          example: 50000
+                    trash_list:
                       type: array
                       items:
-                          type: object
-                          properties:
-                              _id:
-                                  type: string
-                                  example: "5ff53c3ff9789143b86f863b"
-                              meta:
-                                  type: object
-                                  properties:
-                                      user_id:
-                                          type: string
-                                          example: xowns4817@naver.com-naver
-                                      create_time:
-                                          type: string
-                                          format: date-time
-                                          example: 20210106132743
-                                      distance:
-                                          type: number
-                                          example: 1500
-                                      calories:
-                                          type: number
-                                          example: 200
-                                      plogging_time:
-                                          type: number
-                                          example: 20
-                                      plogging_img:
-                                          type: string
-                                          example: "http://localhost:20000/plogging/xowns4817@naver.com-naver/plogging_20210106132743.PNG"
-                                      plogging_total_score:
-                                          type: number
-                                          example: 100000
-                                      plogging_activity_score:
-                                          type: number
-                                          example: 50000
-                                      plogging_environment_score:
-                                          type: number
-                                          example: 50000
-                              trash_list:
-                                  type: array
-                                  items:
-                                      type: object
-                                      properties:
-                                          trash_type:
-                                              type: integer
-                                              example: 2
-                                          pick_count:
-                                              type: integer
-                                              example: 100
+                        type: object
+                        properties:
+                          trash_type:
+                            type: integer
+                            example: 2
+                          pick_count:
+                            type: integer
+                            example: 100
         400:
           description: Bad Request(parameter error)
           schema:
-              type: object
-              properties:
-                  rc:
-                      type: number
-                      example: 400
-                  rcmsg:
-                      type: string
-                      example: body should have required property 'ploggingData'
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 400
+              rcmsg:
+                type: string
+                example: body should have required property 'ploggingData'
         401:
           description: Unauthorized
           schema:
-              type: object
-              properties:
-                  rc:
-                      type: number
-                      example: 401
-                  rcmsg:
-                      type: string
-                      example: 권한이 없습니다.(로그인을 해주세요.)
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 401
+              rcmsg:
+                type: string
+                example: 권한이 없습니다.(로그인을 해주세요.)
         404:
           description: Bad Request(url error)
           schema:
-              type: object
-              properties:
-                  rc:
-                      type: number
-                      example: 404
-                  rcmsg:
-                      type: string
-                      example: 요청 url을 확인해 주세요.
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 404
+              rcmsg:
+                type: string
+                example: 요청 url을 확인해 주세요.
         500:
           description: server error
           schema:
-              type: object
-              properties:
-                  rc:
-                      type: number
-                      example: 500
-                  rcmsg:
-                      type: string
-                      example: 서버 오류.
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 500
+              rcmsg:
+                type: string
+                example: 서버 오류.
     post:
       summary: 산책 이력 등록하기
       tags: [Plogging]
       consumes:
-      - multipart/form-data
+        - multipart/form-data
       produces:
-      - application/json
+        - application/json
       parameters:
         - in: header
           name: sessionKey
@@ -522,80 +522,80 @@ paths:
         - in: formData
           name: ploggingData
           type: string
-          example: {"meta": { "distance": 1500, "calorie": 200, "flogging_time":20}, "pick_list": [ { "trash_type": 2, "pick_count":100}, {"trash_type":1, "pick_count":200}] }
+          example: '{"meta": { "distance": 1500, "calorie": 200, "flogging_time": 20 }, "pick_list": [{ "trash_type": 2, "pick_count": 100 }, { "trash_type": 1, "pick_count": 200 }]}'
           required: true
           description: 산책이력 데이터
       responses:
         200:
           description: Success
           schema:
-              type: object
-              properties:
-                  plogging:
-                      type: object
-                      properties:
-                          rc:
-                              type: number
-                              example: 200
-                          rcmsg:
-                              type: string
-                              example: 산책이력 등록 성공
-                          score:
-                              type: object
-                              properties:
-                                  totalScore:
-                                      type: number
-                                      example: 3200
-                                  activityScore:
-                                      type: number
-                                      example: 3000
-                                  environmentScore:
-                                      type: number
-                                      example: 200            
+            type: object
+            properties:
+              plogging:
+                type: object
+                properties:
+                  rc:
+                    type: number
+                    example: 200
+                  rcmsg:
+                    type: string
+                    example: 산책이력 등록 성공
+                  score:
+                    type: object
+                    properties:
+                      totalScore:
+                        type: number
+                        example: 3200
+                      activityScore:
+                        type: number
+                        example: 3000
+                      environmentScore:
+                        type: number
+                        example: 200
         400:
           description: Bad Request(parameter error)
           schema:
-              type: object
-              properties:
-                  rc:
-                      type: number
-                      example: 400
-                  rcmsg:
-                      type: string
-                      example: query should have required property 'searchType'
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 400
+              rcmsg:
+                type: string
+                example: query should have required property 'searchType'
         401:
           description: Unauthorized
           schema:
-              type: object
-              properties:
-                  rc:
-                      type: number
-                      example: 401
-                  rcmsg:
-                      type: string
-                      example: 권한이 없습니다.(로그인을 해주세요.)
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 401
+              rcmsg:
+                type: string
+                example: 권한이 없습니다.(로그인을 해주세요.)
         404:
           description: Bad Request(url error)
           schema:
-              type: object
-              properties:
-                  rc:
-                      type: number
-                      example: 404
-                  rcmsg:
-                      type: string
-                      example: 요청 url을 확인해 주세요.
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 404
+              rcmsg:
+                type: string
+                example: 요청 url을 확인해 주세요.
         500:
           description: server error
           schema:
-              type: object
-              properties:
-                  rc:
-                      type: number
-                      example: 500
-                  rcmsg:
-                      type: string
-                      example: 서버 오류.
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 500
+              rcmsg:
+                type: string
+                example: 서버 오류.
     delete:
       summary: 산책 이력 삭제하기
       tags: [Plogging]
@@ -621,47 +621,47 @@ paths:
         200:
           description: Success
           schema:
-              type: object
-              properties:
-                  rc:
-                      type: number
-                      example: 200
-                  rcmsg:
-                      type: string
-                      example: 산책이력 삭제 성공
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 200
+              rcmsg:
+                type: string
+                example: 산책이력 삭제 성공
         401:
           description: Unauthorized
           schema:
-              type: object
-              properties:
-                  rc:
-                      type: number
-                      example: 401
-                  rcmsg:
-                      type: string
-                      example: 권한이 없습니다.(로그인을 해주세요)
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 401
+              rcmsg:
+                type: string
+                example: 권한이 없습니다.(로그인을 해주세요)
         404:
           description: Bad Request(url error)
           schema:
-              type: object
-              properties:
-                  rc:
-                      type: number
-                      example: 404
-                  rcmsg:
-                      type: string
-                      example: 요청 url을 확인해 주세요.
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 404
+              rcmsg:
+                type: string
+                example: 요청 url을 확인해 주세요.
         500:
           description: server error
           schema:
-              type: object
-              properties:
-                  rc:
-                      type: number
-                      example: 500
-                  rcmsg:
-                      type: string
-                      example: 서버 오류.
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 500
+              rcmsg:
+                type: string
+                example: 서버 오류.
   /rank/{rankType}:
     get:
       summary: 랭킹 가져오기
@@ -710,37 +710,72 @@ paths:
                   properties:
                     userId:
                       type: string
+                    displayName:
+                      type: string
+                    profileImg:
+                      type: string
                     score:
                       type: integer
                 example:
                   - userId: happy
-                    score: 18000
+                    displayName: 해피
+                    profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
+                    score: 19480
                   - userId: choco
+                    displayName: 초코
+                    profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
                     score: 17000
                   - userId: bori
+                    displayName: 보리
+                    profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
                     score: 16500
                   - userid: ttori
+                    displayName: 또리
+                    profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
                     score: 16000
                   - userId: momo
+                    displayName: 모모
+                    profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
                     score: 15500
                   - userid: congi
+                    displayName: 콩이
+                    profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
                     score: 14500
                   - userId: coco
+                    displayName: 코코
+                    profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
                     score: 14000
                   - userId: hoya
+                    displayName: 호야
+                    profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
                     score: 13500
                   - userId: zzangu
+                    displayName: 짱구
+                    profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
                     score: 13000
                   - userId: duri
+                    displayName: 두리
+                    profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
                     score: 12000
         400:
           description: Bad Request(parameter error)
           schema:
-              type: object
-              properties:
-                  rc:
-                      type: number
-                      example: 400
-                  rcmsg:
-                      type: string
-                      example: query should have required property 'offset'
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 400
+              rcmsg:
+                type: string
+                example: query should have required property 'offset'
+        500:
+          description: server error
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 500
+              rcmsg:
+                type: string
+                example: 서버 오류.
