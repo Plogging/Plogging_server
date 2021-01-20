@@ -7,7 +7,8 @@ const { uptime } = require('process');
 const crypto = require('crypto');
 const { assert } = require('console');
 const filePath = process.env.IMG_FILE_PATH;
-const swaggerValidation = require('../util/validator')
+const swaggerValidation = require('../util/validator');
+const { reloadLogs } = require('pm2');
 
 const UserInterface = function(config) {
     const router = express.Router();
@@ -23,15 +24,15 @@ const UserInterface = function(config) {
     const upload = this.fileInterface({
         storage: this.fileInterface.diskStorage({
             destination: function (req, file, cb) {
-            const userId = req.userId; // 세션체크 완료하면 값 받아옴
-	        const dir = `${filePath}${userId}`;
-            if (!fs.existsSync(dir)){
-                fs.mkdirSync(dir);
-            }
-            cb(null, dir);
+                const userId = req.userId; // 세션체크 완료하면 값 받아옴
+                const dir = `${filePath}/${userId}`;
+                if (!fs.existsSync(dir)){
+                    fs.mkdirSync(dir);
+                }
+                cb(null, dir);
             },
             filename: function (req, file, cb) {
-            cb(null, `profileImg.PNG`);
+                cb(null, `profileImg.PNG`);
             }
         }),
         limits: {fileSize: 1*1000*5000}, // file upload 5MB 제한
@@ -154,14 +155,14 @@ UserInterface.prototype.getUserInfo = async function(req, res) {
 }
 
 UserInterface.prototype.update = async function(req, res) {
-    console.log(req.body.displayName)
     const pool = this.pool;
     let returnResult = {};
     const displayName = req.body.displayName;
     const currentTime = util.getCurrentDateTime();
     try {
-        const profileImg = process.env.SERVER_REQ_INFO + '/' + req.file.path.split("/mnt/Plogging_server/images/")[1];
-        const updateUserQuery = `UPDATE ${USER_TABLE} SET display_name = ?, profile_img = ?, update_datetime = ? WHERE user_id = ?`
+        // TODO: sql 오류에도 파일 이미지는 정상으로 바뀜
+        const profileImg = req.file.path; // TODO: 추후 서버 연결 시 경로 변경
+        const updateUserQuery = `UPDATE ${USER_TABLE} SET display_name = ?, profile_img = ?, update_datetime = ? WHERE user_id = ?`;
         const updateUserValues = [displayName, profileImg, currentTime, req.session.userId];
         
         pool.execute(updateUserQuery, updateUserValues, function(err, result) {
@@ -193,50 +194,55 @@ UserInterface.prototype.signOut = async function(req, res) {
 
 UserInterface.prototype.withdrawal = async function(req, res) {
     const userId = req.session.userId;
-    const deleteUserQuery = `DELETE FROM ${USER_TABLE} WHERE user_id = ?`;
-    const deleteUserValues = [userId];
     const mongoConnection = this.MongoPool.db('plogging');
-    this.pool.getConnection(function(err, conn){
+    this.pool.getConnection( async function(err, conn){
         conn.beginTransaction();
-        conn.execute(deleteUserQuery, deleteUserValues, function(err, result) {
-            if(result.affectedRows){
-                // 탈퇴 유저의 이력 전체 삭제
-                mongoConnection.collection('record')
-                    .deleteMany({"meta.user_id": userId}, function(err, result) {
-                        if(err){
-                            res.sendStatus(500);
-                            conn.rollback();
-                        }else{
-                            try {
-                                // 탈퇴 유저의 산책이력 이미지 전체 삭제
-                                if(fs.existsSync(`${filePath}${userId}`)){
-                                    fs.rmdirSync(`${filePath}${userId}`, { recursive: true });
-                                }
-                                // 해당 산책의 점수 랭킹점수 삭제
-                                //await this.redisAsyncZrem(queryKey, userId);
-                                res.sendStatus(200);
-                                req.session.destroy();
-                                conn.commit();
-                            } catch (error) {
-                                res.sendStatus(500);
-                                conn.rollback();
-                            }
-                        }
-                });
-                
-            }else{
+        const deleteUserQuery = `DELETE FROM ${USER_TABLE} WHERE user_id = ?`;
+        const deleteUserValues = [userId];
+        const [rows,_] = await conn.promise().query(deleteUserQuery, deleteUserValues)
+        if(rows.affectedRows){
+            try {
+                await mongoConnection.collection('record').deleteMany({"meta.user_id": userId});
+                // 탈퇴 유저의 산책이력 이미지 전체 삭제
+                if(fs.existsSync(`${filePath}/${userId}`)){
+                    removeDir(`${filePath}/${userId}`);
+                }
+                // 해당 산책의 점수 랭킹점수 삭제
+                //await this.redisAsyncZrem(queryKey, userId);
+                res.sendStatus(200);
+                req.session.destroy();
+                conn.commit();
+            } catch (error) {
+                console.log(error.message)
                 res.sendStatus(500);
-            };
-            if(err){
-                res.sendStatus(500);
-            };
-            
-        });
+                conn.rollback();
+            }
+        }
         if(err){
             res.sendStatus(500);
         };
         conn.release();
     });
+}
+
+const removeDir = function(path) {
+    if (fs.existsSync(path)) {
+        const files = fs.readdirSync(path)
+        if (files.length > 0) {
+            files.forEach(function(filename) {
+                if (fs.statSync(path + "/" + filename).isDirectory()) {
+                removeDir(path + "/" + filename)
+                } else {
+                fs.unlinkSync(path + "/" + filename)
+                }
+            })
+        fs.rmdirSync(path)
+        } else {
+        fs.rmdirSync(path)
+        }
+    } else {
+        console.log("Directory path not found.")
+    }
 }
 
 module.exports = UserInterface;
