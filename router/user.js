@@ -171,6 +171,7 @@ UserInterface.prototype.signOut = async function(req, res) {
 UserInterface.prototype.withdrawal = async function(req, res) {
     const userId = req.session.userId;
     const mongoConnection = this.MongoPool.db('plogging');
+    const redisClient = this.redisClient
     this.pool.getConnection( async function(err, conn){
         conn.beginTransaction();
         const deleteUserQuery = `DELETE FROM ${USER_TABLE} WHERE user_id = ?`;
@@ -184,7 +185,9 @@ UserInterface.prototype.withdrawal = async function(req, res) {
                     removeDir(`${filePath}/${userId}`);
                 }
                 // 해당 산책의 점수 랭킹점수 삭제
-                //await this.redisAsyncZrem(queryKey, userId);
+                await redisClient.zrem("weekly", userId);
+                await redisClient.zrem("monthly", userId);
+
                 res.sendStatus(200);
                 req.session.destroy();
                 conn.commit();
