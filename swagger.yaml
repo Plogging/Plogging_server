@@ -62,7 +62,7 @@ paths:
         401:
           description: Unauthorized (password error)
         409:
-          description: Conflict (nick name conflict)
+          description: Conflict (display name conflict)
         500:
           description: Internal Server Error
     
@@ -133,6 +133,8 @@ paths:
                 example: 쓰담이
         400:
           description: Bad Request (parameter error)
+        409:
+          description: Conflict (display name conflict)
         500:
           description: Internal Server Error
                 

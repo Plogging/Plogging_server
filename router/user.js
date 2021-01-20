@@ -155,7 +155,11 @@ UserInterface.prototype.update = async function(req, res) {
             res.sendStatus(500);
         }
     } catch (error) {
-        res.sendStatus(500);
+        if(error.errno === 1062){
+            res.sendStatus(409);
+        }else{
+            res.sendStatus(500);
+        }
     }
 }
 
