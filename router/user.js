@@ -48,12 +48,10 @@ const UserInterface = function(config) {
 };
 
 UserInterface.prototype.signIn = async function(req, res) {
-
     let returnResult = {};
     const secretKey = req.body.secretKey;
     const [userEmail, userType] = req.body.userId.split(":");
     const userName = req.body.userName;
-
     if(userType.toLowerCase() === 'custom' && !secretKey){ 
         res.sendStatus(400);
         return;
@@ -61,15 +59,13 @@ UserInterface.prototype.signIn = async function(req, res) {
     
     // search userId in DB
     const userId = req.body.userId
-    const findUserQuery = `SELECT * FROM ${USER_TABLE} WHERE user_id = ?`;
-    const findUserValues = [userId];
-
-    this.pool.getConnection(function(err, conn){
+    this.pool.getConnection(async function(err, conn){
         conn.beginTransaction();
-        conn.execute(findUserQuery, findUserValues, function(err, result) {
-            
-            if (result.length === 0) {
-                
+        const findUserQuery = `SELECT * FROM ${USER_TABLE} WHERE user_id = ?`;
+        const findUserValues = [userId];
+        const [rows, _] = await conn.promise().execute(findUserQuery, findUserValues); 
+        if (rows.length === 0) {
+            try {
                 // set userImg
                 let userImg = "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg";
                 const createDateline = util.getCurrentDateTime();
@@ -84,45 +80,36 @@ UserInterface.prototype.signIn = async function(req, res) {
                     createUserQuery = `INSERT INTO ${USER_TABLE}(user_id, display_name, profile_img, type, email, update_datetime, create_datetime) VALUES(?, ?, ?, ?, ?, ?, ?)`;
                     createUserValues = [userId, userName, userImg, userType, userEmail, createDateline, createDateline];
                 }
-                
-                conn.execute(createUserQuery, createUserValues, function(err, result){
-                    if(err) {
-                        res.sendStatus(500);
-                        conn.rollback();
-                    }else{
-                        req.session.userId = userId;
-                        returnResult.session = req.session.id;
-                        returnResult.userImg = userImg;
-                        returnResult.userName = userName;
-                        res.json(returnResult);
-                        conn.commit();
-                    }
-                });
-                if(err) {
-                    res.sendStatus(500);
-                    conn.rollback();
-                }
-            }else{
-                if(userType.toLowerCase() === 'custom'){
-                    const hashedPassword = crypto.pbkdf2Sync(secretKey, result[0].salt, 10000, 64, 'sha512').toString('base64');
-                    if(hashedPassword != result[0].hash_password){
-                        res.sendStatus(401);
-                        conn.rollback();
-                        return;
-                    }
-                }
+                const [rows, _] = await conn.promise().execute(createUserQuery, createUserValues);
                 req.session.userId = userId;
                 returnResult.session = req.session.id;
-                returnResult.userImg = result[0].profile_img;
-                returnResult.userName = result[0].display_name;
+                returnResult.userImg = userImg;
+                returnResult.userName = userName;
                 res.json(returnResult);
                 conn.commit();
-            };
-        });
+            } catch (error) {
+                res.sendStatus(500);
+                conn.rollback();
+            }
+        }else{
+            if(userType.toLowerCase() === 'custom'){
+                const hashedPassword = crypto.pbkdf2Sync(secretKey, rows[0].salt, 10000, 64, 'sha512').toString('base64');
+                if(hashedPassword != rows[0].hash_password){
+                    res.sendStatus(401);
+                    conn.rollback();
+                    return;
+                }
+            }
+            req.session.userId = userId;
+            returnResult.session = req.session.id;
+            returnResult.userImg = rows[0].profile_img;
+            returnResult.userName = rows[0].display_name;
+            res.json(returnResult);
+            conn.commit();
+        };
         if(err){
             res.sendStatus(500);
-            conn.rollback();
-        }
+        };
         conn.release();
     });
 }
@@ -130,32 +117,27 @@ UserInterface.prototype.signIn = async function(req, res) {
 
 UserInterface.prototype.getUserInfo = async function(req, res) {
     
-    const pool = this.pool;
+    const promisePool = this.pool.promise();
     let returnResult = {};
     try {
         const getUserQuery = `SELECT * FROM ${USER_TABLE} WHERE user_id = ?`;
         const getUserValues = [req.session.userId];
-        
-        pool.execute(getUserQuery, getUserValues, function(err, result) {
-            if(result.length){
-                returnResult.userId = result[0].user_id;
-                returnResult.userImg = result[0].profile_img;
-                returnResult.userName = result[0].display_name;
-                res.json(returnResult);
-            }else{
-                res.sendStatus(500);
-            }
-            if(err){
-                res.sendStatus(500);
-            }
-        })
+        const [rows, _] = await promisePool.execute(getUserQuery, getUserValues);
+        if(rows.length){
+            returnResult.userId = rows[0].user_id;
+            returnResult.userImg = rows[0].profile_img;
+            returnResult.userName = rows[0].display_name;
+            res.json(returnResult);
+        }else{
+            res.sendStatus(500);
+        }
     } catch (error) {
         res.sendStatus(500);
     }
 }
 
 UserInterface.prototype.update = async function(req, res) {
-    const pool = this.pool;
+    const promisePool = this.pool.promise();
     let returnResult = {};
     const displayName = req.body.displayName;
     const currentTime = util.getCurrentDateTime();
@@ -164,19 +146,14 @@ UserInterface.prototype.update = async function(req, res) {
         const profileImg = req.file.path; // TODO: 추후 서버 연결 시 경로 변경
         const updateUserQuery = `UPDATE ${USER_TABLE} SET display_name = ?, profile_img = ?, update_datetime = ? WHERE user_id = ?`;
         const updateUserValues = [displayName, profileImg, currentTime, req.session.userId];
-        
-        pool.execute(updateUserQuery, updateUserValues, function(err, result) {
-            if(result.affectedRows){
-                returnResult.displayName = displayName;
-                returnResult.profileImg = profileImg;
-                res.send(returnResult);
-            }else{
-                res.sendStatus(500);
-            }
-            if(err) {
-                res.sendStatus(500);
-            }
-        })
+        const [rows, _] = await promisePool.execute(updateUserQuery, updateUserValues);
+        if(rows.affectedRows){
+            returnResult.displayName = displayName;
+            returnResult.profileImg = profileImg;
+            res.send(returnResult);
+        }else{
+            res.sendStatus(500);
+        }
     } catch (error) {
         res.sendStatus(500);
     }
