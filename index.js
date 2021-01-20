@@ -9,12 +9,12 @@ const poolCallback = require("./config/mysqlConfig.js").getMysqlPool; // callbac
 const poolAsyncAwait = require("./config/mysqlConfig.js").getMysqlPool2; // async await
 const redisClient = require("./config/redisConfig.js");
 const MongoClient = require("./config/mongoConfig.js");
-const swaggerValidation = require('./util/validator.js')
+const swaggerValidation = require('./util/validator.js');
 
 const session = require('express-session');
 const redisStore = require('connect-redis')(session);
-const multer  = require('multer')
-const YAML = require('yamljs')
+const multer  = require('multer');
+const YAML = require('yamljs');
 
 // node-swagger
 const swaggerUi = require('swagger-ui-express');
@@ -60,18 +60,15 @@ const swaggerUi = require('swagger-ui-express');
     * 
     */
     app.use("/", function(req, res, next) {
-
         // 세션 체크 공통 모듈
         if(req.path === '/user' && req.method === 'POST') next();
         else {
             const sessionKey = req.get('sessionKey');
-
             if(sessionKey === req.session.id) {  // 세션 값이 있는 경우 ( 로그인이 되어있는 경우 )
                 req.userId = req.session.userId;
                 next();
             } else { // 세션 값이 없는 경우 ( 로그인이 안되어 있는 경우 )
-                let returnResult = { rc: 401, rcmsg: "unauthorized" };
-                res.status(401).send(returnResult);
+                res.sendStatus(401);
             }
         }
     });
@@ -84,7 +81,7 @@ const swaggerUi = require('swagger-ui-express');
     // 반드시 라우팅 코드 이후에 위치해야 함
     app.use((err, req, res, next) => {
         if (err instanceof swaggerValidation.InputValidationError) {
-            return res.status(400).json({ rc: 400, rcmsg: err.errors.join(", ") })
+            return res.status(400).send(err.errors.join(", "))
         }
     })
 
