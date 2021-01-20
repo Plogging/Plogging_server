@@ -4,7 +4,6 @@ const util = require('../util/common.js');
 const USER_TABLE = 'user';
 const fs = require('fs');
 const { uptime } = require('process');
-const crypto = require('crypto');
 const { assert } = require('console');
 const filePath = process.env.IMG_FILE_PATH;
 const swaggerValidation = require('../util/validator');
@@ -49,16 +48,16 @@ const UserInterface = function(config) {
 
 UserInterface.prototype.signIn = async function(req, res) {
     let returnResult = {};
-    const secretKey = req.body.secretKey;
     const [userEmail, userType] = req.body.userId.split(":");
+    const secretKey = req.body.secretKey;
     const userName = req.body.userName;
+    const userId = req.body.userId;
     if(userType.toLowerCase() === 'custom' && !secretKey){ 
         res.sendStatus(400);
         return;
     }
     
     // search userId in DB
-    const userId = req.body.userId
     this.pool.getConnection(async function(err, conn){
         conn.beginTransaction();
         const findUserQuery = `SELECT * FROM ${USER_TABLE} WHERE user_id = ?`;
@@ -72,20 +71,18 @@ UserInterface.prototype.signIn = async function(req, res) {
                 let createUserQuery
                 let createUserValues
                 if(userType.toLowerCase() === 'custom'){
-                    const salt = (crypto.randomBytes(32)).toString('hex');
-                    const hashedPassword = crypto.pbkdf2Sync(secretKey, salt, 10000, 64, 'sha512').toString('base64');
-                    createUserQuery = `INSERT INTO ${USER_TABLE}(user_id, display_name, profile_img, type, email, update_datetime, create_datetime, salt, hash_password) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-                    createUserValues = [userId, userName, userImg, userType, userEmail, createDateline, createDateline, salt, hashedPassword];
+                    createUserQuery = `INSERT INTO ${USER_TABLE}(user_id, display_name, profile_img, type, email, update_datetime, create_datetime, secret_key) VALUES(?, ?, ?, ?, ?, ?, ?, ?)`;
+                    createUserValues = [userId, userName, userImg, userType, userEmail, createDateline, createDateline, secretKey];
                 }else{
                     createUserQuery = `INSERT INTO ${USER_TABLE}(user_id, display_name, profile_img, type, email, update_datetime, create_datetime) VALUES(?, ?, ?, ?, ?, ?, ?)`;
                     createUserValues = [userId, userName, userImg, userType, userEmail, createDateline, createDateline];
                 }
-                const [rows, _] = await conn.promise().execute(createUserQuery, createUserValues);
+                await conn.promise().execute(createUserQuery, createUserValues);
                 req.session.userId = userId;
                 returnResult.session = req.session.id;
                 returnResult.userImg = userImg;
                 returnResult.userName = userName;
-                res.json(returnResult);
+                res.status(201).json(returnResult);
                 conn.commit();
             } catch (error) {
                 res.sendStatus(500);
@@ -93,8 +90,7 @@ UserInterface.prototype.signIn = async function(req, res) {
             }
         }else{
             if(userType.toLowerCase() === 'custom'){
-                const hashedPassword = crypto.pbkdf2Sync(secretKey, rows[0].salt, 10000, 64, 'sha512').toString('base64');
-                if(hashedPassword != rows[0].hash_password){
+                if(secretKey != rows[0].secret_key){
                     res.sendStatus(401);
                     conn.rollback();
                     return;
@@ -116,7 +112,6 @@ UserInterface.prototype.signIn = async function(req, res) {
 
 
 UserInterface.prototype.getUserInfo = async function(req, res) {
-    
     const promisePool = this.pool.promise();
     let returnResult = {};
     try {
