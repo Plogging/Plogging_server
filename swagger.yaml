@@ -30,16 +30,24 @@ paths:
                   example: 1234qwer
       responses:
         200:
-          description: 신입 회원인 경우에 Success creating user 기존 회원인 경우에 Success getting user
+          description: 기존 회원 로그인 성공
           schema:
             type: object
             properties:
-                rc:
-                    type: number
-                    example: 200
-                rcmsg:
+                session:
                     type: string
-                    example: Success create user
+                    example: 0q8DptSJiinhbspcQwK6wxUtvNkmNano
+                userImg:
+                    type: string
+                    example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
+                userName:
+                    type: string
+                    example: 쓰담이
+        201:
+          description: 신규 회원 로그인 성공 (회원 가입)
+          schema:
+            type: object
+            properties:
                 session:
                     type: string
                     example: 0q8DptSJiinhbspcQwK6wxUtvNkmNano
@@ -50,57 +58,21 @@ paths:
                     type: string
                     example: 쓰담이
         400:
-          description: Bad Request(parameter error)
-          schema:
-              type: object
-              properties:
-                  rc:
-                      type: number
-                      example: 400
-                  rcmsg:
-                      type: string
-                      example: no parameter
+          description: Bad Request (parameter error)
         401:
-          description: Bad Request(password error)
-          schema:
-              type: object
-              properties:
-                  rc:
-                      type: number
-                      example: 401
-                  rcmsg:
-                      type: string
-                      example: password error
+          description: Unauthorized (password error)
+        409:
+          description: Conflict (nick name conflict)
         500:
-          description: server error
-          schema:
-              type: object
-              properties:
-                  rc:
-                      type: number
-                      example: 500
-                  rcmsg:
-                      type: string
-                      example: server error
-        600:
-          description: DB error
-          schema:
-              type: object
-              properties:
-                  rc:
-                      type: number
-                      example: 600
-                  rcmsg:
-                      type: string
-                      example: DB error
-                      
+          description: Internal Server Error
+    
     get:
       summary: 사용자 정보 가져오기
       description: 사용자 id(email + type), 사용자 닉네임, 프로필 사진을 가져온다.
       tags: [User]
       parameters:
         - in: header
-          name: userId
+          name: sessionKey
           type: string
           required: true
           description: 유저 SessionKey
@@ -110,12 +82,6 @@ paths:
           schema:
             type: object
             properties:
-                rc:
-                    type: number
-                    example: 200
-                rcmsg:
-                    type: string
-                    example: success
                 userId:
                     type: string
                     example: abc@naver.com:naver.com
@@ -126,66 +92,30 @@ paths:
                     type: string
                     example: 쓰담이
         400:
-          description: Bad Request(parameter error)
-          schema:
-              type: object
-              properties:
-                  rc:
-                      type: number
-                      example: 400
-                  rcmsg:
-                      type: string
-                      example: no parameter
-        401:
-          description: Bad Request(session key error)
-          schema:
-              type: object
-              properties:
-                  rc:
-                      type: number
-                      example: 401
-                  rcmsg:
-                      type: string
-                      example: no header key
+          description: Bad Request (parameter error)
         500:
-          description: server error
-          schema:
-              type: object
-              properties:
-                  rc:
-                      type: number
-                      example: 500
-                  rcmsg:
-                      type: string
-                      example: Getting user error
-        600:
-          description: DB error
-          schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 600
-              rcmsg:
-                type: string
-                example: DB error
+          description: Internal Server Error
     put:
       summary: 사용자 정보변경
       description: 반드시 2개의 파라미터를 받아야한다.
       tags: [User]
+      consumes:
+        - multipart/form-data
+      produces:
+        - application/json
       parameters:
         - in: header
-          name: userId
+          name: sessionKey
           type: string
           required: true
           description: 유저 SessionKey
         - in: formData
-          name: profile_img
+          name: profileImg
           type: file
-          description: 사용자의 사진을 업로드 합니다.
           required: true
+          description: 사용자의 사진을 업로드 합니다.
         - in: formData
-          name: display_name
+          name: displayName
           type: string
           description: 사용자의 이름을 변경합니다.
           required: true
@@ -195,12 +125,6 @@ paths:
           schema:
             type: object
             properties:
-              rc:
-                type: number
-                example: 200
-              rcmsg:
-                type: string
-                example: success
               userImg:
                 type: string
                 example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
@@ -208,160 +132,43 @@ paths:
                 type: string
                 example: 쓰담이
         400:
-          description: Bad Request(parameter error)
-          schema:
-              type: object
-              properties:
-                  rc:
-                      type: number
-                      example: 400
-                  rcmsg:
-                      type: string
-                      example: no parameter
-        401:
-          description: Bad Request(session key error)
-          schema:
-              type: object
-              properties:
-                  rc:
-                      type: number
-                      example: 401
-                  rcmsg:
-                      type: string
-                      example: no header key
+          description: Bad Request (parameter error)
         500:
-          description: user update error
-          schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 500
-              rcmsg:
-                type: string
-                example: user update error
-        600:
-          description: DB error
-          schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 600
-              rcmsg:
-                type: string
-                example: DB error
+          description: Internal Server Error
+                
+    delete:
+      summary: 회원탈퇴
+      tags: [User]
+      parameters:
+        - in: header
+          name: sessionKey
+          type: string
+          required: true
+          description: 유저 SessionKey
+      responses:
+        200:
+          description: OK
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
   /user/sign-out:
     get:
       summary: 사용자 로그아웃
       tags: [User]
       parameters:
         - in: header
-          name: userId
+          name: sessionKey
           type: string
           required: true
           description: 유저 SessionKey
       responses:
         200:
-          description: 로그아웃 성공
-          schema:
-            type: object
-            properties:
-                rc:
-                    type: number
-                    example: 200
-                rcmsg:
-                    type: string
-                    example: logout success
-              
+          description: OK
         400:
-          description: Bad Request(parameter error)
-          schema:
-              type: object
-              properties:
-                  rc:
-                      type: number
-                      example: 400
-                  rcmsg:
-                      type: string
-                      example: no header key
-        401:
-          description: Bad Request(session key error)
-          schema:
-              type: object
-              properties:
-                  rc:
-                      type: number
-                      example: 401
-                  rcmsg:
-                      type: string
-                      example: no header key
+          description: Bad Request
         500:
-          description: server error
-          schema:
-              type: object
-              properties:
-                  rc:
-                      type: number
-                      example: 500
-                  rcmsg:
-                      type: string
-                      example: server error
-    delete:
-      summary: 회원탈퇴
-      tags: [User]
-      parameters:
-        - in: header
-          name: userId
-          type: string
-          required: true
-          description: 유저 SessionKey
-      responses:
-        200:
-          description: 회원탈퇴 성공
-          schema:
-            type: object
-            properties:
-                rc:
-                    type: number
-                    example: 200
-                rcmsg:
-                    type: string
-                    example: success withdrawal
-                
-        400:
-          description: Bad Request(parameter error)
-          schema:
-              type: object
-              properties:
-                  rc:
-                      type: number
-                      example: 400
-                  rcmsg:
-                      type: string
-                      example: no header key
-        401:
-          description: Bad Request(session key error)
-          schema:
-              type: object
-              properties:
-                  rc:
-                      type: number
-                      example: 401
-                  rcmsg:
-                      type: string
-                      example: no header key
-        500:
-          description: server error
-          schema:
-              type: object
-              properties:
-                  rc:
-                      type: number
-                      example: 500
-                  rcmsg:
-                      type: string
-                      example: server error
+          description: Internal Server Error
                   
   /plogging:
     get:
@@ -394,7 +201,6 @@ paths:
           type: number
           required: false
           description: 조회할 페이지 숫자 ( default - 1 )
-
       responses:
         200:
           description: Success
