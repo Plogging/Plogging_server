@@ -85,7 +85,11 @@ UserInterface.prototype.signIn = async function(req, res) {
                 res.status(201).json(returnResult);
                 conn.commit();
             } catch (error) {
-                res.sendStatus(500);
+                if(error.errno === 1062){
+                    res.sendStatus(409);
+                }else{
+                    res.sendStatus(500);
+                }
                 conn.rollback();
             }
         }else{
