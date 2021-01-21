@@ -201,6 +201,31 @@ paths:
           description: Bad Request
         500:
           description: Internal Server Error
+  /user/password-temp:
+    put:
+      summary: 임시 비밀번호 변경
+      tags: [User]
+      parameters:
+        - in: body
+          name: email
+          description: 임시 비밀번호를 받는 이메일 주소
+          schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  example: heeheewuwu@gmail.com
+      responses:
+        200:
+          description: OK
+        400:
+          description: Bad Request
+        404:
+          description: Not Found (no email)
+        500:
+          description: Internal Server Error
 
   /plogging:
     get:

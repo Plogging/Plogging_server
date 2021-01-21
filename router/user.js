@@ -6,8 +6,12 @@ const fs = require('fs');
 const { uptime } = require('process');
 const { assert } = require('console');
 const filePath = process.env.IMG_FILE_PATH;
+const adminEmailId = process.env.ADMIN_EMAIL_ID;
+const adminEmailPassword = process.env.ADMIN_EMAIL_PASSWORD;
 const swaggerValidation = require('../util/validator');
 const { reloadLogs } = require('pm2');
+const nodemailer = require("nodemailer");
+const Email = require('email-templates');
 
 const UserInterface = function(config) {
     const router = express.Router();
@@ -43,6 +47,7 @@ const UserInterface = function(config) {
     router.get('/sign-out', swaggerValidation.validate, (req, res) => this.signOut(req, res));
     router.put('', upload.single('profileImg'), swaggerValidation.validate, (req, res) => this.update(req, res));
     router.put('/password', swaggerValidation.validate, (req, res) => this.changePassword(req, res));
+    router.put('/password-temp', swaggerValidation.validate, (req, res) => this.temporaryPassword(req, res));
     router.delete('', swaggerValidation.validate, (req, res) => this.withdrawal(req, res));
     return this.router;
 };
@@ -86,6 +91,7 @@ UserInterface.prototype.signIn = async function(req, res) {
                 res.status(201).json(returnResult);
                 conn.commit();
             } catch (error) {
+                console.log(error)
                 if(error.errno === 1062){
                     res.sendStatus(409);
                 }else{
@@ -192,7 +198,6 @@ UserInterface.prototype.withdrawal = async function(req, res) {
                 // 해당 산책의 점수 랭킹점수 삭제
                 await redisClient.zrem("weekly", userId);
                 await redisClient.zrem("monthly", userId);
-
                 res.sendStatus(200);
                 req.session.destroy();
                 conn.commit();
@@ -225,6 +230,24 @@ UserInterface.prototype.changePassword = async function(req, res) {
     }
 }
 
+UserInterface.prototype.temporaryPassword = async function(req, res) {
+    const tempPassword = Math.random().toString(36).slice(2);
+    try {
+        await sendEmail(req.body.email, tempPassword);
+        const promisePool = this.pool.promise();
+        const query = `UPDATE ${USER_TABLE} SET secret_key = ? WHERE user_id = ?`;
+        const value = [tempPassword, req.body.email+":custom"];
+        const [rows, _] = await promisePool.execute(query, value);
+        if(rows.affectedRows){
+            res.sendStatus(200);
+        }else{
+            res.sendStatus(404);
+        }
+    } catch (error) {
+        res.sendStatus(500);
+    }
+}
+
 const removeDir = function(path) {
     if (fs.existsSync(path)) {
         const files = fs.readdirSync(path)
@@ -243,6 +266,39 @@ const removeDir = function(path) {
     } else {
         console.log("Directory path not found.")
     }
+}
+
+const sendEmail = async function(userEmail, tempPassword){
+    let emailStringList = ['signUp', '[Eco run] 회원가입을 축하합니다!']
+    if(tempPassword){
+        emailStringList = ['password', '[Eco run] 임시 비밀번호 입니다']
+    }
+    let transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+            user: adminEmailId,
+            pass: adminEmailPassword
+        },
+    });
+    const email = new Email({
+        transport: transporter,
+        send: true,
+        preview: false,
+    });
+    email.send({
+        template: emailStringList[0],
+        message: {
+            from: "Eco run<ploggingteam@gmail.com>", 
+            to: userEmail, 
+            subject: emailStringList[1]
+        },
+        locals: {
+            name: userEmail,
+            password: tempPassword
+        }})
+        .then(() => console.log('email has been sent!'))
+        .catch(console.error);
+
 }
 
 module.exports = UserInterface;
