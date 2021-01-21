@@ -3,13 +3,10 @@ const cors=require('cors');
 const util = require('../util/common.js');
 const USER_TABLE = 'user';
 const fs = require('fs');
-const { uptime } = require('process');
-const { assert } = require('console');
 const filePath = process.env.IMG_FILE_PATH;
 const adminEmailId = process.env.ADMIN_EMAIL_ID;
 const adminEmailPassword = process.env.ADMIN_EMAIL_PASSWORD;
 const swaggerValidation = require('../util/validator');
-const { reloadLogs } = require('pm2');
 const nodemailer = require("nodemailer");
 const Email = require('email-templates');
 
