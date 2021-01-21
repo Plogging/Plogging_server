@@ -9,6 +9,7 @@ const adminEmailPassword = process.env.ADMIN_EMAIL_PASSWORD;
 const swaggerValidation = require('../util/validator');
 const nodemailer = require("nodemailer");
 const Email = require('email-templates');
+const ejs = require('ejs');
 
 const UserInterface = function(config) {
     const router = express.Router();
@@ -324,6 +325,11 @@ const sendEmail = async function(userEmail, tempPassword){
         transport: transporter,
         send: true,
         preview: false,
+        views: {
+            options: {
+                extension: 'ejs'
+            }
+        }
     });
     email.send({
         template: emailStringList[0],
