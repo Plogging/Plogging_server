@@ -7,17 +7,18 @@ info:
 paths:
   /user:
     post:
-      summary: 로그인 하기
+      summary: 회원가입하기
       tags: [User]
       parameters:
         - in: body
           name: user
-          description: userId는 email:type 으로 구분자 ':'를 사용합니다. 자체 로그인인 경우는 custom으로 하면됩니다. 자체로그인인 경우는 secretKey를 꼭 받아야 합니다.
+          description: userId는 email:type 으로 구분자 ':'를 사용합니다. type은 custom입니다.
           schema:
               type: object
               required:
                 - userName
                 - userId
+                - secretKey
               properties:
                 userId:
                   type: string
@@ -29,22 +30,8 @@ paths:
                   type: string
                   example: 1234qwer
       responses:
-        200:
-          description: 기존 회원 로그인 성공
-          schema:
-            type: object
-            properties:
-                session:
-                    type: string
-                    example: 0q8DptSJiinhbspcQwK6wxUtvNkmNano
-                userImg:
-                    type: string
-                    example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
-                userName:
-                    type: string
-                    example: 쓰담이
         201:
-          description: 신규 회원 로그인 성공 (회원 가입)
+          description: 회원가입 성공
           schema:
             type: object
             properties:
@@ -59,13 +46,10 @@ paths:
                     example: 쓰담이
         400:
           description: Bad Request (parameter error)
-        401:
-          description: Unauthorized (password error)
         409:
           description: Conflict (display name conflict)
         500:
           description: Internal Server Error
-    
     get:
       summary: 사용자 정보 가져오기
       description: 사용자 id(email + type), 사용자 닉네임, 프로필 사진을 가져온다.
@@ -154,6 +138,67 @@ paths:
           description: Bad Request
         500:
           description: Internal Server Error
+          
+  /user/sign-in:
+    post:
+      summary: 로그인 하기
+      tags: [User]
+      parameters:
+        - in: body
+          name: user
+          description: userId는 email:type 으로 구분자 ':'를 사용합니다. 자체 로그인인 경우는 custom으로 하면됩니다. 자체로그인인 경우는 secretKey를 꼭 받아야 합니다.
+          schema:
+              type: object
+              required:
+                - userId
+              properties:
+                userId:
+                  type: string
+                  example: ganghee@naver.com:naver.com
+                userName:
+                  type: string
+                  example: 쓰담이
+                secretKey:
+                  type: string
+                  example: 1234qwer
+      responses:
+        200:
+          description: 기존 회원 로그인 성공
+          schema:
+            type: object
+            properties:
+                session:
+                    type: string
+                    example: 0q8DptSJiinhbspcQwK6wxUtvNkmNano
+                userImg:
+                    type: string
+                    example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
+                userName:
+                    type: string
+                    example: 쓰담이
+        201:
+          description: 신규 회원 로그인 성공 (회원 가입)
+          schema:
+            type: object
+            properties:
+                session:
+                    type: string
+                    example: 0q8DptSJiinhbspcQwK6wxUtvNkmNano
+                userImg:
+                    type: string
+                    example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
+                userName:
+                    type: string
+                    example: 쓰담이
+        400:
+          description: Bad Request (parameter error)
+        401:
+          description: Unauthorized (password error)
+        409:
+          description: Conflict (display name conflict)
+        500:
+          description: Internal Server Error
+    
   /user/sign-out:
     get:
       summary: 사용자 로그아웃

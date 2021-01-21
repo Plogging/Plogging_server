@@ -42,15 +42,66 @@ const UserInterface = function(config) {
         })
 
     // 유저 관련 api 구현
-    router.post('', swaggerValidation.validate, (req, res) => this.signIn(req, res));
+    router.post('', swaggerValidation.validate, (req, res) => this.register(req, res));
     router.get('', swaggerValidation.validate, (req, res) => this.getUserInfo(req, res));
-    router.get('/sign-out', swaggerValidation.validate, (req, res) => this.signOut(req, res));
     router.put('', upload.single('profileImg'), swaggerValidation.validate, (req, res) => this.update(req, res));
+    router.post('/sign-in', swaggerValidation.validate, (req, res) => this.signIn(req, res));
+    router.get('/sign-out', swaggerValidation.validate, (req, res) => this.signOut(req, res));
     router.put('/password', swaggerValidation.validate, (req, res) => this.changePassword(req, res));
     router.put('/password-temp', swaggerValidation.validate, (req, res) => this.temporaryPassword(req, res));
     router.delete('', swaggerValidation.validate, (req, res) => this.withdrawal(req, res));
     return this.router;
 };
+
+UserInterface.prototype.register = async function(req, res) {
+    let returnResult = {};
+    const [userEmail, userType] = req.body.userId.split(":");
+    const secretKey = req.body.secretKey;
+    const userName = req.body.userName;
+    const userId = req.body.userId;
+    if(userType.toLowerCase() != 'custom' || !secretKey){ 
+        res.sendStatus(400);
+        return;
+    }
+    
+    // search userId in DB
+    this.pool.getConnection(async function(err, conn){
+        conn.beginTransaction();
+        const findUserQuery = `SELECT * FROM ${USER_TABLE} WHERE user_id = ?`;
+        const findUserValues = [userId];
+        const [rows, _] = await conn.promise().execute(findUserQuery, findUserValues); 
+        if (rows.length === 0) {
+            try {
+                // set userImg
+                let userImg = "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg";
+                const createDateline = util.getCurrentDateTime();
+                const createUserQuery = `INSERT INTO ${USER_TABLE}(user_id, display_name, profile_img, type, email, update_datetime, create_datetime, secret_key) VALUES(?, ?, ?, ?, ?, ?, ?, ?)`;
+                const createUserValues = [userId, userName, userImg, userType, userEmail, createDateline, createDateline, secretKey];
+                await conn.promise().execute(createUserQuery, createUserValues);
+                req.session.userId = userId;
+                returnResult.session = req.session.id;
+                returnResult.userImg = userImg;
+                returnResult.userName = userName;
+                res.status(201).json(returnResult);
+                conn.commit();
+            } catch (error) {
+                if(error.errno === 1062){
+                    res.status(409).send('DisplayName Conflict');
+                }else{
+                    res.sendStatus(500);
+                }
+                conn.rollback();
+            }
+        }else{
+            res.status(409).send('UserId Conflict');
+        };
+        if(err){
+            res.sendStatus(500);
+        };
+        conn.release();
+    });
+}
+
 
 UserInterface.prototype.signIn = async function(req, res) {
     let returnResult = {};
@@ -74,15 +125,8 @@ UserInterface.prototype.signIn = async function(req, res) {
                 // set userImg
                 let userImg = "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg";
                 const createDateline = util.getCurrentDateTime();
-                let createUserQuery
-                let createUserValues
-                if(userType.toLowerCase() === 'custom'){
-                    createUserQuery = `INSERT INTO ${USER_TABLE}(user_id, display_name, profile_img, type, email, update_datetime, create_datetime, secret_key) VALUES(?, ?, ?, ?, ?, ?, ?, ?)`;
-                    createUserValues = [userId, userName, userImg, userType, userEmail, createDateline, createDateline, secretKey];
-                }else{
-                    createUserQuery = `INSERT INTO ${USER_TABLE}(user_id, display_name, profile_img, type, email, update_datetime, create_datetime) VALUES(?, ?, ?, ?, ?, ?, ?)`;
-                    createUserValues = [userId, userName, userImg, userType, userEmail, createDateline, createDateline];
-                }
+                const createUserQuery = `INSERT INTO ${USER_TABLE}(user_id, display_name, profile_img, type, email, update_datetime, create_datetime) VALUES(?, ?, ?, ?, ?, ?, ?)`;
+                const createUserValues = [userId, userName, userImg, userType, userEmail, createDateline, createDateline];
                 await conn.promise().execute(createUserQuery, createUserValues);
                 req.session.userId = userId;
                 returnResult.session = req.session.id;
@@ -91,7 +135,6 @@ UserInterface.prototype.signIn = async function(req, res) {
                 res.status(201).json(returnResult);
                 conn.commit();
             } catch (error) {
-                console.log(error)
                 if(error.errno === 1062){
                     res.sendStatus(409);
                 }else{
