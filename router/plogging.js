@@ -58,7 +58,7 @@ const PloggingInterface = function(config) {
 /**
  * @swagger
  */
-PloggingInferface.prototype.readPlogging = async function(req, res) {
+PloggingInterface.prototype.readPlogging = async function(req, res) {
     logger.info(logHelper.reqWrapper(req));
 
     let userId = req.userId; // api를 call한 userId
