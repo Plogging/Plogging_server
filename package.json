@@ -28,6 +28,8 @@
     "redis-lock": "^0.1.4",
     "swagger-jsdoc": "^6.0.1",
     "swagger-ui-express": "^4.1.6",
+    "winston": "^3.3.3",
+    "winston-daily-rotate-file": "^4.5.0",
     "yamljs": "^0.3.0"
   }
 }

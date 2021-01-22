@@ -13,16 +13,18 @@ module.exports = {
               "PORT": 20000,
               "LOG_PATH": "",
               "LOG_LEVEL": "debug",
-              "MONGODB_INFO": "127.0.0.1:27017",
+              "MONGODB_INFO": "127.0.0.1:27017", //"121.130.220.217:40002",
               "MONGODB_PASSWORD": "JjaoSaoP+IRVDBkXdDR4XMgTmkMut0VM",
-              "REDIS_INFO": "127.0.0.1:6379",
+              "REDIS_INFO": "127.0.0.1:6379", // 121.130.220.217:40000",
               "REDIS_PASSWORD":"JjaoSaoP+IRVDBkXdDR4XMgTmkMut0VM",
-              "MARIADB_INFO": "127.0.0.1:3306",
+              "MARIADB_INFO": "127.0.0.1:3306", //"121.130.220.217:40001",
               "MARIADB_PASSWORD": "JjaoSaoP+IRVDBkXdDR4XMgTmkMut0VM",
               "IMG_FILE_PATH": "E:file_test",
               "SERVER_REQ_INFO": "http://localhost:20000",
               "ADMIN_EMAIL_ID": "ploggingteam@gmail.com",
-              "ADMIN_EMAIL_PASSWORD": "murder^^6"
+              "ADMIN_EMAIL_PASSWORD": "murder^^6",
+              "SERVER_REQ_INFO": "http:localhost//:20000", //http:121.130.220.217//:20000",
+              "LOG_PATH": "E:\winston-log"
           },
           env_development: { // tb ( 라즈베리파이 서버 )
             "NODE_ENV": "development",
@@ -36,7 +38,8 @@ module.exports = {
             "IMG_FILE_PATH": "/mnt/Plogging_server/images",
             "SERVER_REQ_INFO": "http://121.130.220.217:20000",
             "ADMIN_EMAIL_ID": "ploggingteam@gamil.com",
-            "ADMIN_EMAIL_PASSWORD": "murder^^6"
+            "ADMIN_EMAIL_PASSWORD": "murder^^6",
+            "LOG_PATH": "/mnt/Plogging_server/images/log"
           },
           env_production: { // 상용 ( 클라우드 서버 )
             "NODE_ENV": "production",
