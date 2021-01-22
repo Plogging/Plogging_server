@@ -10,7 +10,7 @@ const filePath = "/mnt/Plogging_server/images/plogging/";
 const logger = require("../util/logger.js")("plogging.js");
 const logHelper = require("../util/logHelper.js");
 
-const PloggingInferface = function(config) {
+const PloggingInterface = function(config) {
     const router = express.Router();
     router.all('*',cors());
 
@@ -24,27 +24,27 @@ const PloggingInferface = function(config) {
 
     const upload = this.fileInterface({
         storage: this.fileInterface.diskStorage({
-          destination: function (req, file, cb) {
-            const userId = req.userId; // 세션체크 완료하면 값 받아옴
-            const dir = `${filePath}${userId}`;
-            if (!fs.existsSync(dir)){
-                fs.mkdirSync(dir);
+            destination: function (req, file, cb) {
+                const userId = req.userId; // 세션체크 완료하면 값 받아옴
+                const dir = `${filePath}${userId}`;
+                if (!fs.existsSync(dir)){
+                    fs.mkdirSync(dir);
+                }
+                cb(null, dir);
+            },
+            filename: function (req, file, cb) {
+                cb(null, `plogging_${util.getCurrentDateTime()}.PNG`);
             }
-            cb(null, dir);
-          },
-          filename: function (req, file, cb) {
-            cb(null, `plogging_${util.getCurrentDateTime()}.PNG`);
-          }
         }),
         limits: {fileSize: 1*1000*5000}, // file upload 5MB 제한
-      })
+    })
 
     // 플로깅 관련 api 구현
     router.get("/", swaggerValidation.validate, (req, res) => this.readPlogging(req, res));// read
     router.post("/", upload.single('ploggingImg'), swaggerValidation.validate, (req, res) => this.writePlogging(req, res)); // create
     router.delete("/", swaggerValidation.validate, (req, res) => this.deletePlogging(req,res)); // delete
 
-   this.redisAsyncZrem = promisify(this.redisClient.zrem).bind(this.redisClient);
+    this.redisAsyncZrem = promisify(this.redisClient.zrem).bind(this.redisClient);
 
     return this.router;
 };
@@ -109,7 +109,7 @@ PloggingInferface.prototype.readPlogging = async function(req, res) {
  * 산책 이력 등록
  * - img는 optional. 만약, 입력안하면 baseImg로 세팅
  */
-PloggingInferface.prototype.writePlogging = async function(req, res) {
+PloggingInterface.prototype.writePlogging = async function(req, res) {
     console.log("plogging write api !");
 
     let returnResult = { rc: 200, rcmsg: "success" };
@@ -162,7 +162,7 @@ PloggingInferface.prototype.writePlogging = async function(req, res) {
         await this.redisClient.zadd(monthlyRankingKey, resultMonthScore, userId); // 랭킹서버에 insert
 
         unlock();
- 
+        
         returnResult.score = { };
         returnResult.score.totalScore = ploggingTotalScore;
         returnResult.score.activityScore = ploggingActivityScore;
@@ -184,7 +184,7 @@ PloggingInferface.prototype.writePlogging = async function(req, res) {
  *   case 1. 유저가 특정 산책 이력을 삭제하거나(1개 삭제) - 산책이력의 objectId값을 파라미터로 전달
  *   case 2. 회원 탈퇴했을때(해당 회원 산책이력 모두 삭제) - 산책이력의 objectId값을 파라미터로 전달하지 않음
  */
-PloggingInferface.prototype.deletePlogging = async function(req, res) {
+PloggingInterface.prototype.deletePlogging = async function(req, res) {
     console.log("plogging delete api !");
 
     let userId = req.userId;
@@ -198,15 +198,14 @@ PloggingInferface.prototype.deletePlogging = async function(req, res) {
     let mongoConnection = null;
     try {
         mongoConnection = this.MongoPool.db('plogging');
-
         if(mongoObjectId) { // 해당 이력만 삭제
             query = {"_id": ObjectId(mongoObjectId)};
-
+            
             // 산책이력 삭제
             await mongoConnection.collection('record').deleteOne(query);
-         
+            
             // 산책이력 이미지 삭제
-            if(ploggingImgPath) fs.unlinkSync(ploggingImgPath);
+            if(ploggingImgName) fs.unlinkSync(ploggingImgName);
 
             // 해당 산책의 점수 랭킹점수 삭제
             //let queryKey = "Plogging";
@@ -266,4 +265,4 @@ function addExtraScorePerKm(distance) {
     return extraScore;
 }
 
-module.exports = PloggingInferface;
+module.exports = PloggingInterface;
