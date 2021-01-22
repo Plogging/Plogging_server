@@ -224,7 +224,7 @@ UserInterface.prototype.withdrawal = async function(req, res) {
             await mongoConnection.collection('record').deleteMany({"meta.user_id": userId});
             // 탈퇴 유저의 산책이력 이미지 전체 삭제
             if(fs.existsSync(`${filePath}/${userId}`)){
-                removeDir(`${filePath}/${userId}`);
+                fs.rmdirSync(`${filePath}/${userId}`, { recursive: true });
             }
             // 해당 산책의 점수 랭킹점수 삭제
             await redisClient.zrem("weekly", userId);
@@ -272,26 +272,6 @@ UserInterface.prototype.temporaryPassword = async function(req, res) {
         }
     } catch (error) {
         res.sendStatus(500);
-    }
-}
-
-const removeDir = function(path) {
-    if (fs.existsSync(path)) {
-        const files = fs.readdirSync(path)
-        if (files.length > 0) {
-            files.forEach(function(filename) {
-                if (fs.statSync(path + "/" + filename).isDirectory()) {
-                    removeDir(path + "/" + filename)
-                } else {
-                    fs.unlinkSync(path + "/" + filename)
-                }
-            })
-        fs.rmdirSync(path)
-        } else {
-        fs.rmdirSync(path)
-        }
-    } else {
-        console.log("Directory path not found.")
     }
 }
 
