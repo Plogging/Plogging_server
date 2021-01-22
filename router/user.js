@@ -113,6 +113,10 @@ UserInterface.prototype.signIn = async function(req, res) {
     const findUserValues = [userId];
     const [rows, _] = await promiseConn.execute(findUserQuery, findUserValues);
     if (rows.length === 0) {
+        if(userType.toLowerCase() === 'custom'){
+            res.sendStatus(404);
+            return;
+        }
         try {
             // set userImg
             let userImg = "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg";

@@ -194,6 +194,8 @@ paths:
           description: Bad Request (parameter error)
         401:
           description: Unauthorized (password error)
+        404:
+          description: Not Found (custom 로그인 시 저장된 id 없음)
         409:
           description: Conflict (display name conflict)
         500:
