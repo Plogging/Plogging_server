@@ -47,7 +47,7 @@ paths:
         400:
           description: Bad Request (body should have required property [userId])
         409:
-          description: Conflict ('display name conflict' or 'userId conflict')
+          description: Conflict ('user name conflict' or 'userId conflict')
         500:
           description: Internal Server Error
     get:
@@ -148,7 +148,7 @@ paths:
         400:
           description: Bad Request (body should have required property [userId/ userName])
         409:
-          description: Conflict (display name conflict)
+          description: Conflict (user name conflict)
         500:
           description: Internal Server Error
   /user/sign-in:
@@ -327,8 +327,8 @@ paths:
             description: Internal Server Error
   /user/name:
     put:
-        summary: 사용자 프로필 이미지 변경
-        description: 사용자의 프로필 이미지를 변경합니다.
+        summary: 사용자 프로필 이름 변경
+        description: 사용자의 이름을 변경합니다.
         tags: [User]
         consumes:
           - multipart/form-data
@@ -346,9 +346,9 @@ paths:
             schema:
                 type: object
                 required:
-                  - displayName
+                  - userName
                 properties:
-                  displayName:
+                  userName:
                     type: string
                     example: 쓰담이
         responses:
@@ -357,13 +357,13 @@ paths:
             schema:
               type: object
               properties:
-                userImg:
+                userName:
                   type: string
-                  example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
+                  example: 쓰담이
           400:
             description: Bad Request (body should have required property 'secretKey')
           409:
-            description: DisplayName Conflict
+            description: userName Conflict
           500:
             description: Internal Server Error
                   

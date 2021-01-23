@@ -83,7 +83,7 @@ UserInterface.prototype.register = async function(req, res) {
             } catch (error) {
                 console.log(error)
                 if(error.errno === 1062){
-                    res.status(409).send('DisplayName Conflict');
+                    res.status(409).send('UserName Conflict');
                 }else{
                     res.sendStatus(500);
                 }
@@ -192,17 +192,17 @@ UserInterface.prototype.changeUserName = async function(req, res) {
     const updateTime = util.getCurrentDateTime();
     try {
         const query = `UPDATE ${USER_TABLE} SET display_name = ?, update_datetime = ? WHERE user_id = ?`;
-        const values = [req.body.displayName, updateTime, req.session.userId];
+        const values = [req.body.userName, updateTime, req.session.userId];
         const [rows, _] = await promisePool.execute(query, values);
         if(rows.affectedRows){
-            returnResult.displayName = req.body.displayName;
+            returnResult.userName = req.body.userName;
             res.send(returnResult);
         }else{
             res.sendStatus(500);
         }
     } catch (error) {
         if(error.errno === 1062){
-            res.status(409).send('DisplayName Conflict');
+            res.status(409).send('userName Conflict');
         }else{
             res.sendStatus(500);
         }
