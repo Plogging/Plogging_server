@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const swaggerValidation = require('../util/validator')
+const logger = require("../util/logger.js")("ranking.js");
 const { USER_TABLE } = require('./user')
 
 const weeklyRankingKey = "weekly"
@@ -31,6 +32,7 @@ RankingInterface.prototype.getGlobalRank = async function(req, res) {
         let rankType = req.query.rankType
         let offset = req.query.offset
         let limit = req.query.limit
+        logger.info(`Fetching ${rankType} global ranking from redis...`)
         const [zcountResult, zrevrangeResult] = await this.redisClient.pipeline()
         .zcount(rankType, "-inf", "+inf")
         .zrevrange(rankType, offset, offset+limit-1, "withscores")
@@ -40,6 +42,7 @@ RankingInterface.prototype.getGlobalRank = async function(req, res) {
         const returnResult = {rc: 200, rcmsg: "success", count: count, rankData: rankData}
         res.status(200).json(returnResult)
     } catch(e) {
+        logger.error(e.message)
         const returnResult = { rc: 500, rcmsg: e.message }
         res.status(500).json(returnResult)
     }
@@ -49,6 +52,7 @@ RankingInterface.prototype.getUserRank = async function(req, res) {
     try {
         let rankType = req.query.rankType
         let targetUserId = req.params.id
+        logger.info(`Fetching ${rankType} rank of user ${targetUserId} from redis...`)
         const [zrankResult, zscoreResult] = await this.redisClient.pipeline()
         .zrank(rankType, targetUserId)
         .zscore(rankType, targetUserId)
@@ -61,6 +65,7 @@ RankingInterface.prototype.getUserRank = async function(req, res) {
         const returnResult = {rc: 200, rcmsg: "success", userRankData: userRankData}
         res.status(200).json(returnResult)
     } catch(e) {
+        logger.error(e.message)
         const returnResult = { rc: 500, rcmsg: e.message }
         res.status(500).json(returnResult)
     }
@@ -89,6 +94,7 @@ RankingInterface.prototype.buildRankData = async function(rankWithScores) {
 
 RankingInterface.prototype.getUserInfo = async function(userId) {
     const query = `SELECT user_id, display_name, profile_img from ${USER_TABLE} WHERE user_id = ?`
+    logger.info(`Fetching user data of user ${userId} from DB...`)
     const [rows, _] = await this.mysqlPool2.promise().query(query, [userId])
     const { user_id, display_name, profile_img } = rows[0]
     const userInfo = { userId: user_id, displayName: display_name, profileImg: profile_img }
@@ -98,6 +104,7 @@ RankingInterface.prototype.getUserInfo = async function(userId) {
 RankingInterface.prototype.getUserInfos = async function(userIds) {
     const query = `SELECT user_id, display_name, profile_img from ${USER_TABLE} WHERE user_id in 
     (` + userIds.map(() => '?') + `)`
+    logger.info(`Fetching user data of users ${userIds} from DB...`)
     const [rows, _] = await this.mysqlPool2.promise().query(query, userIds)
     const userInfos = {}
     rows.forEach(row => {
