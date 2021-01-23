@@ -11,7 +11,7 @@ const redisClient = require("./config/redisConfig.js");
 const MongoClient = require("./config/mongoConfig.js");
 const swaggerValidation = require('./util/validator.js');
 const logger = require("./util/logger.js")("index.js");
-const logHelper = require("../util/logHelper.js");
+const logHelper = require("./util/logHelper.js");
 
 const session = require('express-session');
 const redisStore = require('connect-redis')(session);
@@ -30,7 +30,7 @@ const swaggerUi = require('swagger-ui-express');
     app.use(bodyParser.urlencoded({extended: false}));
     app.use(bodyParser.json());
 
-    app.use(express.static('/mnt/Plogging_server/images')); // 정적파일 제공
+    app.use(express.static(process.env.IMG_FILE_PATH)); // 정적파일 제공
 
     // redis sessionStorage 설정
     app.use(session({
