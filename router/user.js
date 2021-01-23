@@ -310,10 +310,10 @@ UserInterface.prototype.checkUserId = async function(req, res) {
     const promisePool = this.pool.promise();
     try {
         const query = `SELECT * FROM ${USER_TABLE} WHERE user_id = ?`;
-        const values = [req.body.userId];
+        const values = [req.body.userId + ':custom'];
         const [rows, _] = await promisePool.execute(query, values);
         if(rows.length){
-            res.status(400).send('user_id which was existed');
+            res.status(400).send('userId which was existed');
         }else{
             res.sendStatus(200);
         }
