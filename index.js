@@ -11,7 +11,7 @@ const redisClient = require("./config/redisConfig.js");
 const MongoClient = require("./config/mongoConfig.js");
 const swaggerValidation = require('./util/validator.js');
 const logger = require("./util/logger.js")("index.js");
-const logHelper = require("../util/logHelper.js");
+const logHelper = require("./util/logHelper.js");
 
 const session = require('express-session');
 const redisStore = require('connect-redis')(session);
