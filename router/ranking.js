@@ -20,15 +20,15 @@ const RankingInterface = function(config) {
     this.redisClient = config.redisClient;
 
     // 랭킹 관련 api 구현
-    router.get("/:rankType", swaggerValidation.validate, (req, res) => this.getRank(req, res));
-
+    router.get("/global", swaggerValidation.validate, (req, res) => this.getGlobalRank(req, res));
+    router.get("/user/:id", swaggerValidation.validate, (req, res) => this.getUserRank(req, res))
     return this.router;
 
 };
 
-RankingInterface.prototype.getRank = async function(req, res) {
+RankingInterface.prototype.getGlobalRank = async function(req, res) {
     try {
-        let rankType = req.params.rankType
+        let rankType = req.query.rankType
         let offset = req.query.offset
         let limit = req.query.limit
         const [zcountResult, zrevrangeResult] = await this.redisClient.pipeline()
@@ -38,6 +38,27 @@ RankingInterface.prototype.getRank = async function(req, res) {
         const count = zcountResult[1]
         const rankData = await this.buildRankData(zrevrangeResult[1])
         const returnResult = {rc: 200, rcmsg: "success", count: count, rankData: rankData}
+        res.status(200).json(returnResult)
+    } catch(e) {
+        const returnResult = { rc: 500, rcmsg: e.message }
+        res.status(500).json(returnResult)
+    }
+}
+
+RankingInterface.prototype.getUserRank = async function(req, res) {
+    try {
+        let rankType = req.query.rankType
+        let targetUserId = req.params.id
+        const [zrankResult, zscoreResult] = await this.redisClient.pipeline()
+        .zrank(rankType, targetUserId)
+        .zscore(rankType, targetUserId)
+        .exec()
+        const rank = zrankResult[1]
+        const score = zscoreResult[1]
+        const { userId, displayName, profileImg } = await this.getUserInfo(targetUserId)
+        const userRankData = {userId: userId, displayName: displayName, profileImg: profileImg,
+        rank: rank, score: score}
+        const returnResult = {rc: 200, rcmsg: "success", userRankData: userRankData}
         res.status(200).json(returnResult)
     } catch(e) {
         const returnResult = { rc: 500, rcmsg: e.message }
@@ -64,6 +85,14 @@ RankingInterface.prototype.buildRankData = async function(rankWithScores) {
         rankData.push(userInfo)
     }
     return rankData
+}
+
+RankingInterface.prototype.getUserInfo = async function(userId) {
+    const query = `SELECT user_id, display_name, profile_img from ${USER_TABLE} WHERE user_id = ?`
+    const [rows, _] = await this.mysqlPool2.promise().query(query, [userId])
+    const { user_id, display_name, profile_img } = rows[0]
+    const userInfo = { userId: user_id, displayName: display_name, profileImg: profile_img }
+    return userInfo
 }
 
 RankingInterface.prototype.getUserInfos = async function(userIds) {
