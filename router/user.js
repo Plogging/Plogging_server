@@ -177,6 +177,9 @@ UserInterface.prototype.getUserInfo = async function(req, res) {
             returnResult.userId = rows[0].user_id;
             returnResult.userImg = rows[0].profile_img;
             returnResult.userName = rows[0].display_name;
+            returnResult.userScore = rows[0].score;
+            returnResult.userDistance = rows[0].distance;
+            returnResult.userTrash = rows[0].trash;
             res.json(returnResult);
         }else{
             res.sendStatus(500);
