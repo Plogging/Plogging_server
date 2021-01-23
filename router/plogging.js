@@ -8,7 +8,6 @@ const swaggerValidation = require('../util/validator')
 //const filePath = process.env.IMG_FILE_PATH + "/plogging/";
 const filePath = "/mnt/Plogging_server/images/plogging/";
 const logger = require("../util/logger.js")("plogging.js");
-const logHelper = require("../util/logHelper.js");
 
 const PloggingInterface = function(config) {
     const router = express.Router();
