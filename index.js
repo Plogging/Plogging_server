@@ -63,7 +63,9 @@ const swaggerUi = require('swagger-ui-express');
         // 세션 체크 공통 모듈
         if((req.path === '/user' && req.method === 'POST') || 
             (req.path === '/user/password-temp') || 
-            (req.path === '/user/sign-in')) next();
+            (req.path === '/user/sign-in') ||
+            (req.path === '/user/social') ||
+            (req.path === '/user/check')) next();
         else {
             const sessionKey = req.get('sessionKey');
             if(sessionKey === req.session.id) {  // 세션 값이 있는 경우 ( 로그인이 되어있는 경우 )

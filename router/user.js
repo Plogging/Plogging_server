@@ -42,7 +42,7 @@ const UserInterface = function(config) {
     router.post('', swaggerValidation.validate, (req, res) => this.register(req, res));
     router.get('', swaggerValidation.validate, (req, res) => this.getUserInfo(req, res));
     router.delete('', swaggerValidation.validate, (req, res) => this.withdrawal(req, res));
-    router.post('/sign-in', swaggerValidation.validate, (req, res) => this.signIn(req, res));
+    router.post('/social', swaggerValidation.validate, (req, res) => this.social(req, res));
     router.get('/sign-out', swaggerValidation.validate, (req, res) => this.signOut(req, res));
     router.put('/password', swaggerValidation.validate, (req, res) => this.changePassword(req, res));
     router.put('/password-temp', swaggerValidation.validate, (req, res) => this.temporaryPassword(req, res));
@@ -97,16 +97,11 @@ UserInterface.prototype.register = async function(req, res) {
     promiseConn.release();
 }
 
-UserInterface.prototype.signIn = async function(req, res) {
+UserInterface.prototype.social = async function(req, res) {
     let returnResult = {};
     const [userEmail, userType] = req.body.userId.split(":");
-    const secretKey = req.body.secretKey;
-    const userName = req.body.userName;
     const userId = req.body.userId;
-    if(userType.toLowerCase() === 'custom' && !secretKey){ 
-        res.sendStatus(400);
-        return;
-    }
+    const userName = req.body.userName;
     const promiseConn = await this.pool.promise().getConnection();
     promiseConn.beginTransaction();
     // search userId in DB
@@ -114,12 +109,8 @@ UserInterface.prototype.signIn = async function(req, res) {
     const findUserValues = [userId];
     const [rows, _] = await promiseConn.execute(findUserQuery, findUserValues);
     if (rows.length === 0) {
-        if(userType.toLowerCase() === 'custom'){
-            res.sendStatus(404);
-            return;
-        }
         try {
-            // set userImg
+            // init userImg
             let userImg = "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg";
             const createDateline = util.getCurrentDateTime();
             const createUserQuery = `INSERT INTO ${USER_TABLE}(user_id, display_name, profile_img, type, email, update_datetime, create_datetime) VALUES(?, ?, ?, ?, ?, ?, ?)`;
@@ -140,13 +131,6 @@ UserInterface.prototype.signIn = async function(req, res) {
             promiseConn.rollback();
         }
     }else{
-        if(userType.toLowerCase() === 'custom'){
-            if(secretKey != rows[0].secret_key){
-                res.sendStatus(401);
-                promiseConn.rollback();
-                return;
-            }
-        }
         req.session.userId = userId;
         returnResult.session = req.session.id;
         returnResult.userImg = rows[0].profile_img;

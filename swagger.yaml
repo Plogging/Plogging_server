@@ -45,9 +45,9 @@ paths:
                     type: string
                     example: 쓰담이
         400:
-          description: Bad Request (body should have required property 'secretKey')
+          description: Bad Request (body should have required property [userId])
         409:
-          description: Conflict (display name conflict)
+          description: Conflict ('display name conflict' or 'userId conflict')
         500:
           description: Internal Server Error
     get:
@@ -79,7 +79,6 @@ paths:
           description: Unauthorized (sessionKey 유효하지 않을 때)
         500:
           description: Internal Server Error
-    
     delete:
       summary: 회원탈퇴
       tags: [User]
@@ -92,31 +91,31 @@ paths:
       responses:
         200:
           description: OK
+        401:
+          description: Unauthorized (sessionKey 유효하지 않을 때)
         500:
           description: Internal Server Error
           
-  /user/sign-in:
+  /user/social:
     post:
-      summary: 로그인 하기
+      summary: OAuth login
       tags: [User]
       parameters:
         - in: body
           name: user
-          description: userId는 email:type 으로 구분자 ':'를 사용합니다. 자체 로그인인 경우는 custom으로 하면됩니다. 자체로그인인 경우는 secretKey를 꼭 받아야 합니다.
+          description: userId는 email:type 으로 구분자 ':'를 사용합니다. 409의 에러인 경우 userName 충돌이며 회원가입 실패이다.
           schema:
               type: object
               required:
                 - userId
+                - userName
               properties:
                 userId:
                   type: string
-                  example: ganghee@naver.com:naver.com
+                  example: ganghee@naver.com:naver
                 userName:
                   type: string
                   example: 쓰담이
-                secretKey:
-                  type: string
-                  example: 1234qwer
       responses:
         200:
           description: 기존 회원 로그인 성공
@@ -133,7 +132,7 @@ paths:
                     type: string
                     example: 쓰담이
         201:
-          description: 신규 회원 로그인 성공 (회원 가입)
+          description: OAuth 신규 회원 등록 성공
           schema:
             type: object
             properties:
@@ -147,16 +146,12 @@ paths:
                     type: string
                     example: 쓰담이
         400:
-          description: Bad Request (parameter error)
-        401:
-          description: Unauthorized (password error)
-        404:
-          description: Not Found (custom 로그인 시 저장된 id 없음)
+          description: Bad Request (body should have required property [userId/ userName])
         409:
           description: Conflict (display name conflict)
         500:
           description: Internal Server Error
-    
+  
   /user/sign-out:
     get:
       summary: 사용자 로그아웃
@@ -196,7 +191,8 @@ paths:
         400:
           description: user_id which was existed
         500:
-          description: Internal Server Error                
+          description: Internal Server error
+  
   /user/password:
     put:
       summary: 비밀번호 변경
