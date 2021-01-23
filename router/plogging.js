@@ -7,7 +7,6 @@ const USER_TABLE = 'user';
 const { ObjectId } = require('mongodb');
 const swaggerValidation = require('../util/validator')
 const ploggingFilePath = process.env.IMG_FILE_PATH + "/plogging/";
-//const filePath = "/mnt/Plogging_server/images/plogging/";
 const logger = require("../util/logger.js")("plogging.js");
 
 const PloggingInterface = function(config) {
@@ -210,6 +209,7 @@ PloggingInterface.prototype.deletePlogging = async function(req, res) {
     let userId = req.userId;
     let mongoObjectId = req.query.objectId;
     let ploggingImgName = req.query.ploggingImgName; // plogging_20210106132743.PNG
+    let ploggingImgPath = `${ploggingFilePath}${userId}/${ploggingImgName}`; 
     let query = null;
 
     let returnResult = { rc: 200, rcmsg: "success" };
@@ -222,7 +222,7 @@ PloggingInterface.prototype.deletePlogging = async function(req, res) {
         await mongoConnection.collection('record').deleteOne(query);
             
         // 산책이력 이미지 삭제
-        if(ploggingImgName) fs.unlinkSync(ploggingImgName);
+        fs.unlinkSync(ploggingImgPath);
 
         // 해당 산책의 점수 랭킹점수 삭제
         await this.redisClient.zrem("weekly", userId);
