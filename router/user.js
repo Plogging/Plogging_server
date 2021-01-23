@@ -9,7 +9,6 @@ const adminEmailPassword = process.env.ADMIN_EMAIL_PASSWORD;
 const swaggerValidation = require('../util/validator');
 const nodemailer = require("nodemailer");
 const Email = require('email-templates');
-const ejs = require('ejs');
 
 const UserInterface = function(config) {
     const router = express.Router();
@@ -42,11 +41,11 @@ const UserInterface = function(config) {
     // 유저 관련 api 구현
     router.post('', swaggerValidation.validate, (req, res) => this.register(req, res));
     router.get('', swaggerValidation.validate, (req, res) => this.getUserInfo(req, res));
-    router.put('', upload.single('profileImg'), swaggerValidation.validate, (req, res) => this.update(req, res));
     router.post('/sign-in', swaggerValidation.validate, (req, res) => this.signIn(req, res));
     router.get('/sign-out', swaggerValidation.validate, (req, res) => this.signOut(req, res));
     router.put('/password', swaggerValidation.validate, (req, res) => this.changePassword(req, res));
     router.put('/password-temp', swaggerValidation.validate, (req, res) => this.temporaryPassword(req, res));
+    router.put('', upload.single('profileImg'), swaggerValidation.validate, (req, res) => this.changeUserProfile(req, res));
     router.delete('', swaggerValidation.validate, (req, res) => this.withdrawal(req, res));
     return this.router;
 };
@@ -94,7 +93,6 @@ UserInterface.prototype.register = async function(req, res) {
     };
     promiseConn.release();
 }
-
 
 UserInterface.prototype.signIn = async function(req, res) {
     let returnResult = {};
@@ -156,7 +154,6 @@ UserInterface.prototype.signIn = async function(req, res) {
     promiseConn.release();
 }
 
-
 UserInterface.prototype.getUserInfo = async function(req, res) {
     const promisePool = this.pool.promise();
     let returnResult = {};
@@ -177,30 +174,24 @@ UserInterface.prototype.getUserInfo = async function(req, res) {
     }
 }
 
-UserInterface.prototype.update = async function(req, res) {
+UserInterface.prototype.changeUserProfile = async function(req, res) {
     const promisePool = this.pool.promise();
     let returnResult = {};
-    const displayName = req.body.displayName;
-    const currentTime = util.getCurrentDateTime();
+    const updateTime = util.getCurrentDateTime();
     try {
         // TODO: sql 오류에도 파일 이미지는 정상으로 바뀜
         const profileImg = req.file.path; // TODO: 추후 서버 연결 시 경로 변경
-        const updateUserQuery = `UPDATE ${USER_TABLE} SET display_name = ?, profile_img = ?, update_datetime = ? WHERE user_id = ?`;
-        const updateUserValues = [displayName, profileImg, currentTime, req.session.userId];
-        const [rows, _] = await promisePool.execute(updateUserQuery, updateUserValues);
+        const query = `UPDATE ${USER_TABLE} SET profile_img = ?, update_datetime = ? WHERE user_id = ?`;
+        const values = [profileImg, updateTime, req.session.userId];
+        const [rows, _] = await promisePool.execute(query, values);
         if(rows.affectedRows){
-            returnResult.displayName = displayName;
             returnResult.profileImg = profileImg;
             res.send(returnResult);
         }else{
             res.sendStatus(500);
         }
     } catch (error) {
-        if(error.errno === 1062){
-            res.sendStatus(409);
-        }else{
-            res.sendStatus(500);
-        }
+        res.sendStatus(500);
     }
 }
 
