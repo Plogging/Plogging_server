@@ -56,46 +56,48 @@ const UserInterface = function(config) {
 
 UserInterface.prototype.register = async function(req, res) {
     let returnResult = {};
-    const [userEmail, userType] = req.body.userId.split(":");
     const secretKey = req.body.secretKey;
     const userName = req.body.userName;
-    const userId = req.body.userId;
-    
-    if(userType.toLowerCase() != 'custom' || !secretKey){ 
-        res.sendStatus(400);
-        return;
-    }
-    const findUserQuery = `SELECT * FROM ${USER_TABLE} WHERE user_id = ?`;
-    const findUserValues = [userId];
-    const promiseConn = await this.pool.promise().getConnection();
-    promiseConn.beginTransaction();
-    const [rows, _] = await promiseConn.execute(findUserQuery, findUserValues);
-    if (rows.length === 0) {
-        try {
-            // set userImg
-            let userImg = "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg";
-            const createDateline = util.getCurrentDateTime();
-            const createUserQuery = `INSERT INTO ${USER_TABLE}(user_id, display_name, profile_img, type, email, update_datetime, create_datetime, secret_key) VALUES(?, ?, ?, ?, ?, ?, ?, ?)`;
-            const createUserValues = [userId, userName, userImg, userType, userEmail, createDateline, createDateline, secretKey];
-            await promiseConn.execute(createUserQuery, createUserValues);
-            req.session.userId = userId;
-            returnResult.session = req.session.id;
-            returnResult.userImg = userImg;
-            returnResult.userName = userName;
-            res.status(201).json(returnResult);
-            promiseConn.commit();
-        } catch (error) {
-            if(error.errno === 1062){
-                res.status(409).send('DisplayName Conflict');
-            }else{
-                res.sendStatus(500);
+    const userType = 'custom';
+    const userId = req.body.userId + ':' + userType;
+    try {
+        const findUserQuery = `SELECT * FROM ${USER_TABLE} WHERE user_id = ?`;
+        const findUserValues = [userId];
+        const promiseConn = await this.pool.promise().getConnection();
+        promiseConn.beginTransaction();
+        const [rows, _] = await promiseConn.execute(findUserQuery, findUserValues);
+        if (rows.length === 0) {
+            try {
+                // set userImg
+                let userImg = "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg";
+                const createDateline = util.getCurrentDateTime();
+                const createUserQuery = `INSERT INTO ${USER_TABLE}(user_id, display_name, profile_img, type, email, update_datetime, create_datetime, secret_key) VALUES(?, ?, ?, ?, ?, ?, ?, ?)`;
+                const createUserValues = [userId, userName, userImg, userType, req.body.userId, createDateline, createDateline, secretKey];
+                await promiseConn.execute(createUserQuery, createUserValues);
+                req.session.userId = userId;
+                returnResult.session = req.session.id;
+                returnResult.userImg = userImg;
+                returnResult.userName = userName;
+                res.status(201).json(returnResult);
+                promiseConn.commit();
+            } catch (error) {
+                console.log(error)
+                if(error.errno === 1062){
+                    res.status(409).send('DisplayName Conflict');
+                }else{
+                    res.sendStatus(500);
+                }
+                promiseConn.rollback();
             }
-            promiseConn.rollback();
-        }
-    }else{
-        res.status(409).send('UserId Conflict');
-    };
-    promiseConn.release();
+        }else{
+            res.status(409).send('UserId Conflict');
+        };
+    } catch (error) {
+        res.sendStatus(500);
+    } finally{
+        promiseConn.release();
+    }
+    
 }
 
 UserInterface.prototype.social = async function(req, res) {
