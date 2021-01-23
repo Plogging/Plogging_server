@@ -45,7 +45,8 @@ const UserInterface = function(config) {
     router.get('/sign-out', swaggerValidation.validate, (req, res) => this.signOut(req, res));
     router.put('/password', swaggerValidation.validate, (req, res) => this.changePassword(req, res));
     router.put('/password-temp', swaggerValidation.validate, (req, res) => this.temporaryPassword(req, res));
-    router.put('', upload.single('profileImg'), swaggerValidation.validate, (req, res) => this.changeUserProfile(req, res));
+    router.put('/image', upload.single('profileImg'), swaggerValidation.validate, (req, res) => this.changeUserImage(req, res));
+    router.put('/name', swaggerValidation.validate, (req, res) => this.changeUserName(req, res));
     router.delete('', swaggerValidation.validate, (req, res) => this.withdrawal(req, res));
     return this.router;
 };
@@ -174,7 +175,30 @@ UserInterface.prototype.getUserInfo = async function(req, res) {
     }
 }
 
-UserInterface.prototype.changeUserProfile = async function(req, res) {
+UserInterface.prototype.changeUserName = async function(req, res) {
+    const promisePool = this.pool.promise();
+    let returnResult = {};
+    const updateTime = util.getCurrentDateTime();
+    try {
+        const query = `UPDATE ${USER_TABLE} SET display_name = ?, update_datetime = ? WHERE user_id = ?`;
+        const values = [req.body.displayName, updateTime, req.session.userId];
+        const [rows, _] = await promisePool.execute(query, values);
+        if(rows.affectedRows){
+            returnResult.displayName = req.body.displayName;
+            res.send(returnResult);
+        }else{
+            res.sendStatus(500);
+        }
+    } catch (error) {
+        if(error.errno === 1062){
+            res.status(409).send('DisplayName Conflict');
+        }else{
+            res.sendStatus(500);
+        }
+    }
+}
+
+UserInterface.prototype.changeUserImage = async function(req, res) {
     const promisePool = this.pool.promise();
     let returnResult = {};
     const updateTime = util.getCurrentDateTime();

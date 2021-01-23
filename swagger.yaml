@@ -62,7 +62,7 @@ paths:
           description: 유저 SessionKey
       responses:
         200:
-          description: 2개의 파라미터를 받아 성공적으로 변경
+          description: OK
           schema:
             type: object
             properties:
@@ -234,7 +234,7 @@ paths:
           description: Not Found (no email)
         500:
           description: Internal Server Error
-  /user/profile-image:
+  /user/image:
     put:
         summary: 사용자 프로필 이미지 변경
         description: 사용자의 프로필 이미지를 변경합니다.
@@ -256,7 +256,7 @@ paths:
             description: 사용자의 사진을 업로드 합니다.
         responses:
           200:
-            description: 2개의 파라미터를 받아 성공적으로 변경
+            description: 프로필 이미지 성공적으로 변경
             schema:
               type: object
               properties:
@@ -265,6 +265,47 @@ paths:
                   example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
           400:
             description: Bad Request (body should have required property 'secretKey')
+          500:
+            description: Internal Server Error
+  /user/name:
+    put:
+        summary: 사용자 프로필 이미지 변경
+        description: 사용자의 프로필 이미지를 변경합니다.
+        tags: [User]
+        consumes:
+          - multipart/form-data
+        produces:
+          - application/json
+        parameters:
+          - in: header
+            name: sessionKey
+            type: string
+            required: true
+            description: 유저 SessionKey
+          - in: body
+            name: name
+            description: 사용자 이름 받기
+            schema:
+                type: object
+                required:
+                  - displayName
+                properties:
+                  displayName:
+                    type: string
+                    example: 쓰담이
+        responses:
+          200:
+            description: 사용자 이름 성공적으로 변경
+            schema:
+              type: object
+              properties:
+                userImg:
+                  type: string
+                  example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
+          400:
+            description: Bad Request (body should have required property 'secretKey')
+          409:
+            description: DisplayName Conflict
           500:
             description: Internal Server Error
                   
