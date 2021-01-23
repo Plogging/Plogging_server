@@ -2,26 +2,26 @@ const express = require('express');
 const { promisify } = require('util');
 
 const UserInterface = require("./router/user.js");
-const PloggingInferface = require('./router/plogging.js');
+const PloggingInterface = require('./router/plogging.js');
 const RankingInterface = require('./router/ranking.js');
 const bodyParser = require('body-parser');
 const poolCallback = require("./config/mysqlConfig.js").getMysqlPool; // callback
 const poolAsyncAwait = require("./config/mysqlConfig.js").getMysqlPool2; // async await
 const redisClient = require("./config/redisConfig.js");
 const MongoClient = require("./config/mongoConfig.js");
-const swaggerValidation = require('./util/validator.js')
+const swaggerValidation = require('./util/validator.js');
 
 const session = require('express-session');
 const redisStore = require('connect-redis')(session);
-const multer  = require('multer')
-const YAML = require('yamljs')
+const multer  = require('multer');
+const YAML = require('yamljs');
 
 // node-swagger
 const swaggerUi = require('swagger-ui-express');
 
 (async () => {
     const swaggerDocument = YAML.load('./swagger.yaml')
-    const mongoConnectioPool = await MongoClient.connect();
+    const mongoConnectionPool = await MongoClient.connect();
 
     const app = express();
 
@@ -48,7 +48,7 @@ const swaggerUi = require('swagger-ui-express');
     globalOption.mysqlPool2=poolAsyncAwait;
     globalOption.redisClient=redisClient;
     globalOption.fileInterface = multer;
-    globalOption.MongoPool=mongoConnectioPool;
+    globalOption.MongoPool=mongoConnectionPool;
 
     app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument)); // node-swaggwer
 
@@ -60,31 +60,30 @@ const swaggerUi = require('swagger-ui-express');
     * 
     */
     app.use("/", function(req, res, next) {
-
         // 세션 체크 공통 모듈
-        if(req.path === '/user' && req.method === 'POST') next();
+        if((req.path === '/user' && req.method === 'POST') || 
+            (req.path === '/user/password-temp') || 
+            (req.path === '/user/sign-in')) next();
         else {
             const sessionKey = req.get('sessionKey');
-
             if(sessionKey === req.session.id) {  // 세션 값이 있는 경우 ( 로그인이 되어있는 경우 )
                 req.userId = req.session.userId;
                 next();
             } else { // 세션 값이 없는 경우 ( 로그인이 안되어 있는 경우 )
-                let returnResult = { rc: 401, rcmsg: "unauthorized" };
-                res.status(401).send(returnResult);
+                res.sendStatus(401);
             }
         }
     });
 
     app.use('/user', new UserInterface(globalOption)); // 유저 관려 api는 user.js로 포워딩
     app.use('/rank', new RankingInterface(globalOption)); // 랭킹 관련 api는 ranking.js로 포워딩
-    app.use('/plogging', new PloggingInferface(globalOption)); // 쓰레기 관련 api는 plogging.js로 포워딩        
+    app.use('/plogging', new PloggingInterface(globalOption)); // 쓰레기 관련 api는 plogging.js로 포워딩        
 
     // swagger spec을 이용한 request 검증
     // 반드시 라우팅 코드 이후에 위치해야 함
     app.use((err, req, res, next) => {
         if (err instanceof swaggerValidation.InputValidationError) {
-            return res.status(400).json({ rc: 400, rcmsg: err.errors.join(", ") })
+            return res.status(400).send(err.errors.join(", "))
         }
     })
 

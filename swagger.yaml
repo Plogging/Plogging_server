@@ -7,79 +7,52 @@ info:
 paths:
   /user:
     post:
-      summary: 로그인 하기
+      summary: 회원가입하기
       tags: [User]
       parameters:
         - in: body
           name: user
-          description: The user to create or to get info
+          description: userId는 email:type 으로 구분자 ':'를 사용합니다. type은 custom입니다.
           schema:
-            type: object
-            required:
-              - type
-              - email
-            properties:
-              type:
-                type: string
-              email:
-                type: string
+              type: object
+              required:
+                - userName
+                - userId
+                - secretKey
+              properties:
+                userId:
+                  type: string
+                  example: ganghee@naver.com:naver.com
+                userName:
+                  type: string
+                  example: 쓰담이
+                secretKey:
+                  type: string
+                  example: 1234qwer
       responses:
-        200:
-          description: 신입 회원인 경우에 Success creating user 기존 회원인 경우에 Success getting user
+        201:
+          description: 회원가입 성공
           schema:
             type: object
             properties:
-              rc:
-                type: number
-                example: 200
-              rcmsg:
-                type: string
-                example: Success create user
-              session:
-                type: string
-                example: 0q8DptSJiinhbspcQwK6wxUtvNkmNano
-              userImg:
-                type: string21f614df928f
-                example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
-              userName:
-                type: string
-                example: 쓰담이
+                session:
+                    type: string
+                    example: 0q8DptSJiinhbspcQwK6wxUtvNkmNano
+                userImg:
+                    type: string
+                    example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
+                userName:
+                    type: string
+                    example: 쓰담이
         400:
-          description: Bad Request(parameter error)
-          schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 400
-              rcmsg:
-                type: string
-                example: no parameter
+          description: Bad Request (parameter error)
+        409:
+          description: Conflict (display name conflict)
         500:
-          description: server error
-          schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 500
-              rcmsg:
-                type: string
-                example: server error
-        600:
-          description: DB error
-          schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 600
-              rcmsg:
-                type: string
-                example: DB error
-    put:
-      summary: 사용자 정보변경
-      description: 반드시 2개의 파라미터를 받아야한다.
+          description: Internal Server Error
+    get:
+      summary: 사용자 정보 가져오기
+      description: 사용자 id(email + type), 사용자 닉네임, 프로필 사진을 가져온다.
       tags: [User]
       parameters:
         - in: header
@@ -87,13 +60,46 @@ paths:
           type: string
           required: true
           description: 유저 SessionKey
-        - in: formData
-          name: profile_img
-          type: file
-          description: 사용자의 사진을 업로드 합니다.
+      responses:
+        200:
+          description: 2개의 파라미터를 받아 성공적으로 변경
+          schema:
+            type: object
+            properties:
+                userId:
+                    type: string
+                    example: abc@naver.com:naver.com
+                userImg:
+                    type: string
+                    example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
+                userName:
+                    type: string
+                    example: 쓰담이
+        400:
+          description: Bad Request (parameter error)
+        500:
+          description: Internal Server Error
+    put:
+      summary: 사용자 정보변경
+      description: 반드시 2개의 파라미터를 받아야한다.
+      tags: [User]
+      consumes:
+        - multipart/form-data
+      produces:
+        - application/json
+      parameters:
+        - in: header
+          name: sessionKey
+          type: string
           required: true
+          description: 유저 SessionKey
         - in: formData
-          name: display_name
+          name: profileImg
+          type: file
+          required: true
+          description: 사용자의 사진을 업로드 합니다.
+        - in: formData
+          name: displayName
           type: string
           description: 사용자의 이름을 변경합니다.
           required: true
@@ -103,12 +109,6 @@ paths:
           schema:
             type: object
             properties:
-              rc:
-                type: number
-                example: 200
-              rcmsg:
-                type: string
-                example: success
               userImg:
                 type: string
                 example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
@@ -116,38 +116,91 @@ paths:
                 type: string
                 example: 쓰담이
         400:
-          description: Bad Request(parameter error)
-          schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 400
-              rcmsg:
-                type: string
-                example: body should have required property 'email'
+          description: Bad Request (parameter error)
+        409:
+          description: Conflict (display name conflict)
         500:
-          description: user update error
+          description: Internal Server Error
+                
+    delete:
+      summary: 회원탈퇴
+      tags: [User]
+      parameters:
+        - in: header
+          name: sessionKey
+          type: string
+          required: true
+          description: 유저 SessionKey
+      responses:
+        200:
+          description: OK
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+          
+  /user/sign-in:
+    post:
+      summary: 로그인 하기
+      tags: [User]
+      parameters:
+        - in: body
+          name: user
+          description: userId는 email:type 으로 구분자 ':'를 사용합니다. 자체 로그인인 경우는 custom으로 하면됩니다. 자체로그인인 경우는 secretKey를 꼭 받아야 합니다.
+          schema:
+              type: object
+              required:
+                - userId
+              properties:
+                userId:
+                  type: string
+                  example: ganghee@naver.com:naver.com
+                userName:
+                  type: string
+                  example: 쓰담이
+                secretKey:
+                  type: string
+                  example: 1234qwer
+      responses:
+        200:
+          description: 기존 회원 로그인 성공
           schema:
             type: object
             properties:
-              rc:
-                type: number
-                example: 500
-              rcmsg:
-                type: string
-                example: user update error
-        600:
-          description: DB error
+                session:
+                    type: string
+                    example: 0q8DptSJiinhbspcQwK6wxUtvNkmNano
+                userImg:
+                    type: string
+                    example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
+                userName:
+                    type: string
+                    example: 쓰담이
+        201:
+          description: 신규 회원 로그인 성공 (회원 가입)
           schema:
             type: object
             properties:
-              rc:
-                type: number
-                example: 600
-              rcmsg:
-                type: string
-                example: DB error
+                session:
+                    type: string
+                    example: 0q8DptSJiinhbspcQwK6wxUtvNkmNano
+                userImg:
+                    type: string
+                    example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
+                userName:
+                    type: string
+                    example: 쓰담이
+        400:
+          description: Bad Request (parameter error)
+        401:
+          description: Unauthorized (password error)
+        404:
+          description: Not Found (custom 로그인 시 저장된 id 없음)
+        409:
+          description: Conflict (display name conflict)
+        500:
+          description: Internal Server Error
+    
   /user/sign-out:
     get:
       summary: 사용자 로그아웃
@@ -160,27 +213,67 @@ paths:
           description: 유저 SessionKey
       responses:
         200:
-          description: 로그아웃 성공
-          schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 200
-              rcmsg:
-                type: string
-                example: logout success
+          description: OK
+        400:
+          description: Bad Request
         500:
-          description: server error
+          description: Internal Server Error
+                  
+  /user/password:
+    put:
+      summary: 비밀번호 변경
+      tags: [User]
+      parameters:
+        - in: header
+          name: sessionKey
+          type: string
+          required: true
+          description: 유저 SessionKey
+        - in: body
+          name: secretKey
+          description: 암호화된 비밀번호
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 500
-              rcmsg:
-                type: string
-                example: server error
+              type: object
+              required:
+                - secretKey
+                - userId
+              properties:
+                secretKey:
+                  type: string
+                  example: qwerqwer
+      responses:
+        200:
+          description: OK
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+  /user/password-temp:
+    put:
+      summary: 임시 비밀번호 변경
+      tags: [User]
+      parameters:
+        - in: body
+          name: email
+          description: 임시 비밀번호를 받는 이메일 주소
+          schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  example: heeheewuwu@gmail.com
+      responses:
+        200:
+          description: OK
+        400:
+          description: Bad Request
+        404:
+          description: Not Found (no email)
+        500:
+          description: Internal Server Error
+
   /plogging:
     get:
       summary: 산책이력 가져오기
@@ -212,7 +305,6 @@ paths:
           type: number
           required: false
           description: 조회할 페이지 숫자 ( default - 1 )
-
       responses:
         200:
           description: Success
