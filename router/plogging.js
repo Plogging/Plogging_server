@@ -59,8 +59,7 @@ const PloggingInterface = function(config) {
  * @swagger
  */
 PloggingInterface.prototype.readPlogging = async function(req, res) {
-    logger.info(logHelper.reqWrapper(req));
-
+ 
     let userId = req.userId; // api를 call한 userId
     let targetUserId = req.query.targetUserId; // 산책이력을 조회를 할 userId
     let ploggingCntPerPage = req.query.ploggingCntPerPage; // 한 페이지에 보여줄 산책이력 수
