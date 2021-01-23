@@ -518,13 +518,13 @@ paths:
         - in: query
           name: objectId
           type: string
-          required: false
+          required: true
           example: "5ff53c3ff9789143b86f863b"
           description: 산책이력 식별키
         - in: query
           name: ploggingImgName
           type: string
-          required: false
+          required: true
           example: plogging_20210106132743.PNG
           description: 산책 인증사진 파일이름
       responses:
