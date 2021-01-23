@@ -44,8 +44,6 @@ const PloggingInterface = function(config) {
     router.post("/", upload.single('ploggingImg'), swaggerValidation.validate, (req, res) => this.writePlogging(req, res)); // create
     router.delete("/", swaggerValidation.validate, (req, res) => this.deletePlogging(req,res)); // delete
 
-    this.redisAsyncZrem = promisify(this.redisClient.zrem).bind(this.redisClient);
-
     return this.router;
 };
 
@@ -203,8 +201,8 @@ PloggingInterface.prototype.writePlogging = async function(req, res) {
 
 /*
  * 산책 이력삭제
- *   case 1. 유저가 특정 산책 이력을 삭제하거나(1개 삭제) - 산책이력의 objectId값을 파라미터로 전달
- *   case 2. 회원 탈퇴했을때(해당 회원 산책이력 모두 삭제) - 산책이력의 objectId값을 파라미터로 전달하지 않음
+ *  ->산책이력의 objectId값을 파라미터로 전달
+ *   
  */
 PloggingInterface.prototype.deletePlogging = async function(req, res) {
     logger.info("plogging delete api !");
@@ -212,46 +210,32 @@ PloggingInterface.prototype.deletePlogging = async function(req, res) {
     let userId = req.userId;
     let mongoObjectId = req.query.objectId;
     let ploggingImgName = req.query.ploggingImgName; // plogging_20210106132743.PNG
-    let ploggingImgPath = `${ploggingFilePath}${userId}/${ploggingImgName}`; 
-
     let query = null;
 
     let returnResult = { rc: 200, rcmsg: "success" };
     let mongoConnection = null;
     try {
         mongoConnection = this.MongoPool.db('plogging');
-        if(mongoObjectId) { // 해당 이력만 삭제
-            query = {"_id": ObjectId(mongoObjectId)};
+        query = {"_id": ObjectId(mongoObjectId)};
             
-            // 산책이력 삭제
-            await mongoConnection.collection('record').deleteOne(query);
+        // 산책이력 삭제
+        await mongoConnection.collection('record').deleteOne(query);
             
-            // 산책이력 이미지 삭제
-            if(ploggingImgName) fs.unlinkSync(ploggingImgName);
+        // 산책이력 이미지 삭제
+        if(ploggingImgName) fs.unlinkSync(ploggingImgName);
 
-            // 해당 산책의 점수 랭킹점수 삭제
-            //let queryKey = "Plogging";
+        // 해당 산책의 점수 랭킹점수 삭제
+        await this.redisClient.zrem("weekly", userId);
+        await this.redisClient.zrem("monthly", userId);
 
-            //await this.redisAsyncZrem(queryKey, userId);
-        } else { // 전체이력 삭제 -> 회원탈퇴
-            query = {"meta.user_id": userId};
-
-            // 탈퇴 유저의 이력 전체 삭제
-            await mongoConnection.collection('record').deleteMany(query);
-
-            // 탈퇴 유저의 산책이력 이미지 전체 삭제
-            fs.rmdirSync(`${ploggingFilePath}${userId}`, { recursive: true });
-
-             // 해당 산책의 점수 랭킹점수 삭제
-            //await this.redisAsyncZrem(queryKey, userId);
-        }
         res.status(200).send(returnResult);
     } catch(e) {
         logger.error(e.message);
-        mongoConnection=null;
         returnResult.rc = 500;
         returnResult.rcmsg = e.message;
         res.status(500).send(returnResult);
+    } finally {
+        mongoConnection=null;
     }
 }
 
