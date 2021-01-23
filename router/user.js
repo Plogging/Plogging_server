@@ -43,6 +43,7 @@ const UserInterface = function(config) {
     router.get('', swaggerValidation.validate, (req, res) => this.getUserInfo(req, res));
     router.delete('', swaggerValidation.validate, (req, res) => this.withdrawal(req, res));
     router.post('/social', swaggerValidation.validate, (req, res) => this.social(req, res));
+    router.post('/sign-in', swaggerValidation.validate, (req, res) => this.signIn(req, res));
     router.get('/sign-out', swaggerValidation.validate, (req, res) => this.signOut(req, res));
     router.put('/password', swaggerValidation.validate, (req, res) => this.changePassword(req, res));
     router.put('/password-temp', swaggerValidation.validate, (req, res) => this.temporaryPassword(req, res));
@@ -139,6 +140,28 @@ UserInterface.prototype.social = async function(req, res) {
         promiseConn.commit();
     };
     promiseConn.release();
+}
+
+UserInterface.prototype.signIn = async function(req, res) {
+    const promisePool = this.pool.promise();
+    const userId = req.body.userId + ':custom';
+    let returnResult = {};
+    try {
+        const query = `SELECT * FROM ${USER_TABLE} WHERE user_id = ? AND secret_key = ?`;
+        const values = [userId, req.body.secretKey];
+        const [rows, _] = await promisePool.execute(query, values);
+        if(rows.length){
+            req.session.userId = userId;
+            returnResult.session = req.session.id;
+            returnResult.userImg = rows[0].profile_img;
+            returnResult.userName = rows[0].display_name;
+            res.json(returnResult);
+        }else{
+            res.sendStatus(401);
+        }
+    } catch (error) {
+        res.sendStatus(500);
+    }
 }
 
 UserInterface.prototype.getUserInfo = async function(req, res) {
