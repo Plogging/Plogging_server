@@ -248,13 +248,13 @@ UserInterface.prototype.withdrawal = async function(req, res) {
 UserInterface.prototype.changePassword = async function(req, res) {
     try {
         const promisePool = this.pool.promise();
-        const query = `UPDATE ${USER_TABLE} SET secret_key = ? WHERE user_id = ?`;
-        const value = [req.body.secretKey, req.session.userId];
+        const query = `UPDATE ${USER_TABLE} SET secret_key = ? WHERE user_id = ? AND secret_key = ?`;
+        const value = [req.body.newSecretKey, req.session.userId, req.body.existedSecretKey];
         const [rows, _] = await promisePool.execute(query, value);
         if(rows.affectedRows){
             res.sendStatus(200);
         }else{
-            res.sendStatus(500);
+            res.status(400).send('No secret key');
         }
     } catch (error) {
         res.sendStatus(500);

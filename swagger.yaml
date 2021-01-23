@@ -45,7 +45,7 @@ paths:
                     type: string
                     example: 쓰담이
         400:
-          description: Bad Request (parameter error)
+          description: Bad Request (body should have required property 'secretKey')
         409:
           description: Conflict (display name conflict)
         500:
@@ -75,8 +75,8 @@ paths:
                 userName:
                     type: string
                     example: 쓰담이
-        400:
-          description: Bad Request (parameter error)
+        401:
+          description: Unauthorized (sessionKey 유효하지 않을 때)
         500:
           description: Internal Server Error
     put:
@@ -116,7 +116,7 @@ paths:
                 type: string
                 example: 쓰담이
         400:
-          description: Bad Request (parameter error)
+          description: Bad Request (body should have required property 'secretKey')
         409:
           description: Conflict (display name conflict)
         500:
@@ -134,8 +134,6 @@ paths:
       responses:
         200:
           description: OK
-        400:
-          description: Bad Request
         500:
           description: Internal Server Error
           
@@ -231,26 +229,31 @@ paths:
           description: 유저 SessionKey
         - in: body
           name: secretKey
-          description: 암호화된 비밀번호
+          description: Password which was encrypted.
           schema:
               type: object
               required:
-                - secretKey
-                - userId
+                - newSecretKey
+                - existedSecretKey
               properties:
-                secretKey:
+                newSecretKey:
                   type: string
-                  example: qwerqwer
+                  example: Password which will be changed.
+                existedSecretKey:
+                  type: string
+                  example: Password witch being.
       responses:
         200:
           description: OK
         400:
-          description: Bad Request
+          description: No secret key
+        401:
+          description: Unauthorized (session key error)
         500:
           description: Internal Server Error
   /user/password-temp:
     put:
-      summary: 임시 비밀번호 변경
+      summary: 임시 비밀번호 발급
       tags: [User]
       parameters:
         - in: body
@@ -273,7 +276,6 @@ paths:
           description: Not Found (no email)
         500:
           description: Internal Server Error
-
   /plogging:
     get:
       summary: 산책이력 가져오기
