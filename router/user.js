@@ -41,13 +41,15 @@ const UserInterface = function(config) {
     // 유저 관련 api 구현
     router.post('', swaggerValidation.validate, (req, res) => this.register(req, res));
     router.get('', swaggerValidation.validate, (req, res) => this.getUserInfo(req, res));
+    router.delete('', swaggerValidation.validate, (req, res) => this.withdrawal(req, res));
     router.post('/sign-in', swaggerValidation.validate, (req, res) => this.signIn(req, res));
     router.get('/sign-out', swaggerValidation.validate, (req, res) => this.signOut(req, res));
     router.put('/password', swaggerValidation.validate, (req, res) => this.changePassword(req, res));
     router.put('/password-temp', swaggerValidation.validate, (req, res) => this.temporaryPassword(req, res));
     router.put('/image', upload.single('profileImg'), swaggerValidation.validate, (req, res) => this.changeUserImage(req, res));
     router.put('/name', swaggerValidation.validate, (req, res) => this.changeUserName(req, res));
-    router.delete('', swaggerValidation.validate, (req, res) => this.withdrawal(req, res));
+    router.post('/check', swaggerValidation.validate, (req, res) => this.checkUserId(req, res));
+    
     return this.router;
 };
 
@@ -288,6 +290,22 @@ UserInterface.prototype.temporaryPassword = async function(req, res) {
             res.sendStatus(200);
         }else{
             res.sendStatus(404);
+        }
+    } catch (error) {
+        res.sendStatus(500);
+    }
+}
+
+UserInterface.prototype.checkUserId = async function(req, res) {
+    const promisePool = this.pool.promise();
+    try {
+        const query = `SELECT * FROM ${USER_TABLE} WHERE user_id = ?`;
+        const values = [req.body.userId];
+        const [rows, _] = await promisePool.execute(query, values);
+        if(rows.length){
+            res.status(400).send('user_id which was existed');
+        }else{
+            res.sendStatus(200);
         }
     } catch (error) {
         res.sendStatus(500);

@@ -174,7 +174,29 @@ paths:
           description: Bad Request
         500:
           description: Internal Server Error
-                  
+  /user/check:
+    post:
+      summary: 사용자 아이디 유효성 확인
+      tags: [User]
+      parameters:
+        - in: body
+          name: userId
+          description: 회원 가입하기 전에 해당 id가 존재하는지 확인한다. "[id]:custom" 으로 보내야한다.
+          schema:
+              type: object
+              required:
+                - userId
+              properties:
+                userId:
+                  type: string
+                  example: ganghee@naver.com:custom
+      responses:
+        200:
+          description: OK
+        400:
+          description: user_id which was existed
+        500:
+          description: Internal Server Error                
   /user/password:
     put:
       summary: 비밀번호 변경
