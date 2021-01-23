@@ -271,9 +271,10 @@ UserInterface.prototype.withdrawal = async function(req, res) {
 
 UserInterface.prototype.changePassword = async function(req, res) {
     try {
+        const updateTime = util.getCurrentDateTime();
         const promisePool = this.pool.promise();
-        const query = `UPDATE ${USER_TABLE} SET secret_key = ? WHERE user_id = ? AND secret_key = ?`;
-        const value = [req.body.newSecretKey, req.session.userId, req.body.existedSecretKey];
+        const query = `UPDATE ${USER_TABLE} SET secret_key = ?, update_datetime = ? WHERE user_id = ? AND secret_key = ?`;
+        const value = [req.body.newSecretKey, updateTime, req.session.userId, req.body.existedSecretKey];
         const [rows, _] = await promisePool.execute(query, value);
         if(rows.affectedRows){
             res.sendStatus(200);
@@ -290,8 +291,8 @@ UserInterface.prototype.temporaryPassword = async function(req, res) {
     try {
         await sendEmail(req.body.email, tempPassword);
         const promisePool = this.pool.promise();
-        const query = `UPDATE ${USER_TABLE} SET secret_key = ? WHERE user_id = ?`;
-        const value = [tempPassword, req.body.email+":custom"];
+        const query = `UPDATE ${USER_TABLE} SET secret_key = ?, update_datetime = ? WHERE user_id = ?`;
+        const value = [tempPassword, updateTime, req.body.email+":custom"];
         const [rows, _] = await promisePool.execute(query, value);
         if(rows.affectedRows){
             res.sendStatus(200);
