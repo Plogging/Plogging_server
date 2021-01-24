@@ -103,6 +103,7 @@ PloggingInterface.prototype.readPlogging = async function(req, res) {
  */
 PloggingInterface.prototype.writePlogging = async function(req, res) {
     logger.info("plogging write api !");
+    logger.info(logHelper.reqWrapper(req, "plogging"));
 
     let returnResult = { rc: 200, rcmsg: "success" };
 
@@ -200,6 +201,7 @@ PloggingInterface.prototype.writePlogging = async function(req, res) {
  */
 PloggingInterface.prototype.deletePlogging = async function(req, res) {
     logger.info("plogging delete api !");
+    logger.info(logHelper.reqWrapper(req, "plogging"));
 
     let userId = req.userId;
     let mongoObjectId = req.query.objectId;
