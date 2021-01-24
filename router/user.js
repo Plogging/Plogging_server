@@ -40,8 +40,8 @@ const UserInterface = function(config) {
 
     // 유저 관련 api 구현
     router.post('', swaggerValidation.validate, (req, res) => this.register(req, res));
-    router.get('', swaggerValidation.validate, (req, res) => this.getUserInfo(req, res));
     router.delete('', swaggerValidation.validate, (req, res) => this.withdrawal(req, res));
+    router.get('/:id', swaggerValidation.validate, (req, res) => this.getUserInfo(req, res));
     router.post('/social', swaggerValidation.validate, (req, res) => this.social(req, res));
     router.post('/sign-in', swaggerValidation.validate, (req, res) => this.signIn(req, res));
     router.get('/sign-out', swaggerValidation.validate, (req, res) => this.signOut(req, res));
@@ -171,7 +171,7 @@ UserInterface.prototype.getUserInfo = async function(req, res) {
     let returnResult = {};
     try {
         const getUserQuery = `SELECT * FROM ${USER_TABLE} WHERE user_id = ?`;
-        const getUserValues = [req.session.userId];
+        const getUserValues = [req.params.id];
         const [rows, _] = await promisePool.execute(getUserQuery, getUserValues);
         if(rows.length){
             returnResult.userId = rows[0].user_id;
