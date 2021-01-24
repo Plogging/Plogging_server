@@ -411,7 +411,7 @@ paths:
               rcmsg:
                 type: string
                 example: 서버 오류.
-  /plogging/:
+  /plogging:
     post:
       summary: 산책 이력 등록하기
       tags: [Plogging]
