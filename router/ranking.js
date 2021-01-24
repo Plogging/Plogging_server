@@ -22,16 +22,16 @@ const RankingInterface = function(config) {
 
     // 랭킹 관련 api 구현
     router.get("/global", swaggerValidation.validate, (req, res) => this.getGlobalRank(req, res));
-    router.get("/user/:id", swaggerValidation.validate, (req, res) => this.getUserRank(req, res))
+    router.get("/users/:id", swaggerValidation.validate, (req, res) => this.getUserRank(req, res))
     return this.router;
 
 };
 
 RankingInterface.prototype.getGlobalRank = async function(req, res) {
     try {
-        let rankType = req.query.rankType
-        let offset = req.query.offset
-        let limit = req.query.limit
+        const rankType = req.query.rankType
+        const offset = req.query.offset
+        const limit = req.query.limit
         logger.info(`Fetching ${rankType} global ranking from redis...`)
         const [zcountResult, zrevrangeResult] = await this.redisClient.pipeline()
         .zcount(rankType, "-inf", "+inf")
@@ -50,8 +50,8 @@ RankingInterface.prototype.getGlobalRank = async function(req, res) {
 
 RankingInterface.prototype.getUserRank = async function(req, res) {
     try {
-        let rankType = req.query.rankType
-        let targetUserId = req.params.id
+        const rankType = req.query.rankType
+        const targetUserId = req.params.id
         logger.info(`Fetching ${rankType} rank of user ${targetUserId} from redis...`)
         const [zrankResult, zscoreResult] = await this.redisClient.pipeline()
         .zrank(rankType, targetUserId)
@@ -102,6 +102,7 @@ RankingInterface.prototype.getUserInfo = async function(userId) {
 }
 
 RankingInterface.prototype.getUserInfos = async function(userIds) {
+    if (userIds.length == 0) return {}
     const query = `SELECT user_id, display_name, profile_img from ${USER_TABLE} WHERE user_id in 
     (` + userIds.map(() => '?') + `)`
     logger.info(`Fetching user data of users ${userIds} from DB...`)

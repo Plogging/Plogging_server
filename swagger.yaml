@@ -689,7 +689,7 @@ paths:
               rcmsg:
                 type: string
                 example: 서버 오류.
-  /rank/user/{id}:
+  /rank/users/{id}:
     get:
       summary: 유저 랭킹 가져오기
       tags: [Ranking]
