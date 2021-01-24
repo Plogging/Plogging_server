@@ -67,15 +67,8 @@ PloggingInterface.prototype.readPlogging = async function(req, res) {
     if(!ploggingCntPerPage) ploggingCntPerPage = 4;
     if(!pageNumber) pageNumber = 1;
 
-    /**
-     * 1. 내 산책이력 조회 ( tartgetUserId 없으면 내 산책이력 조회 )
-     * 2. 상대방 산책이력 조회 ( targetUserId가 있으면 해당 유저의 산책이력 조회)
-     */
-
-    if(targetUserId) userId = targetUserId;
-
     let searchType = Number(req.query.searchType); // 최신순(0), 점수순(1), 거리순(2)
-    let query = {"meta.user_id": userId};
+    let query = {"meta.user_id": targetUserId};
     let sort_option = [{"meta.created_time": -1},
                        {"meta.plogging_total_score": -1},
                        {"meta.distance": -1}];  
