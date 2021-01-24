@@ -1,14 +1,14 @@
 const express = require('express');
 const { promisify } = require('util');
 
-const UserInterface = require("./router/user.js");
+const UserInterface = require('./router/user.js');
 const PloggingInterface = require('./router/plogging.js');
 const RankingInterface = require('./router/ranking.js');
 const bodyParser = require('body-parser');
-const poolCallback = require("./config/mysqlConfig.js").getMysqlPool; // callback
-const poolAsyncAwait = require("./config/mysqlConfig.js").getMysqlPool2; // async await
-const redisClient = require("./config/redisConfig.js");
-const MongoClient = require("./config/mongoConfig.js");
+const poolCallback = require('./config/mysqlConfig.js').getMysqlPool; // callback
+const poolAsyncAwait = require('./config/mysqlConfig.js').getMysqlPool2; // async await
+const redisClient = require('./config/redisConfig.js');
+const MongoClient = require('./config/mongoConfig.js');
 const swaggerValidation = require('./util/validator.js');
 
 const session = require('express-session');
@@ -36,7 +36,7 @@ const swaggerUi = require('swagger-ui-express');
             client: redisClient,
             ttl: 60*30 // expires ( per in second ) - 30분
         }),
-        secret: "plogging", // sessionId를 만들때 key로 쓰이는거 같음
+        secret: 'plogging', // sessionId를 만들때 key로 쓰이는거 같음
         resave: false,
         saveUninitialized: true,
     }));
@@ -59,7 +59,7 @@ const swaggerUi = require('swagger-ui-express');
     *    2-2. 파라미터로 들어왔다면 파리미터로 들어온 값으로 userId 세팅 ( 산책이력 조회 ) 
     * 
     */
-    app.use("/", function(req, res, next) {
+    app.use('/', function(req, res, next) {
         // 세션 체크 공통 모듈
         if((req.path === '/user' && req.method === 'POST') || 
             (req.path === '/user/password-temp') || 
@@ -85,7 +85,7 @@ const swaggerUi = require('swagger-ui-express');
     // 반드시 라우팅 코드 이후에 위치해야 함
     app.use((err, req, res, next) => {
         if (err instanceof swaggerValidation.InputValidationError) {
-            return res.status(400).send(err.errors.join(", "))
+            return res.status(400).send(err.errors.join(', '))
         }
     })
 

@@ -7,7 +7,7 @@ const filePath = process.env.IMG_FILE_PATH;
 const adminEmailId = process.env.ADMIN_EMAIL_ID;
 const adminEmailPassword = process.env.ADMIN_EMAIL_PASSWORD;
 const swaggerValidation = require('../util/validator');
-const nodemailer = require("nodemailer");
+const nodemailer = require('nodemailer');
 const Email = require('email-templates');
 
 const UserInterface = function(config) {
@@ -69,7 +69,7 @@ UserInterface.prototype.register = async function(req, res) {
         if (rows.length === 0) {
             try {
                 // set userImg
-                let userImg = "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg";
+                let userImg = 'https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg';
                 const createDateline = util.getCurrentDateTime();
                 const createUserQuery = `INSERT INTO ${USER_TABLE}(user_id, display_name, profile_img, type, email, update_datetime, create_datetime, secret_key) VALUES(?, ?, ?, ?, ?, ?, ?, ?)`;
                 const createUserValues = [userId, userName, userImg, userType, req.body.userId, createDateline, createDateline, secretKey];
@@ -102,7 +102,7 @@ UserInterface.prototype.register = async function(req, res) {
 
 UserInterface.prototype.social = async function(req, res) {
     let returnResult = {};
-    const [userEmail, userType] = req.body.userId.split(":");
+    const [userEmail, userType] = req.body.userId.split(':');
     const userId = req.body.userId;
     const userName = req.body.userName;
     const promiseConn = await this.pool.promise().getConnection();
@@ -114,7 +114,7 @@ UserInterface.prototype.social = async function(req, res) {
     if (rows.length === 0) {
         try {
             // init userImg
-            let userImg = "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg";
+            let userImg = 'https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg';
             const createDateline = util.getCurrentDateTime();
             const createUserQuery = `INSERT INTO ${USER_TABLE}(user_id, display_name, profile_img, type, email, update_datetime, create_datetime) VALUES(?, ?, ?, ?, ?, ?, ?)`;
             const createUserValues = [userId, userName, userImg, userType, userEmail, createDateline, createDateline];
@@ -254,14 +254,14 @@ UserInterface.prototype.withdrawal = async function(req, res) {
     const [rows,_] = await promiseConn.query(deleteUserQuery, deleteUserValues)
     if(rows.affectedRows){
         try {
-            await mongoConnection.collection('record').deleteMany({"meta.user_id": userId});
+            await mongoConnection.collection('record').deleteMany({'meta.user_id': userId});
             // 탈퇴 유저의 산책이력 이미지 전체 삭제
             if(fs.existsSync(`${filePath}/${userId}`)){
                 fs.rmdirSync(`${filePath}/${userId}`, { recursive: true });
             }
             // 해당 산책의 점수 랭킹점수 삭제
-            await redisClient.zrem("weekly", userId);
-            await redisClient.zrem("monthly", userId);
+            await redisClient.zrem('weekly', userId);
+            await redisClient.zrem('monthly', userId);
             res.sendStatus(200);
             req.session.destroy();
             promiseConn.commit();
@@ -297,7 +297,7 @@ UserInterface.prototype.temporaryPassword = async function(req, res) {
         await sendEmail(req.body.email, tempPassword);
         const promisePool = this.pool.promise();
         const query = `UPDATE ${USER_TABLE} SET secret_key = ?, update_datetime = ? WHERE user_id = ?`;
-        const value = [tempPassword, updateTime, req.body.email+":custom"];
+        const value = [tempPassword, updateTime, req.body.email+':custom'];
         const [rows, _] = await promisePool.execute(query, value);
         if(rows.affectedRows){
             res.sendStatus(200);
@@ -331,7 +331,7 @@ const sendEmail = async function(userEmail, tempPassword){
         emailStringList = ['password', '[Eco run] 임시 비밀번호 입니다']
     }
     let transporter = nodemailer.createTransport({
-        service: "gmail",
+        service: 'gmail',
         auth: {
             user: adminEmailId,
             pass: adminEmailPassword
@@ -350,7 +350,7 @@ const sendEmail = async function(userEmail, tempPassword){
     email.send({
         template: emailStringList[0],
         message: {
-            from: "Eco run<ploggingteam@gmail.com>", 
+            from: 'Eco run<ploggingteam@gmail.com>', 
             to: userEmail, 
             subject: emailStringList[1]
         },
