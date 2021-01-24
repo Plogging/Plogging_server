@@ -1,7 +1,7 @@
 module.exports = {
-    reqWrapper: function(req) {
+    reqWrapper: function(req, act) {
         const format = { };
-        format.path = req.path;
+        format.path = "/" + act;
         format.method = req.method;
         format.query = req.query;
         format.params = req.params;

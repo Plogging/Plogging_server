@@ -11,6 +11,8 @@ const redisClient = require('./config/redisConfig.js');
 const MongoClient = require('./config/mongoConfig.js');
 const swaggerValidation = require('./util/validator.js');
 const {sequelize} = require('./models/index');
+const logger = require("./util/logger.js")("index.js");
+const logHelper = require("./util/logHelper.js");
 
 const session = require('express-session');
 const redisStore = require('connect-redis')(session);
@@ -30,7 +32,7 @@ const swaggerUi = require('swagger-ui-express');
     app.use(bodyParser.urlencoded({extended: false}));
     app.use(bodyParser.json());
 
-    app.use(express.static('/mnt/Plogging_server/images')); // 정적파일 제공
+    app.use(express.static(process.env.IMG_FILE_PATH)); // 정적파일 제공
 
     // redis sessionStorage 설정
     app.use(session({
@@ -62,7 +64,10 @@ const swaggerUi = require('swagger-ui-express');
     *    2-2. 파라미터로 들어왔다면 파리미터로 들어온 값으로 userId 세팅 ( 산책이력 조회 ) 
     * 
     */
-    app.use('/', function(req, res, next) {
+    app.use("/", function(req, res, next) {
+
+        //버전정보 체크
+        //logger.info(logHelper.reqWrapper(req));
         // 세션 체크 공통 모듈
         if((req.path === '/user' && req.method === 'POST') || 
             (req.path === '/user/password-temp') || 

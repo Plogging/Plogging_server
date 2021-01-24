@@ -3,10 +3,10 @@ const cors=require('cors');
 const fs = require('fs');
 const { promisify } = require('util');
 const util = require('../util/common.js');
+const USER_TABLE = 'user';
 const { ObjectId } = require('mongodb');
 const swaggerValidation = require('../util/validator')
-//const filePath = process.env.IMG_FILE_PATH + "/plogging/";
-const filePath = "/mnt/Plogging_server/images/plogging/";
+const ploggingFilePath = process.env.IMG_FILE_PATH + "/plogging/";
 const logger = require("../util/logger.js")("plogging.js");
 const logHelper = require("../util/logHelper.js");
 
@@ -26,7 +26,7 @@ const PloggingInterface = function(config) {
         storage: this.fileInterface.diskStorage({
             destination: function (req, file, cb) {
                 const userId = req.userId; // 세션체크 완료하면 값 받아옴
-                const dir = `${filePath}${userId}`;
+                const dir = `${ploggingFilePath}${userId}`;
                 if (!fs.existsSync(dir)){
                     fs.mkdirSync(dir);
                 }
@@ -40,11 +40,9 @@ const PloggingInterface = function(config) {
     })
 
     // 플로깅 관련 api 구현
-    router.get("/", swaggerValidation.validate, (req, res) => this.readPlogging(req, res));// read
+    router.get("/:targetUserId", swaggerValidation.validate, (req, res) => this.readPlogging(req, res));// read
     router.post("/", upload.single('ploggingImg'), swaggerValidation.validate, (req, res) => this.writePlogging(req, res)); // create
     router.delete("/", swaggerValidation.validate, (req, res) => this.deletePlogging(req,res)); // delete
-
-    this.redisAsyncZrem = promisify(this.redisClient.zrem).bind(this.redisClient);
 
     return this.router;
 };
@@ -58,11 +56,12 @@ const PloggingInterface = function(config) {
 /**
  * @swagger
  */
-PloggingInferface.prototype.readPlogging = async function(req, res) {
-    logger.info(logHelper.reqWrapper(req));
+PloggingInterface.prototype.readPlogging = async function(req, res) {
+    logger.info("plogging read api !");
+    logger.info(logHelper.reqWrapper(req, "plogging"));
 
     let userId = req.userId; // api를 call한 userId
-    let targetUserId = req.query.targetUserId; // 산책이력을 조회를 할 userId
+    let targetUserId = req.params.targetUserId; // 산책이력을 조회를 할 userId
     let ploggingCntPerPage = req.query.ploggingCntPerPage; // 한 페이지에 보여줄 산책이력 수
     let pageNumber = req.query.pageNumber; // 조회할 페이지 Number
 
@@ -70,15 +69,8 @@ PloggingInferface.prototype.readPlogging = async function(req, res) {
     if(!ploggingCntPerPage) ploggingCntPerPage = 4;
     if(!pageNumber) pageNumber = 1;
 
-    /**
-     * 1. 내 산책이력 조회 ( tartgetUserId 없으면 내 산책이력 조회 )
-     * 2. 상대방 산책이력 조회 ( targetUserId가 있으면 해당 유저의 산책이력 조회)
-     */
-
-    if(targetUserId) userId = targetUserId;
-
     let searchType = Number(req.query.searchType); // 최신순(0), 점수순(1), 거리순(2)
-    let query = {"meta.user_id": userId};
+    let query = {"meta.user_id": targetUserId};
     let sort_option = [{"meta.created_time": -1},
                        {"meta.plogging_total_score": -1},
                        {"meta.distance": -1}];  
@@ -97,7 +89,7 @@ PloggingInferface.prototype.readPlogging = async function(req, res) {
         returnResult.plogging_list = PloggingList;
         res.status(200).send(returnResult);
     } catch(e) {
-        console.log(e);
+        logger.error(e.message);
         mongoConnection=null;
         returnResult.rc = 500;
         returnResult = e.message;
@@ -110,42 +102,65 @@ PloggingInferface.prototype.readPlogging = async function(req, res) {
  * - img는 optional. 만약, 입력안하면 baseImg로 세팅
  */
 PloggingInterface.prototype.writePlogging = async function(req, res) {
-    console.log("plogging write api !");
+    logger.info("plogging write api !");
+    logger.info(logHelper.reqWrapper(req, "plogging"));
 
     let returnResult = { rc: 200, rcmsg: "success" };
 
-    let userId = req.userId;
+    const userId = req.userId;
     let ploggingObj = req.body.ploggingData;
     
     ploggingObj = JSON.parse(ploggingObj);
 
     ploggingObj.meta.user_id = userId;
-    ploggingObj.meta.create_time = util.getCurrentDateTime();
+    ploggingObj.meta.create_time = util.getCurrentDateTime();    
 
     //이미지가 없을때는 baseImg insert
     if(req.file===undefined) ploggingObj.meta.plogging_img = `${process.env.SERVER_REQ_INFO}/plogging/baseImg.PNG`;
-    else ploggingObj.meta.plogging_img = process.env.SERVER_REQ_INFO + '/' + req.file.path.split("/mnt/Plogging_server/images/")[1];
-    //else ploggingObj.meta.plogging_img = req.file.path;
+    else ploggingObj.meta.plogging_img = process.env.SERVER_REQ_INFO + '/' + req.file.path.split(`${process.env.IMG_FILE_PATH}/`)[1];
 
     let mongoConnection = null;
+    let mariadbConnection = null;
+    let redisUnLock = null;
     try {
         // 해당 산책의 plogging 점수
         const ploggingScoreArr = calcPloggingScore(ploggingObj);
         const ploggingTotalScore = Number(ploggingScoreArr[0] + ploggingScoreArr[1]);
         const ploggingActivityScore =  Number(ploggingScoreArr[0]);
         const ploggingEnvironmentScore = Number(ploggingScoreArr[1]);
+        const ploggingDistance = ploggingObj.meta.distance;
+        const pickList = ploggingObj.pick_list;
+        const pickCount = calPickCount(pickList);
 
         ploggingObj.meta.plogging_total_score = ploggingTotalScore;
         ploggingObj.meta.plogging_activity_score = ploggingActivityScore;
-        ploggingObj.meta.plogging_environment_score =  ploggingEnvironmentScore;
-      
+        ploggingObj.meta.plogging_environment_score = ploggingEnvironmentScore;
+
+        // rdb update ( 점수, 거리, 쓰레기 주운갯수)
+        mariadbConnection = await this.mysqlPool2.promise().getConnection();
+        const selectSql = `SELECT score, distance, trash from ${USER_TABLE} WHERE user_id=?`;
+        
+        await mariadbConnection.beginTransaction();
+        const  [userData, _] = await mariadbConnection.query(selectSql, [userId]);
+        // 기존 점수 조회
+        const updateScore = userData[0].score + ploggingTotalScore;
+        const updateDistance = userData[0].distance + ploggingDistance;
+        const updateTrash = userData[0].trash + pickCount;
+        const currentTime = util.getCurrentDateTime();
+        const updateSql = `UPDATE ${USER_TABLE} SET score = ?, distance = ?, trash = ?, update_datetime = ? WHERE user_id = ?`;
+
+        await mariadbConnection.query(updateSql, [updateScore, updateDistance, updateTrash, currentTime, userId]);
+        await mariadbConnection.commit();
+
+        // mongodb update
         mongoConnection = this.MongoPool.db('plogging');
         await mongoConnection.collection('record').insertOne(ploggingObj);
 
         // 누적합 방식이라 조회후 기존점수에 현재 플로깅점수 더해서 다시저장
+        // redis update
         const weeklyRankingKey = "weekly"
         const monthlyRankingKey = "monthly"
-        const unlock = await this.lock("plogging-lock"); // redis lock
+        redisUnLock = await this.lock("plogging-lock"); // redis lock
 
         // 주간 합계
         let originWeekScore = await this.redisClient.zscore(weeklyRankingKey, userId);
@@ -155,14 +170,11 @@ PloggingInterface.prototype.writePlogging = async function(req, res) {
         await this.redisClient.zadd(weeklyRankingKey, resultWeekScore, userId); // 랭킹서버에 insert
 
         // 월간 합계
-        let originMonthScore = await this.redisClient.zscore(monthlyRankingKey, userId);
-       
+        let originMonthScore = await this.redisClient.zscore(monthlyRankingKey, userId);       
         if(!originMonthScore) originMonthScore = Number(0);
         const resultMonthScore = Number(originMonthScore)+Number(ploggingTotalScore);
         await this.redisClient.zadd(monthlyRankingKey, resultMonthScore, userId); // 랭킹서버에 insert
 
-        unlock();
-        
         returnResult.score = { };
         returnResult.score.totalScore = ploggingTotalScore;
         returnResult.score.activityScore = ploggingActivityScore;
@@ -170,66 +182,57 @@ PloggingInterface.prototype.writePlogging = async function(req, res) {
 
         res.status(200).send(returnResult);
     } catch(e) {
-        console.log(e);
-        unlock(); // lock을 걸고 오류가 날수도 있으므로 catch문에는 반드시 unlock을 걸어줘야함.
-        mongoConnection=null;
+        logger.error(e.message);
+        await mariadbConnection.rollback();
         returnResult.rc = 500;
         returnResult.rcmsg = e.message;
         res.status(500).send(returnResult);
+    } finally {
+        await mariadbConnection.release();
+        mongoConnection=null;
+        if(redisUnLock) redisUnLock();
     }
 }
 
 /*
  * 산책 이력삭제
- *   case 1. 유저가 특정 산책 이력을 삭제하거나(1개 삭제) - 산책이력의 objectId값을 파라미터로 전달
- *   case 2. 회원 탈퇴했을때(해당 회원 산책이력 모두 삭제) - 산책이력의 objectId값을 파라미터로 전달하지 않음
+ *  ->산책이력의 objectId값을 파라미터로 전달
+ *   
  */
 PloggingInterface.prototype.deletePlogging = async function(req, res) {
-    console.log("plogging delete api !");
+    logger.info("plogging delete api !");
+    logger.info(logHelper.reqWrapper(req, "plogging"));
 
     let userId = req.userId;
     let mongoObjectId = req.query.objectId;
     let ploggingImgName = req.query.ploggingImgName; // plogging_20210106132743.PNG
-    let ploggingImgPath = `${filePath}${userId}/${ploggingImgName}`; 
-
+    let ploggingImgPath = `${ploggingFilePath}${userId}/${ploggingImgName}`; 
     let query = null;
 
     let returnResult = { rc: 200, rcmsg: "success" };
     let mongoConnection = null;
     try {
         mongoConnection = this.MongoPool.db('plogging');
-        if(mongoObjectId) { // 해당 이력만 삭제
-            query = {"_id": ObjectId(mongoObjectId)};
+        query = {"_id": ObjectId(mongoObjectId)};
             
-            // 산책이력 삭제
-            await mongoConnection.collection('record').deleteOne(query);
+        // 산책이력 삭제
+        await mongoConnection.collection('record').deleteOne(query);
             
-            // 산책이력 이미지 삭제
-            if(ploggingImgName) fs.unlinkSync(ploggingImgName);
+        // 산책이력 이미지 삭제
+        fs.unlinkSync(ploggingImgPath);
 
-            // 해당 산책의 점수 랭킹점수 삭제
-            //let queryKey = "Plogging";
+        // 해당 산책의 점수 랭킹점수 삭제
+        await this.redisClient.zrem("weekly", userId);
+        await this.redisClient.zrem("monthly", userId);
 
-            //await this.redisAsyncZrem(queryKey, userId);
-        } else { // 전체이력 삭제 -> 회원탈퇴
-            query = {"meta.user_id": userId};
-
-            // 탈퇴 유저의 이력 전체 삭제
-            await mongoConnection.collection('record').deleteMany(query);
-
-            // 탈퇴 유저의 산책이력 이미지 전체 삭제
-            fs.rmdirSync(`${filePath}${userId}`, { recursive: true });
-
-             // 해당 산책의 점수 랭킹점수 삭제
-            //await this.redisAsyncZrem(queryKey, userId);
-        }
         res.status(200).send(returnResult);
     } catch(e) {
-        console.log(e);
-        mongoConnection=null;
+        logger.error(e.message);
         returnResult.rc = 500;
         returnResult.rcmsg = e.message;
         res.status(500).send(returnResult);
+    } finally {
+        mongoConnection=null;
     }
 }
 
@@ -242,7 +245,7 @@ function calcPloggingScore(ploggingObj) {
     const pickPerScore = 10; // 쓰레기 1개 주울때마다 10점 증가
     
     const distance = ploggingObj.meta.distance; // 플로깅 거리
-    const pick_list = ploggingObj.pick_list; // 주운 쓰레기 리스트
+    const pickList = ploggingObj.pick_list; // 주운 쓰레기 리스트
     
     if(distance < pivotDistance) score[0] = 0; //300m 이하는 거리점수 없음
     else {
@@ -251,7 +254,7 @@ function calcPloggingScore(ploggingObj) {
     }
 
     let pickCount=0;
-    for(let i=0; i<pick_list.length; i++) pickCount += pick_list[i].pick_count;
+    for(let i=0; i<pickList.length; i++) pickCount += pickList[i].pick_count;
     score[1]= pickCount*pickPerScore;
 
     return score;
@@ -264,5 +267,13 @@ function addExtraScorePerKm(distance) {
     for(let i=1; i<=hopCnt; i++) extraScore += (i*10);
     return extraScore;
 }
+
+// 쓰레기 주운갯수 계산
+function calPickCount(pickList) {
+    let pickCount=0;
+    for(let i=0; i<pickList.length; i++) pickCount += pickList[i].pick_count;
+    return pickCount;
+}
+
 
 module.exports = PloggingInterface;
