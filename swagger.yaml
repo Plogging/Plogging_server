@@ -573,9 +573,9 @@ paths:
               rcmsg:
                 type: string
                 example: 서버 오류.
-  /rank/{rankType}:
+  /rank/global:
     get:
-      summary: 랭킹 가져오기
+      summary: 글로벌 랭킹 가져오기
       tags: [Ranking]
       parameters:
         - in: header
@@ -584,7 +584,7 @@ paths:
           required: true
           description: 유저 SessionKey
         - name: rankType
-          in: path
+          in: query
           type: string
           enum: [weekly, monthly]
           required: true
@@ -628,43 +628,43 @@ paths:
                     score:
                       type: integer
                 example:
-                  - userId: happy
+                  - userId: happy@gamil.com:kakao
                     displayName: 해피
                     profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
                     score: 19480
-                  - userId: choco
+                  - userId: choco@gamil.com:kakao
                     displayName: 초코
                     profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
                     score: 17000
-                  - userId: bori
+                  - userId: bori@gamil.com:kakao
                     displayName: 보리
                     profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
                     score: 16500
-                  - userid: ttori
+                  - userid: ttori@gamil.com:kakao
                     displayName: 또리
                     profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
                     score: 16000
-                  - userId: momo
+                  - userId: momo@gamil.com:kakao
                     displayName: 모모
                     profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
                     score: 15500
-                  - userid: congi
+                  - userid: congi@gamil.com:kakao
                     displayName: 콩이
                     profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
                     score: 14500
-                  - userId: coco
+                  - userId: coco@gamil.com:kakao
                     displayName: 코코
                     profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
                     score: 14000
-                  - userId: hoya
+                  - userId: hoya@gamil.com:kakao
                     displayName: 호야
                     profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
                     score: 13500
-                  - userId: zzangu
+                  - userId: zzangu@gamil.com:kakao
                     displayName: 짱구
                     profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
                     score: 13000
-                  - userId: duri
+                  - userId: duri@gamil.com:kakao
                     displayName: 두리
                     profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
                     score: 12000
@@ -679,6 +679,79 @@ paths:
               rcmsg:
                 type: string
                 example: query should have required property 'offset'
+        500:
+          description: server error
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 500
+              rcmsg:
+                type: string
+                example: 서버 오류.
+  /rank/users/{id}:
+    get:
+      summary: 유저 랭킹 가져오기
+      tags: [Ranking]
+      parameters:
+        - in: header
+          name: sessionKey
+          type: string
+          required: true
+          description: 유저 SessionKey
+        - name: rankType
+          in: query
+          type: string
+          enum: [weekly, monthly]
+          required: true
+          description: 랭킹 유형 (주간 / 월간)
+        - name: id
+          in: path
+          type: string
+          required: true
+          description: 유저 ID
+      responses:
+        200:
+          description: Success
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 200
+              rcmsg:
+                type: string
+                example: success
+              userRankData:
+                type: object
+                properties:
+                  userId:
+                    type: string
+                    example: happy@gmail.com:kakao
+                  displayName:
+                    type: string
+                    example: 해피
+                  profileImg:
+                    type: string
+                    example: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
+                  rank:
+                    type: integer
+                    example: 0
+                  score:
+                    type: integer
+                    example: 19480
+        400:
+          description: Bad Request(parameter error)
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 400
+              rcmsg:
+                type: string
+                example: query should have required property 'rankType'
         500:
           description: server error
           schema:
