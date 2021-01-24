@@ -1,6 +1,5 @@
 const express = require('express');
 const cors=require('cors');
-const util = require('../util/common.js');
 const USER_TABLE = 'user';
 const fs = require('fs');
 const filePath = process.env.IMG_FILE_PATH;
@@ -10,16 +9,17 @@ const swaggerValidation = require('../util/validator');
 const nodemailer = require('nodemailer');
 const Email = require('email-templates');
 
+
 const UserInterface = function(config) {
     const router = express.Router();
     
     router.all('*'  ,cors());
     this.router = router;
-    this.mysqlPool = config.mysqlPool;
-    this.pool = config.mysqlPool2;
     this.redisClient = config.redisClient;
     this.fileInterface = config.fileInterface;
     this.MongoPool = config.MongoPool;
+    this.User = config.sequelize.models.user;
+    this.sequelize = config.sequelize;
 
     const upload = this.fileInterface({
         storage: this.fileInterface.diskStorage({
@@ -50,7 +50,7 @@ const UserInterface = function(config) {
     router.put('/image', upload.single('profileImg'), swaggerValidation.validate, (req, res) => this.changeUserImage(req, res));
     router.put('/name', swaggerValidation.validate, (req, res) => this.changeUserName(req, res));
     router.post('/check', swaggerValidation.validate, (req, res) => this.checkUserId(req, res));
-    
+        
     return this.router;
 };
 
@@ -61,102 +61,98 @@ UserInterface.prototype.register = async function(req, res) {
     const userType = 'custom';
     const userId = req.body.userId + ':' + userType;
     try {
-        const findUserQuery = `SELECT * FROM ${USER_TABLE} WHERE user_id = ?`;
-        const findUserValues = [userId];
-        const promiseConn = await this.pool.promise().getConnection();
-        promiseConn.beginTransaction();
-        const [rows, _] = await promiseConn.execute(findUserQuery, findUserValues);
-        if (rows.length === 0) {
-            try {
-                // set userImg
-                let userImg = 'https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg';
-                const createDateline = util.getCurrentDateTime();
-                const createUserQuery = `INSERT INTO ${USER_TABLE}(user_id, display_name, profile_img, type, email, update_datetime, create_datetime, secret_key) VALUES(?, ?, ?, ?, ?, ?, ?, ?)`;
-                const createUserValues = [userId, userName, userImg, userType, req.body.userId, createDateline, createDateline, secretKey];
-                await promiseConn.execute(createUserQuery, createUserValues);
-                req.session.userId = userId;
-                returnResult.session = req.session.id;
-                returnResult.userImg = userImg;
-                returnResult.userName = userName;
-                res.status(201).json(returnResult);
-                promiseConn.commit();
-            } catch (error) {
-                console.log(error)
-                if(error.errno === 1062){
-                    res.status(409).send('UserName Conflict');
-                }else{
-                    res.sendStatus(500);
+        await this.sequelize.transaction(async (t) => {
+            const user = await this.User.findOne({ 
+                where: {user_id: userId}
+            },{ transaction: t});
+            if (!user) {
+                try {
+                    // set userImg
+                    let userImg = 'https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg';
+                    const newUser = await this.User.create({
+                        user_id: userId,
+                        display_name: userName, 
+                        profile_img: userImg, 
+                        type: userType, 
+                        email: req.body.userId,
+                        secret_key: secretKey 
+                    },{ transaction: t});
+                    req.session.userId = newUser.user_id;
+                    returnResult.session = req.session.id;
+                    returnResult.userImg = newUser.profile_img;
+                    returnResult.userName = newUser.display_name;
+                    res.status(201).json(returnResult);
+                } catch (error) {
+                    if(error.original.errno === 1062){
+                        res.status(409).send('UserName Conflict');
+                    }else{
+                        res.sendStatus(500);
+                    }
                 }
-                promiseConn.rollback();
+            }else{
+                res.status(409).send('UserId Conflict');
             }
-        }else{
-            res.status(409).send('UserId Conflict');
-        };
+        })
     } catch (error) {
         res.sendStatus(500);
-    } finally{
-        promiseConn.release();
     }
-    
 }
 
 UserInterface.prototype.social = async function(req, res) {
     let returnResult = {};
-    const [userEmail, userType] = req.body.userId.split(':');
     const userId = req.body.userId;
+    const [userEmail, userType] = req.body.userId.split(':');
     const userName = req.body.userName;
-    const promiseConn = await this.pool.promise().getConnection();
-    promiseConn.beginTransaction();
-    // search userId in DB
-    const findUserQuery = `SELECT * FROM ${USER_TABLE} WHERE user_id = ?`;
-    const findUserValues = [userId];
-    const [rows, _] = await promiseConn.execute(findUserQuery, findUserValues);
-    if (rows.length === 0) {
-        try {
-            // init userImg
-            let userImg = 'https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg';
-            const createDateline = util.getCurrentDateTime();
-            const createUserQuery = `INSERT INTO ${USER_TABLE}(user_id, display_name, profile_img, type, email, update_datetime, create_datetime) VALUES(?, ?, ?, ?, ?, ?, ?)`;
-            const createUserValues = [userId, userName, userImg, userType, userEmail, createDateline, createDateline];
-            await promiseConn.execute(createUserQuery, createUserValues);
-            req.session.userId = userId;
-            returnResult.session = req.session.id;
-            returnResult.userImg = userImg;
-            returnResult.userName = userName;
-            res.status(201).json(returnResult);
-            promiseConn.commit();
-        } catch (error) {
-            if(error.errno === 1062){
-                res.sendStatus(409);
+    try {
+        await this.sequelize.transaction(async (t) => {
+            const user = await this.User.findOne({ 
+                where: {user_id: userId}
+            }, {transaction: t});
+            if(!user){
+                try {
+                    let userImg = 'https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg';
+                    const newUser = await this.User.create({
+                        user_id: userId,
+                        display_name: userName,
+                        profile_img: userImg,
+                        type: userType,
+                        email: userEmail
+                    }, {transaction: t})
+                    req.session.userId = newUser.user_id;
+                    returnResult.session = req.session.id;
+                    returnResult.userImg = newUser.profile_img;
+                    returnResult.userName = newUser.display_name;
+                    res.status(201).json(returnResult);
+                } catch (error) {
+                    if(error.original.errno === 1062){
+                        res.status(409).send('userName Conflict');
+                    }else{
+                        res.sendStatus(500);
+                    }
+                }
             }else{
-                res.sendStatus(500);
+                req.session.userId = user.user_id;
+                returnResult.session = req.session.id;
+                returnResult.userImg = user.profile_img;
+                returnResult.userName = user.display_name;
+                res.json(returnResult);
             }
-            promiseConn.rollback();
-        }
-    }else{
-        req.session.userId = userId;
-        returnResult.session = req.session.id;
-        returnResult.userImg = rows[0].profile_img;
-        returnResult.userName = rows[0].display_name;
-        res.json(returnResult);
-        promiseConn.commit();
-    };
-    promiseConn.release();
+        })
+    } catch (error) {
+        res.sendStatus(500);
+    }
 }
 
 UserInterface.prototype.signIn = async function(req, res) {
-    const promisePool = this.pool.promise();
     const userId = req.body.userId + ':custom';
     let returnResult = {};
     try {
-        const query = `SELECT * FROM ${USER_TABLE} WHERE user_id = ? AND secret_key = ?`;
-        const values = [userId, req.body.secretKey];
-        const [rows, _] = await promisePool.execute(query, values);
-        if(rows.length){
+        const user = await this.User.findOne({ where: {user_id: userId}});
+        if(user){
             req.session.userId = userId;
             returnResult.session = req.session.id;
-            returnResult.userImg = rows[0].profile_img;
-            returnResult.userName = rows[0].display_name;
+            returnResult.userImg = user.profile_img;
+            returnResult.userName = user.display_name;
             res.json(returnResult);
         }else{
             res.sendStatus(401);
@@ -167,19 +163,16 @@ UserInterface.prototype.signIn = async function(req, res) {
 }
 
 UserInterface.prototype.getUserInfo = async function(req, res) {
-    const promisePool = this.pool.promise();
     let returnResult = {};
     try {
-        const getUserQuery = `SELECT * FROM ${USER_TABLE} WHERE user_id = ?`;
-        const getUserValues = [req.params.id];
-        const [rows, _] = await promisePool.execute(getUserQuery, getUserValues);
-        if(rows.length){
-            returnResult.userId = rows[0].user_id;
-            returnResult.userImg = rows[0].profile_img;
-            returnResult.userName = rows[0].display_name;
-            returnResult.userScore = rows[0].score;
-            returnResult.userDistance = rows[0].distance;
-            returnResult.userTrash = rows[0].trash;
+        const user = await this.User.findOne({ where: { user_id: req.params.id}});
+        if(user){
+            returnResult.userId = user.user_id;
+            returnResult.userImg = user.profile_img;
+            returnResult.userName = user.display_name;
+            returnResult.userScore = user.score;
+            returnResult.userDistance = user.distance;
+            returnResult.userTrash = user.trash;
             res.json(returnResult);
         }else{
             res.sendStatus(500);
@@ -190,21 +183,19 @@ UserInterface.prototype.getUserInfo = async function(req, res) {
 }
 
 UserInterface.prototype.changeUserName = async function(req, res) {
-    const promisePool = this.pool.promise();
     let returnResult = {};
-    const updateTime = util.getCurrentDateTime();
     try {
-        const query = `UPDATE ${USER_TABLE} SET display_name = ?, update_datetime = ? WHERE user_id = ?`;
-        const values = [req.body.userName, updateTime, req.session.userId];
-        const [rows, _] = await promisePool.execute(query, values);
-        if(rows.affectedRows){
+        const [updatedCnt] = await this.User.update({
+            display_name: req.body.userName
+        }, { where: { user_id: req.session.userId}});
+        if(updatedCnt){
             returnResult.userName = req.body.userName;
             res.send(returnResult);
         }else{
             res.sendStatus(500);
         }
     } catch (error) {
-        if(error.errno === 1062){
+        if(error.original.errno === 1062){
             res.status(409).send('userName Conflict');
         }else{
             res.sendStatus(500);
@@ -213,16 +204,15 @@ UserInterface.prototype.changeUserName = async function(req, res) {
 }
 
 UserInterface.prototype.changeUserImage = async function(req, res) {
-    const promisePool = this.pool.promise();
     let returnResult = {};
-    const updateTime = util.getCurrentDateTime();
+    const profileImg = req.file.path;
     try {
         // TODO: sql 오류에도 파일 이미지는 정상으로 바뀜
-        const profileImg = req.file.path; // TODO: 추후 서버 연결 시 경로 변경
-        const query = `UPDATE ${USER_TABLE} SET profile_img = ?, update_datetime = ? WHERE user_id = ?`;
-        const values = [profileImg, updateTime, req.session.userId];
-        const [rows, _] = await promisePool.execute(query, values);
-        if(rows.affectedRows){
+        // TODO: 추후 서버 연결 시 경로 변경
+        const [updatedCnt] = await this.User.update({
+            profile_img: profileImg,
+        }, { where: { user_id: req.session.userId}});
+        if(updatedCnt){
             returnResult.profileImg = profileImg;
             res.send(returnResult);
         }else{
@@ -235,11 +225,7 @@ UserInterface.prototype.changeUserImage = async function(req, res) {
 
 UserInterface.prototype.signOut = async function(req, res) {
     req.session.destroy(function(err) {
-        if(err) {
-            res.sendStatus(500);
-        }else {
-            res.sendStatus(200);
-        }
+        err? res.sendStatus(500): res.sendStatus(200);
     })
 }
 
@@ -247,45 +233,45 @@ UserInterface.prototype.withdrawal = async function(req, res) {
     const userId = req.session.userId;
     const mongoConnection = this.MongoPool.db('plogging');
     const redisClient = this.redisClient;
-    const promiseConn = await this.pool.promise().getConnection();
-    promiseConn.beginTransaction();
-    const deleteUserQuery = `DELETE FROM ${USER_TABLE} WHERE user_id = ?`;
-    const deleteUserValues = [userId];
-    const [rows,_] = await promiseConn.query(deleteUserQuery, deleteUserValues)
-    if(rows.affectedRows){
-        try {
-            await mongoConnection.collection('record').deleteMany({'meta.user_id': userId});
-            // 탈퇴 유저의 산책이력 이미지 전체 삭제
-            if(fs.existsSync(`${filePath}/${userId}`)){
-                fs.rmdirSync(`${filePath}/${userId}`, { recursive: true });
+    try {
+        const t = await this.sequelize.transaction();
+        const deletedCnt = await this.User.destroy({
+            where: {user_id: userId}
+        }, { transaction: t});
+        if(deletedCnt){
+            try {
+                await mongoConnection.collection('record').deleteMany({'meta.user_id': userId});
+                // 탈퇴 유저의 산책이력 이미지 전체 삭제
+                if(fs.existsSync(`${filePath}/${userId}`)){
+                    fs.rmdirSync(`${filePath}/${userId}`, { recursive: true });
+                }
+                // 해당 산책의 점수 랭킹점수 삭제
+                await redisClient.zrem('weekly', userId);
+                await redisClient.zrem('monthly', userId);
+                res.sendStatus(200);
+                await t.commit();
+                req.session.destroy();
+            } catch (error) {
+                await t.rollback();
+                res.sendStatus(500);
             }
-            // 해당 산책의 점수 랭킹점수 삭제
-            await redisClient.zrem('weekly', userId);
-            await redisClient.zrem('monthly', userId);
-            res.sendStatus(200);
-            req.session.destroy();
-            promiseConn.commit();
-        } catch (error) {
-            console.log(error.message)
+        }else{
             res.sendStatus(500);
-            promiseConn.rollback();
         }
+    }catch (error) {
+        res.sendStatus(500);
     }
-    promiseConn.release();
 }
 
 UserInterface.prototype.changePassword = async function(req, res) {
     try {
-        const updateTime = util.getCurrentDateTime();
-        const promisePool = this.pool.promise();
-        const query = `UPDATE ${USER_TABLE} SET secret_key = ?, update_datetime = ? WHERE user_id = ? AND secret_key = ?`;
-        const value = [req.body.newSecretKey, updateTime, req.session.userId, req.body.existedSecretKey];
-        const [rows, _] = await promisePool.execute(query, value);
-        if(rows.affectedRows){
-            res.sendStatus(200);
-        }else{
-            res.status(400).send('No secret key');
-        }
+        const [updatedCnt] = await this.User.update({
+            secret_key: req.body.newSecretKey
+        }, { where: {
+            user_id: req.session.userId,
+            secret_key: req.body.existedSecretKey
+        }});
+        updatedCnt? res.sendStatus(200): res.status(400).send('No secret key');
     } catch (error) {
         res.sendStatus(500);
     }
@@ -295,40 +281,30 @@ UserInterface.prototype.temporaryPassword = async function(req, res) {
     const tempPassword = Math.random().toString(36).slice(2);
     try {
         await sendEmail(req.body.email, tempPassword);
-        const promisePool = this.pool.promise();
-        const query = `UPDATE ${USER_TABLE} SET secret_key = ?, update_datetime = ? WHERE user_id = ?`;
-        const value = [tempPassword, updateTime, req.body.email+':custom'];
-        const [rows, _] = await promisePool.execute(query, value);
-        if(rows.affectedRows){
-            res.sendStatus(200);
-        }else{
-            res.sendStatus(404);
-        }
+        const [updatedCnt] = await this.User.update({
+            secret_key: tempPassword
+        }, { where: { user_id: userId}});
+        updatedCnt? res.sendStatus(200): res.sendStatus(404);
     } catch (error) {
         res.sendStatus(500);
     }
 }
 
 UserInterface.prototype.checkUserId = async function(req, res) {
-    const promisePool = this.pool.promise();
     try {
-        const query = `SELECT * FROM ${USER_TABLE} WHERE user_id = ?`;
-        const values = [req.body.userId + ':custom'];
-        const [rows, _] = await promisePool.execute(query, values);
-        if(rows.length){
-            res.status(400).send('userId which was existed');
-        }else{
-            res.sendStatus(200);
-        }
+        const updatedCnt = await this.User.findOne({
+            where: {user_id: req.body.userId + ':custom'}
+        })
+        updatedCnt? res.status(400).send('userId which was existed'): res.sendStatus(200);
     } catch (error) {
         res.sendStatus(500);
     }
 }
 
 const sendEmail = async function(userEmail, tempPassword){
-    let emailStringList = ['signUp', '[Eco run] 회원가입을 축하합니다!']
+    let emailStringList = ['signUp', '[Eco run] 회원가입을 축하합니다!'];
     if(tempPassword){
-        emailStringList = ['password', '[Eco run] 임시 비밀번호 입니다']
+        emailStringList = ['password', '[Eco run] 임시 비밀번호 입니다'];
     }
     let transporter = nodemailer.createTransport({
         service: 'gmail',

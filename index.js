@@ -10,6 +10,7 @@ const poolAsyncAwait = require('./config/mysqlConfig.js').getMysqlPool2; // asyn
 const redisClient = require('./config/redisConfig.js');
 const MongoClient = require('./config/mongoConfig.js');
 const swaggerValidation = require('./util/validator.js');
+const {sequelize} = require('./models/index');
 
 const session = require('express-session');
 const redisStore = require('connect-redis')(session);
@@ -20,10 +21,11 @@ const YAML = require('yamljs');
 const swaggerUi = require('swagger-ui-express');
 
 (async () => {
-    const swaggerDocument = YAML.load('./swagger.yaml')
+    const swaggerDocument = YAML.load('./swagger.yaml');
     const mongoConnectionPool = await MongoClient.connect();
 
     const app = express();
+    sequelize.sync();
 
     app.use(bodyParser.urlencoded({extended: false}));
     app.use(bodyParser.json());
@@ -49,6 +51,7 @@ const swaggerUi = require('swagger-ui-express');
     globalOption.redisClient=redisClient;
     globalOption.fileInterface = multer;
     globalOption.MongoPool=mongoConnectionPool;
+    globalOption.sequelize = sequelize;
 
     app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument)); // node-swaggwer
 
@@ -76,7 +79,7 @@ const swaggerUi = require('swagger-ui-express');
             }
         }
     });
-
+    
     app.use('/user', new UserInterface(globalOption)); // 유저 관려 api는 user.js로 포워딩
     app.use('/rank', new RankingInterface(globalOption)); // 랭킹 관련 api는 ranking.js로 포워딩
     app.use('/plogging', new PloggingInterface(globalOption)); // 쓰레기 관련 api는 plogging.js로 포워딩        
