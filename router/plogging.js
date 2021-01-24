@@ -8,6 +8,7 @@ const { ObjectId } = require('mongodb');
 const swaggerValidation = require('../util/validator')
 const ploggingFilePath = process.env.IMG_FILE_PATH + "/plogging/";
 const logger = require("../util/logger.js")("plogging.js");
+const logHelper = require("../util/logHelper.js");
 
 const PloggingInterface = function(config) {
     const router = express.Router();
@@ -57,6 +58,7 @@ const PloggingInterface = function(config) {
  */
 PloggingInterface.prototype.readPlogging = async function(req, res) {
     logger.info("plogging read api !");
+    logger.info(logHelper.reqWrapper(req, "plogging"));
 
     let userId = req.userId; // api를 call한 userId
     let targetUserId = req.params.targetUserId; // 산책이력을 조회를 할 userId
