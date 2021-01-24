@@ -63,6 +63,8 @@ const swaggerUi = require('swagger-ui-express');
     */
     app.use("/", function(req, res, next) {
 
+        //버전정보 체크
+        
         logger.info(logHelper.reqWrapper(req));
         // 세션 체크 공통 모듈
         if((req.path === '/user' && req.method === 'POST') || 

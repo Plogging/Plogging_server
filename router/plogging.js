@@ -39,7 +39,7 @@ const PloggingInterface = function(config) {
     })
 
     // 플로깅 관련 api 구현
-    router.get("/", swaggerValidation.validate, (req, res) => this.readPlogging(req, res));// read
+    router.get("/:targetUserId", swaggerValidation.validate, (req, res) => this.readPlogging(req, res));// read
     router.post("/", upload.single('ploggingImg'), swaggerValidation.validate, (req, res) => this.writePlogging(req, res)); // create
     router.delete("/", swaggerValidation.validate, (req, res) => this.deletePlogging(req,res)); // delete
 
@@ -59,7 +59,7 @@ PloggingInterface.prototype.readPlogging = async function(req, res) {
     logger.info("plogging read api !");
 
     let userId = req.userId; // api를 call한 userId
-    let targetUserId = req.query.targetUserId; // 산책이력을 조회를 할 userId
+    let targetUserId = req.params.targetUserId; // 산책이력을 조회를 할 userId
     let ploggingCntPerPage = req.query.ploggingCntPerPage; // 한 페이지에 보여줄 산책이력 수
     let pageNumber = req.query.pageNumber; // 조회할 페이지 Number
 

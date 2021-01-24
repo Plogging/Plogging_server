@@ -284,10 +284,10 @@ paths:
           type: string
           required: true
           description: 유저 SessionKey
-        - in: query
+        - in: path
           name: targetUserId
           type: string
-          required: false
+          required: true
           description: 조회할 유저 id
         - in: query
           name: searchType
