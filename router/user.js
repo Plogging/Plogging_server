@@ -40,64 +40,36 @@ const UserInterface = function(config) {
         })
 
     // 유저 관련 api 구현
-    router.post('', swaggerValidation.validate, (req, res) => this.register(req, res));
-    router.delete('', swaggerValidation.validate, (req, res) => this.withdrawal(req, res));
-    router.get('/:id', swaggerValidation.validate, (req, res) => this.getUserInfo(req, res));
-    router.post('/social', swaggerValidation.validate, (req, res) => this.social(req, res));
     router.post('/sign-in', swaggerValidation.validate, (req, res) => this.signIn(req, res));
-    router.get('/sign-out', swaggerValidation.validate, (req, res) => this.signOut(req, res));
+    router.post('/social', swaggerValidation.validate, (req, res) => this.social(req, res));
+    router.post('', swaggerValidation.validate, (req, res) => this.register(req, res));
+    router.post('/check', swaggerValidation.validate, (req, res) => this.checkUserId(req, res));
+    router.get('/:id', swaggerValidation.validate, (req, res) => this.getUserInfo(req, res));
+    router.put('/name', swaggerValidation.validate, (req, res) => this.changeUserName(req, res));
+    router.put('/image', upload.single('profileImg'), swaggerValidation.validate, (req, res) => this.changeUserImage(req, res));
     router.put('/password', swaggerValidation.validate, (req, res) => this.changePassword(req, res));
     router.put('/password-temp', swaggerValidation.validate, (req, res) => this.temporaryPassword(req, res));
-    router.put('/image', upload.single('profileImg'), swaggerValidation.validate, (req, res) => this.changeUserImage(req, res));
-    router.put('/name', swaggerValidation.validate, (req, res) => this.changeUserName(req, res));
-    router.post('/check', swaggerValidation.validate, (req, res) => this.checkUserId(req, res));
+    router.get('/sign-out', swaggerValidation.validate, (req, res) => this.signOut(req, res));
+    router.delete('', swaggerValidation.validate, (req, res) => this.withdrawal(req, res));
         
     return this.router;
 };
 
-UserInterface.prototype.register = async function(req, res) {
+UserInterface.prototype.signIn = async function(req, res) {
+    const userId = req.body.userId + ':custom';
     let returnResult = {};
-    const secretKey = req.body.secretKey;
-    const userName = req.body.userName;
-    const userType = 'custom';
-    const userId = req.body.userId + ':' + userType;
-    logger.info(`Registering [${userId}] into maria DB...`);
+    logger.info(`Logging in with [${userId}] ...`);
     try {
-        await this.sequelize.transaction(async (t) => {
-            const user = await this.User.findOne({ 
-                where: {user_id: userId}
-            },{ transaction: t});
-            if (!user) {
-                try {
-                    // set userImg
-                    let userImg = 'https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg';
-                    const newUser = await this.User.create({
-                        user_id: userId,
-                        display_name: userName, 
-                        profile_img: userImg, 
-                        type: userType, 
-                        email: req.body.userId,
-                        secret_key: secretKey 
-                    },{ transaction: t});
-                    req.session.userId = newUser.user_id;
-                    returnResult.session = req.session.id;
-                    returnResult.userImg = newUser.profile_img;
-                    returnResult.userName = newUser.display_name;
-                    res.status(201).json(returnResult);
-                } catch (error) {
-                    if(error.original.errno === 1062){
-                        logger.error(`Existed user's name for register [${userName}]`);
-                        res.status(409).send('UserName Conflict');
-                    }else{
-                        logger.error(error.message);
-                        res.sendStatus(500);
-                    }
-                }
-            }else{
-                logger.error(`Existed user's id for register [${req.body.userName}]`);
-                res.status(409).send('UserId Conflict');
-            }
-        })
+        const user = await this.User.findOne({ where: {user_id: userId}});
+        if(user){
+            req.session.userId = userId;
+            returnResult.session = req.session.id;
+            returnResult.userImg = user.profile_img;
+            returnResult.userName = user.display_name;
+            res.json(returnResult);
+        }else{
+            res.sendStatus(401);
+        }
     } catch (error) {
         logger.error(error.message);
         res.sendStatus(500);
@@ -131,11 +103,10 @@ UserInterface.prototype.social = async function(req, res) {
                     returnResult.userName = newUser.display_name;
                     res.status(201).json(returnResult);
                 } catch (error) {
+                    logger.error(error.message);
                     if(error.original.errno === 1062){
-                        logger.error(`Existed user's name for register [${userName}]`);
                         res.status(409).send('userName Conflict');
                     }else{
-                        logger.error(error.message);
                         res.sendStatus(500);
                     }
                 }
@@ -153,22 +124,61 @@ UserInterface.prototype.social = async function(req, res) {
     }
 }
 
-UserInterface.prototype.signIn = async function(req, res) {
-    const userId = req.body.userId + ':custom';
+UserInterface.prototype.register = async function(req, res) {
     let returnResult = {};
-    logger.info(`Logging in with [${userId}] ...`);
+    const secretKey = req.body.secretKey;
+    const userName = req.body.userName;
+    const userType = 'custom';
+    const userId = req.body.userId + ':' + userType;
+    logger.info(`Registering [${userId}] into maria DB...`);
     try {
-        const user = await this.User.findOne({ where: {user_id: userId}});
-        if(user){
-            req.session.userId = userId;
-            returnResult.session = req.session.id;
-            returnResult.userImg = user.profile_img;
-            returnResult.userName = user.display_name;
-            res.json(returnResult);
-        }else{
-            logger.error(`No user for sign in [${userId}]`);
-            res.sendStatus(401);
-        }
+        await this.sequelize.transaction(async (t) => {
+            const user = await this.User.findOne({ 
+                where: {user_id: userId}
+            },{ transaction: t});
+            if (!user) {
+                try {
+                    // set userImg
+                    let userImg = 'https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg';
+                    const newUser = await this.User.create({
+                        user_id: userId,
+                        display_name: userName, 
+                        profile_img: userImg, 
+                        type: userType, 
+                        email: req.body.userId,
+                        secret_key: secretKey 
+                    },{ transaction: t});
+                    req.session.userId = newUser.user_id;
+                    returnResult.session = req.session.id;
+                    returnResult.userImg = newUser.profile_img;
+                    returnResult.userName = newUser.display_name;
+                    res.status(201).json(returnResult);
+                } catch (error) {
+                    logger.error(error.message);
+                    if(error.original.errno === 1062){
+                        res.status(409).send('UserName Conflict');
+                    }else{
+                        res.sendStatus(500);
+                    }
+                }
+            }else{
+                logger.error(`Existed user's id for register [${req.body.userName}]`);
+                res.status(409).send('UserId Conflict');
+            }
+        })
+    } catch (error) {
+        logger.error(error.message);
+        res.sendStatus(500);
+    }
+}
+
+UserInterface.prototype.checkUserId = async function(req, res) {
+    logger.info(`Checking [${req.session.userId}]...`);
+    try {
+        const updatedCnt = await this.User.findOne({
+            where: {user_id: req.body.userId + ':custom'}
+        })
+        updatedCnt? res.status(400).send('userId which was existed'): res.sendStatus(200);
     } catch (error) {
         logger.error(error.message);
         res.sendStatus(500);
@@ -189,7 +199,7 @@ UserInterface.prototype.getUserInfo = async function(req, res) {
             returnResult.userTrash = user.trash;
             res.json(returnResult);
         }else{
-            logger.error(`No user for getting info [${userId}]`);
+            logger.error(`No user for getting [${userId}]`);
             res.sendStatus(500);
         }
     } catch (error) {
@@ -213,11 +223,10 @@ UserInterface.prototype.changeUserName = async function(req, res) {
             res.sendStatus(500);
         }
     } catch (error) {
+        logger.error(error.message);
         if(error.original.errno === 1062){
-            logger.error(`Existed user's name for updating [${req.body.userName}]`);
             res.status(409).send('userName Conflict');
         }else{
-            logger.error(error.message);
             res.sendStatus(500);
         }
     }
@@ -242,6 +251,37 @@ UserInterface.prototype.changeUserImage = async function(req, res) {
         }
     } catch (error) {
         logger.error(error.message)
+        res.sendStatus(500);
+    }
+}
+
+UserInterface.prototype.changePassword = async function(req, res) {
+    logger.info(`Changing user's password of [${req.session.userId}] ...`);
+    try {
+        const [updatedCnt] = await this.User.update({
+            secret_key: req.body.newSecretKey
+        }, { where: {
+            user_id: req.session.userId,
+            secret_key: req.body.existedSecretKey
+        }});
+        updatedCnt? res.sendStatus(200): res.status(400).send('No secret key');
+    } catch (error) {
+        logger.error(error.message);
+        res.sendStatus(500);
+    }
+}
+
+UserInterface.prototype.temporaryPassword = async function(req, res) {
+    logger.info(`Sending user's password of [${req.session.userId}] to Email...`);
+    const tempPassword = Math.random().toString(36).slice(2);
+    try {
+        await sendEmail(req.body.email, tempPassword);
+        const [updatedCnt] = await this.User.update({
+            secret_key: tempPassword
+        }, { where: { user_id: req.session.userId}});
+        updatedCnt? res.sendStatus(200): res.sendStatus(404);
+    } catch (error) {
+        logger.error(error.message);
         res.sendStatus(500);
     }
 }
@@ -292,49 +332,7 @@ UserInterface.prototype.withdrawal = async function(req, res) {
     }
 }
 
-UserInterface.prototype.changePassword = async function(req, res) {
-    logger.info(`Changing user's password of [${req.session.userId}] ...`);
-    try {
-        const [updatedCnt] = await this.User.update({
-            secret_key: req.body.newSecretKey
-        }, { where: {
-            user_id: req.session.userId,
-            secret_key: req.body.existedSecretKey
-        }});
-        updatedCnt? res.sendStatus(200): res.status(400).send('No secret key');
-    } catch (error) {
-        logger.error(error.message);
-        res.sendStatus(500);
-    }
-}
 
-UserInterface.prototype.temporaryPassword = async function(req, res) {
-    logger.info(`Sending user's password of [${req.session.userId}] to Email...`);
-    const tempPassword = Math.random().toString(36).slice(2);
-    try {
-        await sendEmail(req.body.email, tempPassword);
-        const [updatedCnt] = await this.User.update({
-            secret_key: tempPassword
-        }, { where: { user_id: req.session.userId}});
-        updatedCnt? res.sendStatus(200): res.sendStatus(404);
-    } catch (error) {
-        logger.error(error.message);
-        res.sendStatus(500);
-    }
-}
-
-UserInterface.prototype.checkUserId = async function(req, res) {
-    logger.info(`Checking [${req.session.userId}]...`);
-    try {
-        const updatedCnt = await this.User.findOne({
-            where: {user_id: req.body.userId + ':custom'}
-        })
-        updatedCnt? res.status(400).send('userId which was existed'): res.sendStatus(200);
-    } catch (error) {
-        logger.error(error.message);
-        res.sendStatus(500);
-    }
-}
 
 const sendEmail = async function(userEmail, tempPassword){
     let emailStringList = ['signUp', '[Eco run] 회원가입을 축하합니다!'];
