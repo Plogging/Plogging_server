@@ -8,6 +8,7 @@ const adminEmailPassword = process.env.ADMIN_EMAIL_PASSWORD;
 const swaggerValidation = require('../util/validator');
 const nodemailer = require('nodemailer');
 const Email = require('email-templates');
+const logger = require("../util/logger.js")("user.js");
 
 
 const UserInterface = function(config) {
@@ -60,6 +61,7 @@ UserInterface.prototype.register = async function(req, res) {
     const userName = req.body.userName;
     const userType = 'custom';
     const userId = req.body.userId + ':' + userType;
+    logger.info(`Registering [${userId}] into maria DB...`);
     try {
         await this.sequelize.transaction(async (t) => {
             const user = await this.User.findOne({ 
@@ -84,16 +86,20 @@ UserInterface.prototype.register = async function(req, res) {
                     res.status(201).json(returnResult);
                 } catch (error) {
                     if(error.original.errno === 1062){
+                        logger.error(`Existed user's name for register [${userName}]`);
                         res.status(409).send('UserName Conflict');
                     }else{
+                        logger.error(error.message);
                         res.sendStatus(500);
                     }
                 }
             }else{
+                logger.error(`Existed user's id for register [${req.body.userName}]`);
                 res.status(409).send('UserId Conflict');
             }
         })
     } catch (error) {
+        logger.error(error.message);
         res.sendStatus(500);
     }
 }
@@ -103,6 +109,7 @@ UserInterface.prototype.social = async function(req, res) {
     const userId = req.body.userId;
     const [userEmail, userType] = req.body.userId.split(':');
     const userName = req.body.userName;
+    logger.info(`Connecting to [${userId}] from OAuth...`);
     try {
         await this.sequelize.transaction(async (t) => {
             const user = await this.User.findOne({ 
@@ -125,8 +132,10 @@ UserInterface.prototype.social = async function(req, res) {
                     res.status(201).json(returnResult);
                 } catch (error) {
                     if(error.original.errno === 1062){
+                        logger.error(`Existed user's name for register [${userName}]`);
                         res.status(409).send('userName Conflict');
                     }else{
+                        logger.error(error.message);
                         res.sendStatus(500);
                     }
                 }
@@ -139,6 +148,7 @@ UserInterface.prototype.social = async function(req, res) {
             }
         })
     } catch (error) {
+        logger.error(error.message);
         res.sendStatus(500);
     }
 }
@@ -146,6 +156,7 @@ UserInterface.prototype.social = async function(req, res) {
 UserInterface.prototype.signIn = async function(req, res) {
     const userId = req.body.userId + ':custom';
     let returnResult = {};
+    logger.info(`Logging in with [${userId}] ...`);
     try {
         const user = await this.User.findOne({ where: {user_id: userId}});
         if(user){
@@ -155,14 +166,17 @@ UserInterface.prototype.signIn = async function(req, res) {
             returnResult.userName = user.display_name;
             res.json(returnResult);
         }else{
+            logger.error(`No user for sign in [${userId}]`);
             res.sendStatus(401);
         }
     } catch (error) {
+        logger.error(error.message);
         res.sendStatus(500);
     }
 }
 
 UserInterface.prototype.getUserInfo = async function(req, res) {
+    logger.info(`Getting [${req.params.id}] information...`);
     let returnResult = {};
     try {
         const user = await this.User.findOne({ where: { user_id: req.params.id}});
@@ -175,14 +189,17 @@ UserInterface.prototype.getUserInfo = async function(req, res) {
             returnResult.userTrash = user.trash;
             res.json(returnResult);
         }else{
+            logger.error(`No user for getting info [${userId}]`);
             res.sendStatus(500);
         }
     } catch (error) {
+        logger.error(error.message);
         res.sendStatus(500);
     }
 }
 
 UserInterface.prototype.changeUserName = async function(req, res) {
+    logger.info(`Changing user's name of [${req.session.userId}] ...`);
     let returnResult = {};
     try {
         const [updatedCnt] = await this.User.update({
@@ -192,18 +209,22 @@ UserInterface.prototype.changeUserName = async function(req, res) {
             returnResult.userName = req.body.userName;
             res.send(returnResult);
         }else{
+            logger.error(`No user for updating name [${userId}]`);
             res.sendStatus(500);
         }
     } catch (error) {
         if(error.original.errno === 1062){
+            logger.error(`Existed user's name for updating [${req.body.userName}]`);
             res.status(409).send('userName Conflict');
         }else{
+            logger.error(error.message);
             res.sendStatus(500);
         }
     }
 }
 
 UserInterface.prototype.changeUserImage = async function(req, res) {
+    logger.info(`Changing user's image of [${req.session.userId}] ...`);
     let returnResult = {};
     const profileImg = req.file.path;
     try {
@@ -216,20 +237,25 @@ UserInterface.prototype.changeUserImage = async function(req, res) {
             returnResult.profileImg = profileImg;
             res.send(returnResult);
         }else{
+            logger.error(`No user for updating image [${userId}]`);
             res.sendStatus(500);
         }
     } catch (error) {
+        logger.error(error.message)
         res.sendStatus(500);
     }
 }
 
 UserInterface.prototype.signOut = async function(req, res) {
+    logger.info(`Signing out of [${req.session.userId}] ...`);
     req.session.destroy(function(err) {
+        logger.error(err)
         err? res.sendStatus(500): res.sendStatus(200);
     })
 }
 
 UserInterface.prototype.withdrawal = async function(req, res) {
+    logger.info(`Withdrawing [${req.session.userId}] ...`);
     const userId = req.session.userId;
     const mongoConnection = this.MongoPool.db('plogging');
     const redisClient = this.redisClient;
@@ -252,18 +278,22 @@ UserInterface.prototype.withdrawal = async function(req, res) {
                 await t.commit();
                 req.session.destroy();
             } catch (error) {
+                logger.error(error.message);
                 await t.rollback();
                 res.sendStatus(500);
             }
         }else{
+            logger.error(`No user for deleting [${userId}]`);
             res.sendStatus(500);
         }
     }catch (error) {
+        logger.error(error.message);
         res.sendStatus(500);
     }
 }
 
 UserInterface.prototype.changePassword = async function(req, res) {
+    logger.info(`Changing user's password of [${req.session.userId}] ...`);
     try {
         const [updatedCnt] = await this.User.update({
             secret_key: req.body.newSecretKey
@@ -273,30 +303,35 @@ UserInterface.prototype.changePassword = async function(req, res) {
         }});
         updatedCnt? res.sendStatus(200): res.status(400).send('No secret key');
     } catch (error) {
+        logger.error(error.message);
         res.sendStatus(500);
     }
 }
 
 UserInterface.prototype.temporaryPassword = async function(req, res) {
+    logger.info(`Sending user's password of [${req.session.userId}] to Email...`);
     const tempPassword = Math.random().toString(36).slice(2);
     try {
         await sendEmail(req.body.email, tempPassword);
         const [updatedCnt] = await this.User.update({
             secret_key: tempPassword
-        }, { where: { user_id: userId}});
+        }, { where: { user_id: req.session.userId}});
         updatedCnt? res.sendStatus(200): res.sendStatus(404);
     } catch (error) {
+        logger.error(error.message);
         res.sendStatus(500);
     }
 }
 
 UserInterface.prototype.checkUserId = async function(req, res) {
+    logger.info(`Checking [${req.session.userId}]...`);
     try {
         const updatedCnt = await this.User.findOne({
             where: {user_id: req.body.userId + ':custom'}
         })
         updatedCnt? res.status(400).send('userId which was existed'): res.sendStatus(200);
     } catch (error) {
+        logger.error(error.message);
         res.sendStatus(500);
     }
 }
@@ -334,9 +369,8 @@ const sendEmail = async function(userEmail, tempPassword){
             name: userEmail,
             password: tempPassword
         }})
-        .then(() => console.log('email has been sent!'))
-        .catch(console.error);
-
+        .then(() => logger.info(`${userEmail} email has been sent!`))
+        .catch(logger.error(err.message));
 }
 
 module.exports = UserInterface;
