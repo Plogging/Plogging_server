@@ -32,5 +32,5 @@ Object.keys(db).forEach(modelName => {
 
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
-db.Plogging = require('./plogging')(sequelize,Sequelize);
+db.Plogging = require('./userSchema')(sequelize,Sequelize);
 module.exports = db;
