@@ -49,7 +49,7 @@ const UserInterface = function(config) {
     router.put('/image', upload.single('profileImg'), swaggerValidation.validate, (req, res) => this.changeUserImage(req, res));
     router.put('/password', swaggerValidation.validate, (req, res) => this.changePassword(req, res));
     router.put('/password-temp', swaggerValidation.validate, (req, res) => this.temporaryPassword(req, res));
-    router.get('/sign-out', swaggerValidation.validate, (req, res) => this.signOut(req, res));
+    router.put('/sign-out', swaggerValidation.validate, (req, res) => this.signOut(req, res));
     router.delete('', swaggerValidation.validate, (req, res) => this.withdrawal(req, res));
         
     return this.router;
@@ -272,13 +272,13 @@ UserInterface.prototype.changePassword = async function(req, res) {
 }
 
 UserInterface.prototype.temporaryPassword = async function(req, res) {
-    logger.info(`Sending user's password of [${req.session.userId}] to Email...`);
+    logger.info(`Sending user's password of [${req.body.email}] to Email...`);
     const tempPassword = Math.random().toString(36).slice(2);
     try {
         await sendEmail(req.body.email, tempPassword);
         const [updatedCnt] = await this.User.update({
             secret_key: tempPassword
-        }, { where: { user_id: req.session.userId}});
+        }, { where: { user_id: req.body.email + ':custom'}});
         updatedCnt? res.sendStatus(200): res.sendStatus(404);
     } catch (error) {
         logger.error(error.message);
@@ -289,7 +289,7 @@ UserInterface.prototype.temporaryPassword = async function(req, res) {
 UserInterface.prototype.signOut = async function(req, res) {
     logger.info(`Signing out of [${req.session.userId}] ...`);
     req.session.destroy(function(err) {
-        logger.error(err)
+        logger.error(err);
         err? res.sendStatus(500): res.sendStatus(200);
     })
 }
@@ -332,8 +332,6 @@ UserInterface.prototype.withdrawal = async function(req, res) {
     }
 }
 
-
-
 const sendEmail = async function(userEmail, tempPassword){
     let emailStringList = ['signUp', '[Eco run] 회원가입을 축하합니다!'];
     if(tempPassword){
@@ -367,8 +365,7 @@ const sendEmail = async function(userEmail, tempPassword){
             name: userEmail,
             password: tempPassword
         }})
-        .then(() => logger.info(`${userEmail} email has been sent!`))
-        .catch(logger.error(err.message));
+        .then((logger.info(`${userEmail} email has been sent!`)))
 }
 
 module.exports = UserInterface;

@@ -5,6 +5,102 @@ info:
   description: Plogging API docs
 
 paths:
+  /user/sign-in:
+    post:
+      summary: 로그인
+      tags: [User]
+      parameters:
+        - in: body
+          name: user
+          description: userId는 email만 받는다.
+          schema:
+            type: object
+            required:
+              - userId
+              - secretKey
+            properties:
+              userId:
+                type: string
+                example: ganghee@nate.com
+              secretKey:
+                type: string
+                example: 1234qwer
+      responses:
+        200:
+          description: 회원 로그인 성공
+          schema:
+            type: object
+            properties:
+              session:
+                type: string
+                example: 0q8DptSJiinhbspcQwK6wxUtvNkmNano
+              userImg:
+                type: string
+                example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
+              userName:
+                type: string
+                example: 쓰담이
+        400:
+          description: Bad Request (body should have required property [userId/ secretKey])
+        401:
+          description: No userId or No secretKey from DB
+        500:
+          description: Internal Server Error
+  /user/social:
+    post:
+      summary: OAuth login
+      tags: [User]
+      parameters:
+        - in: body
+          name: user
+          description: userId는 email:[type] 으로 구분자 ':'를 사용한다. type은 [kakao, naver, apple] 중 하나다. 409의 에러인 경우 userName 충돌이며 회원가입 실패이다.
+          schema:
+            type: object
+            required:
+              - userId
+              - userName
+            properties:
+              userId:
+                type: string
+                example: ganghee@naver.com:naver
+              userName:
+                type: string
+                example: 쓰담이
+      responses:
+        200:
+          description: 기존 회원 로그인 성공
+          schema:
+            type: object
+            properties:
+              session:
+                type: string
+                example: 0q8DptSJiinhbspcQwK6wxUtvNkmNano
+              userImg:
+                type: string
+                example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
+              userName:
+                type: string
+                example: 쓰담이
+        201:
+          description: OAuth 신규 회원 등록 성공
+          schema:
+            type: object
+            properties:
+              session:
+                type: string
+                example: 0q8DptSJiinhbspcQwK6wxUtvNkmNano
+              userImg:
+                type: string
+                example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
+              userName:
+                type: string
+                example: 쓰담이
+        400:
+          description: Bad Request (body should have required property [userId/ userName])
+        409:
+          description: Conflict (user name conflict)
+        500:
+          description: Internal Server Error
   /user:
     post:
       summary: 회원가입하기
@@ -66,7 +162,30 @@ paths:
           description: Unauthorized (sessionKey 유효하지 않을 때)
         500:
           description: Internal Server Error
-  /users/{id}:
+  /user/check:
+    post:
+      summary: 사용자 아이디 유효성 확인
+      tags: [User]
+      parameters:
+        - in: body
+          name: userId
+          description: 회원 가입하기 전에 해당 id가 존재하는지 확인한다.
+          schema:
+            type: object
+            required:
+              - userId
+            properties:
+              userId:
+                type: string
+                example: ganghee@nate.com
+      responses:
+        200:
+          description: OK (Useable user id)
+        400:
+          description: userId which was existed
+        500:
+          description: Internal Server error
+  /user/{id}:
     get:
       summary: 사용자 정보 가져오기
       description: targetUserId의 사용자 닉네임, 프로필 사진, 플로깅 점수, 플로깅 거리, 쓰레기 주운 갯수를 가져온다.
@@ -110,199 +229,43 @@ paths:
           description: Unauthorized (sessionKey 유효하지 않을 때)
         500:
           description: Internal Server Error
-  /user/social:
-    post:
-      summary: OAuth login
+  /user/name:
+    put:
+      summary: 사용자 프로필 이름 변경
+      description: 사용자의 이름을 변경합니다.
       tags: [User]
+      produces:
+        - application/json
       parameters:
+        - in: header
+          name: sessionKey
+          type: string
+          required: true
+          description: 유저 SessionKey
         - in: body
-          name: user
-          description: userId는 email:[type] 으로 구분자 ':'를 사용한다. type은 [kakao, naver, apple] 중 하나다. 409의 에러인 경우 userName 충돌이며 회원가입 실패이다.
+          name: name
+          description: 사용자 이름 받기
           schema:
             type: object
             required:
-              - userId
               - userName
             properties:
-              userId:
-                type: string
-                example: ganghee@naver.com:naver
               userName:
                 type: string
                 example: 쓰담이
       responses:
         200:
-          description: 기존 회원 로그인 성공
+          description: 사용자 이름 성공적으로 변경
           schema:
             type: object
             properties:
-              session:
-                type: string
-                example: 0q8DptSJiinhbspcQwK6wxUtvNkmNano
-              userImg:
-                type: string
-                example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
               userName:
                 type: string
                 example: 쓰담이
-        201:
-          description: OAuth 신규 회원 등록 성공
-          schema:
-            type: object
-            properties:
-              session:
-                type: string
-                example: 0q8DptSJiinhbspcQwK6wxUtvNkmNano
-              userImg:
-                type: string
-                example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
-              userName:
-                type: string
-                example: 쓰담이
-        400:
-          description: Bad Request (body should have required property [userId/ userName])
+        401:
+          description: Unauthorized (sessionKey 유효하지 않을 때)
         409:
-          description: Conflict (user name conflict)
-        500:
-          description: Internal Server Error
-  /user/sign-in:
-    post:
-      summary: 로그인
-      tags: [User]
-      parameters:
-        - in: body
-          name: user
-          description: userId는 email만 받는다.
-          schema:
-            type: object
-            required:
-              - userId
-              - secretKey
-            properties:
-              userId:
-                type: string
-                example: ganghee@nate.com
-              secretKey:
-                type: string
-                example: 1234qwer
-      responses:
-        200:
-          description: 회원 로그인 성공
-          schema:
-            type: object
-            properties:
-              session:
-                type: string
-                example: 0q8DptSJiinhbspcQwK6wxUtvNkmNano
-              userImg:
-                type: string
-                example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
-              userName:
-                type: string
-                example: 쓰담이
-        400:
-          description: Bad Request (body should have required property [userId/ secretKey])
-        401:
-          description: No userId or No secretKey
-        500:
-          description: Internal Server Error
-  /user/sign-out:
-    get:
-      summary: 사용자 로그아웃
-      tags: [User]
-      parameters:
-        - in: header
-          name: sessionKey
-          type: string
-          required: true
-          description: 유저 SessionKey
-      responses:
-        200:
-          description: OK
-        400:
-          description: Bad Request
-        500:
-          description: Internal Server Error
-  /user/check:
-    post:
-      summary: 사용자 아이디 유효성 확인
-      tags: [User]
-      parameters:
-        - in: body
-          name: userId
-          description: 회원 가입하기 전에 해당 id가 존재하는지 확인한다.
-          schema:
-            type: object
-            required:
-              - userId
-            properties:
-              userId:
-                type: string
-                example: ganghee@nate.com
-      responses:
-        200:
-          description: OK (Useable user id)
-        400:
-          description: userId which was existed
-        500:
-          description: Internal Server error
-  /user/password:
-    put:
-      summary: 비밀번호 변경
-      tags: [User]
-      parameters:
-        - in: header
-          name: sessionKey
-          type: string
-          required: true
-          description: 유저 SessionKey
-        - in: body
-          name: secretKey
-          description: Password which was encrypted.
-          schema:
-            type: object
-            required:
-              - newSecretKey
-              - existedSecretKey
-            properties:
-              newSecretKey:
-                type: string
-                example: Password which will be changed.
-              existedSecretKey:
-                type: string
-                example: Password witch being.
-      responses:
-        200:
-          description: OK
-        400:
-          description: No secret key
-        401:
-          description: Unauthorized (session key error)
-        500:
-          description: Internal Server Error
-  /user/password-temp:
-    put:
-      summary: 임시 비밀번호 발급
-      tags: [User]
-      parameters:
-        - in: body
-          name: email
-          description: 임시 비밀번호를 받는 이메일 주소
-          schema:
-            type: object
-            required:
-              - email
-            properties:
-              email:
-                type: string
-                example: heeheewuwu@gmail.com
-      responses:
-        200:
-          description: OK
-        400:
-          description: Bad Request
-        404:
-          description: Not Found (no email)
+          description: userName Conflict
         500:
           description: Internal Server Error
   /user/image:
@@ -334,19 +297,14 @@ paths:
               userImg:
                 type: string
                 example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
-        400:
-          description: Bad Request (body should have required property 'secretKey')
+        401:
+          description: Unauthorized (sessionKey 유효하지 않을 때)
         500:
           description: Internal Server Error
-  /user/name:
+  /user/password:
     put:
-      summary: 사용자 프로필 이름 변경
-      description: 사용자의 이름을 변경합니다.
+      summary: 비밀번호 변경
       tags: [User]
-      consumes:
-        - multipart/form-data
-      produces:
-        - application/json
       parameters:
         - in: header
           name: sessionKey
@@ -354,32 +312,74 @@ paths:
           required: true
           description: 유저 SessionKey
         - in: body
-          name: name
-          description: 사용자 이름 받기
+          name: secretKey
+          description: Password which was encrypted.
           schema:
             type: object
             required:
-              - userName
+              - newSecretKey
+              - existedSecretKey
             properties:
-              userName:
+              newSecretKey:
                 type: string
-                example: 쓰담이
+                description: Password which will be changed.
+              existedSecretKey:
+                type: string
+                description: Password witch being.
       responses:
         200:
-          description: 사용자 이름 성공적으로 변경
-          schema:
-            type: object
-            properties:
-              userName:
-                type: string
-                example: 쓰담이
+          description: OK
         400:
-          description: Bad Request (body should have required property 'secretKey')
-        409:
-          description: userName Conflict
+          description: Not matched secret key
+        401:
+          description: Unauthorized (session key error)
         500:
           description: Internal Server Error
-
+  /user/password-temp:
+    put:
+      summary: 임시 비밀번호 발급
+      tags: [User]
+      parameters:
+        - in: body
+          name: email
+          description: 임시 비밀번호를 받는 이메일 주소
+          schema:
+            type: object
+            required:
+              - email
+            properties:
+              email:
+                type: string
+                example: heeheewuwu@gmail.com
+      responses:
+        200:
+          description: OK
+        400:
+          description: Bad Request (body에 email 파라미터가 없을 때)
+        401:
+          description: Unauthorized (session key error)
+        404:
+          description: Not Found (no email)
+        500:
+          description: Internal Server Error
+  /user/sign-out:
+    put:
+      summary: 사용자 로그아웃
+      tags: [User]
+      parameters:
+        - in: header
+          name: sessionKey
+          type: string
+          required: true
+          description: 유저 SessionKey
+      responses:
+        200:
+          description: OK
+        401:
+          description: Unauthorized (sessionKey 유효하지 않을 때)
+        500:
+          description: Internal Server Error
+  
   /plogging/{targetUserId}:
     get:
       summary: 산책이력 가져오기
