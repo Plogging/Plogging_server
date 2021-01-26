@@ -1,7 +1,6 @@
 const express = require('express');
 const { promisify } = require('util');
 
-const UserInterface = require('./router/user.js');
 const PloggingInterface = require('./router/plogging.js');
 const RankingInterface = require('./router/ranking.js');
 const bodyParser = require('body-parser');
@@ -85,7 +84,9 @@ const swaggerUi = require('swagger-ui-express');
         }
     });
     
-    app.use('/user', new UserInterface(globalOption)); // 유저 관려 api는 user.js로 포워딩
+    // app.use('/user', new UserInterface(globalOption)); // 유저 관려 api는 user.js로 포워딩
+    const userRoutes = require('./routers/user.js');
+    app.use('/user', userRoutes);
     app.use('/rank', new RankingInterface(globalOption)); // 랭킹 관련 api는 ranking.js로 포워딩
     app.use('/plogging', new PloggingInterface(globalOption)); // 쓰레기 관련 api는 plogging.js로 포워딩        
 
