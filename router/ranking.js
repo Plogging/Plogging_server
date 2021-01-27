@@ -3,13 +3,7 @@ const cors = require('cors');
 const swaggerValidation = require('../util/validator')
 const logger = require("../util/logger.js")("ranking.js");
 const { USER_TABLE } = require('./user')
-
-const weeklyRankingKey = "weekly"
-const monthlyRankingKey = "monthly"
-
-const rankReqSchema = {
-
-}
+const RankSchema = require('../models/ranking')
 
 const RankingInterface = function(config) {
     const router = express.Router();
@@ -32,13 +26,8 @@ RankingInterface.prototype.getGlobalRank = async function(req, res) {
         const rankType = req.query.rankType
         const offset = req.query.offset
         const limit = req.query.limit
-        logger.info(`Fetching ${rankType} global ranking from redis...`)
-        const [zcountResult, zrevrangeResult] = await this.redisClient.pipeline()
-        .zcount(rankType, "-inf", "+inf")
-        .zrevrange(rankType, offset, offset+limit-1, "withscores")
-        .exec()
-        const count = zcountResult[1]
-        const rankData = await this.buildRankData(zrevrangeResult[1])
+        const [count, rawRankData] = RankSchema.getCountAndRankDataWithScores(rankType, offset, limit)
+        const rankData = await this.buildRankData(rawRankData)
         const returnResult = {rc: 200, rcmsg: "success", count: count, rankData: rankData}
         res.status(200).json(returnResult)
     } catch(e) {
@@ -53,12 +42,7 @@ RankingInterface.prototype.getUserRank = async function(req, res) {
         const rankType = req.query.rankType
         const targetUserId = req.params.id
         logger.info(`Fetching ${rankType} rank of user ${targetUserId} from redis...`)
-        const [zrankResult, zscoreResult] = await this.redisClient.pipeline()
-        .zrank(rankType, targetUserId)
-        .zscore(rankType, targetUserId)
-        .exec()
-        const rank = zrankResult[1]
-        const score = zscoreResult[1]
+        const [rank. score] = RankSchema.getUserRankAndScore(rankType, targetUserId)
         const { userId, displayName, profileImg } = await this.getUserInfo(targetUserId)
         const userRankData = {userId: userId, displayName: displayName, profileImg: profileImg,
         rank: rank, score: score}
@@ -71,12 +55,12 @@ RankingInterface.prototype.getUserRank = async function(req, res) {
     }
 }
 
-RankingInterface.prototype.buildRankData = async function(rankWithScores) {
+RankingInterface.prototype.buildRankData = async function(rawRankData) {
     const userIds = []
     const scores = []
-    for (let i=0; i < rankWithScores.length / 2; i++) {
-        userIds.push(rankWithScores[2*i])
-        scores.push(rankWithScores[2*i + 1])
+    for (let i=0; i < rawRankData.length / 2; i++) {
+        userIds.push(rawRankData[2*i])
+        scores.push(rawRankData[2*i + 1])
     }
 
     const userInfos = await this.getUserInfos(userIds)
