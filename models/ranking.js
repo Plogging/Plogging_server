@@ -19,8 +19,8 @@ RankSchema.getCountAndRankDataWithScores = async function(rankType, offset, limi
 RankSchema.getUserRankAndScore = async function(rankType, userId) {
     // TODO: rankType이 weekly나 monthly가 아닐 경우 throw
     const [zrankResult, zscoreResult] = await this.redisClient.pipeline()
-    .zrank(rankType, targetUserId)
-    .zscore(rankType, targetUserId)
+    .zrank(rankType, userId)
+    .zscore(rankType, userId)
     .exec()
     const rank = zrankResult[1]
     const score = zscoreResult[1]
