@@ -5,7 +5,7 @@ const RankSchema = {}
 RankSchema.WEEKLY = "weekly"
 RankSchema.MONTHLY = "monthly"
 
-RankSchema.getCountAndRankDataWithScores = async function(rankType, offset, limit) {
+RankSchema.getCountAndRankDataWithScores = async (rankType, offset, limit) => {
     // TODO: rankType이 weekly나 monthly가 아닐 경우 throw
     const [zcountResult, zrevrangeResult] = await redisClient.pipeline()
     .zcount(rankType, "-inf", "+inf")
@@ -16,7 +16,7 @@ RankSchema.getCountAndRankDataWithScores = async function(rankType, offset, limi
     return [count, rankDataWithScores]
 }
 
-RankSchema.getUserRankAndScore = async function(rankType, userId) {
+RankSchema.getUserRankAndScore = async (rankType, userId) => {
     // TODO: rankType이 weekly나 monthly가 아닐 경우 throw
     const [zrankResult, zscoreResult] = await this.redisClient.pipeline()
     .zrank(rankType, userId)
@@ -27,14 +27,14 @@ RankSchema.getUserRankAndScore = async function(rankType, userId) {
     return [rank, score]
 }
 
-RankSchema.update = async function(userId, score) {
+RankSchema.update = async (userId, score) => {
     await redisClient.pipeline()
     .zincrby(RankSchema.WEEKLY, score, userId)
     .zincrby(RankSchema.MONTHLY, score, userId)
     .exec()
 }
 
-RankSchema.delete = async function(userId) {
+RankSchema.delete = async (userId) => {
     await redisClient.pipeline()
     .zrem(RankSchema.WEEKLY, userId)
     .zrem(RankSchema.MONTHLY, userId)
