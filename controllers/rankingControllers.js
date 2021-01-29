@@ -1,33 +1,15 @@
-const express = require('express');
-const cors = require('cors');
-const swaggerValidation = require('../util/validator')
-const logger = require("../util/logger.js")("ranking.js");
+const poolAsyncAwait = require('./config/mysqlConfig.js').getMysqlPool2
+const logger = require("../util/logger.js")("ranking.js")
 const { USER_TABLE } = require('./user')
 const RankSchema = require('../models/ranking')
 
-const RankingInterface = function(config) {
-    const router = express.Router();
-    router.all('*',cors());
-
-    this.router = router;
-    this.mysqlPool = config.mysqlPool;
-    this.mysqlPool2 = config.mysqlPool2;
-    this.redisClient = config.redisClient;
-
-    // 랭킹 관련 api 구현
-    router.get("/global", swaggerValidation.validate, (req, res) => this.getGlobalRank(req, res));
-    router.get("/users/:id", swaggerValidation.validate, (req, res) => this.getUserRank(req, res))
-    return this.router;
-
-};
-
-RankingInterface.prototype.getGlobalRank = async function(req, res) {
+const getGlobalRank = async (req, res) => {
     try {
         const rankType = req.query.rankType
         const offset = req.query.offset
         const limit = req.query.limit
         const [count, rawRankData] = RankSchema.getCountAndRankDataWithScores(rankType, offset, limit)
-        const rankData = await this.buildRankData(rawRankData)
+        const rankData = await buildRankData(rawRankData)
         const returnResult = {rc: 200, rcmsg: "success", count: count, rankData: rankData}
         res.status(200).json(returnResult)
     } catch(e) {
@@ -37,13 +19,13 @@ RankingInterface.prototype.getGlobalRank = async function(req, res) {
     }
 }
 
-RankingInterface.prototype.getUserRank = async function(req, res) {
+const getUserRank = async (req, res) => {
     try {
         const rankType = req.query.rankType
         const targetUserId = req.params.id
         logger.info(`Fetching ${rankType} rank of user ${targetUserId} from redis...`)
         const [rank. score] = RankSchema.getUserRankAndScore(rankType, targetUserId)
-        const { userId, displayName, profileImg } = await this.getUserInfo(targetUserId)
+        const { userId, displayName, profileImg } = await getUserInfo(targetUserId)
         const userRankData = {userId: userId, displayName: displayName, profileImg: profileImg,
         rank: rank, score: score}
         const returnResult = {rc: 200, rcmsg: "success", userRankData: userRankData}
@@ -55,7 +37,7 @@ RankingInterface.prototype.getUserRank = async function(req, res) {
     }
 }
 
-RankingInterface.prototype.buildRankData = async function(rawRankData) {
+const buildRankData = async rawRankData => {
     const userIds = []
     const scores = []
     for (let i=0; i < rawRankData.length / 2; i++) {
@@ -63,7 +45,7 @@ RankingInterface.prototype.buildRankData = async function(rawRankData) {
         scores.push(rawRankData[2*i + 1])
     }
 
-    const userInfos = await this.getUserInfos(userIds)
+    const userInfos = await getUserInfos(userIds)
 
     const rankData = []
     for (let i=0; i < userIds.length; i++) {
@@ -76,21 +58,21 @@ RankingInterface.prototype.buildRankData = async function(rawRankData) {
     return rankData
 }
 
-RankingInterface.prototype.getUserInfo = async function(userId) {
+const getUserInfo = async userId => {
     const query = `SELECT user_id, display_name, profile_img from ${USER_TABLE} WHERE user_id = ?`
     logger.info(`Fetching user data of user ${userId} from DB...`)
-    const [rows, _] = await this.mysqlPool2.promise().query(query, [userId])
+    const [rows, _] = await poolAsyncAwait.promise().query(query, [userId])
     const { user_id, display_name, profile_img } = rows[0]
     const userInfo = { userId: user_id, displayName: display_name, profileImg: profile_img }
     return userInfo
 }
 
-RankingInterface.prototype.getUserInfos = async function(userIds) {
+const getUserInfos = async userIds => {
     if (userIds.length == 0) return {}
     const query = `SELECT user_id, display_name, profile_img from ${USER_TABLE} WHERE user_id in 
     (` + userIds.map(() => '?') + `)`
     logger.info(`Fetching user data of users ${userIds} from DB...`)
-    const [rows, _] = await this.mysqlPool2.promise().query(query, userIds)
+    const [rows, _] = await poolAsyncAwait.promise().query(query, userIds)
     const userInfos = {}
     rows.forEach(row => {
         const { user_id, display_name, profile_img } = row
@@ -100,4 +82,7 @@ RankingInterface.prototype.getUserInfos = async function(userIds) {
     return userInfos
 }
 
-module.exports = RankingInterface;
+module.exports = {
+    getGlobalRank,
+    getUserRank
+}
