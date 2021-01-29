@@ -1,8 +1,9 @@
 const express = require('express');
 const { promisify } = require('util');
 
+const userRoutes = require('./routers/user.js');
 const PloggingInterface = require('./router/plogging.js');
-const RankingInterface = require('./router/ranking.js');
+const rankingRoutes = require('./routers/ranking')
 const bodyParser = require('body-parser');
 const poolCallback = require('./config/mysqlConfig.js').getMysqlPool; // callback
 const poolAsyncAwait = require('./config/mysqlConfig.js').getMysqlPool2; // async await
@@ -84,10 +85,8 @@ const swaggerUi = require('swagger-ui-express');
         }
     });
     
-    // app.use('/user', new UserInterface(globalOption)); // 유저 관려 api는 user.js로 포워딩
-    const userRoutes = require('./routers/user.js');
     app.use('/user', userRoutes);
-    app.use('/rank', new RankingInterface(globalOption)); // 랭킹 관련 api는 ranking.js로 포워딩
+    app.use('/rank', rankingRoutes); // 랭킹 관련 api는 ranking.js로 포워딩
     app.use('/plogging', new PloggingInterface(globalOption)); // 쓰레기 관련 api는 plogging.js로 포워딩        
 
     // swagger spec을 이용한 request 검증
