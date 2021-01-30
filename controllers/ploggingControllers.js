@@ -65,11 +65,17 @@ const writePlogging = async function(req, res) {
 
     const userId = req.userId;
     let ploggingObj = req.body.ploggingData;
-    
     ploggingObj = JSON.parse(ploggingObj);
 
     ploggingObj.meta.user_id = userId;
-    ploggingObj.meta.created_time = util.getCurrentDateTime();    
+    ploggingObj.meta.created_time = util.getCurrentDateTime(); 
+
+    const ploggingScoreArr = calcPloggingScore(ploggingObj);
+    const ploggingTotalScore = Number(ploggingScoreArr[0] + ploggingScoreArr[1]);
+    const ploggingDistance = ploggingObj.meta.distance;
+    const pickList = ploggingObj.pick_list;
+    const pickCount = calPickCount(pickList);
+    ploggingObj.meta.plogging_total_score = ploggingTotalScore;
 
     //이미지가 없을때는 baseImg insert
     if(req.file===undefined) ploggingObj.meta.plogging_img = `${process.env.SERVER_REQ_INFO}/plogging/baseImg.PNG`;
@@ -77,18 +83,6 @@ const writePlogging = async function(req, res) {
 
     let redisUnLock = null;
     try {
-        // 해당 산책의 plogging 점수
-        const ploggingScoreArr = calcPloggingScore(ploggingObj);
-        const ploggingTotalScore = Number(ploggingScoreArr[0] + ploggingScoreArr[1]);
-        const ploggingActivityScore =  Number(ploggingScoreArr[0]);
-        const ploggingEnvironmentScore = Number(ploggingScoreArr[1]);
-        const ploggingDistance = ploggingObj.meta.distance;
-        const pickList = ploggingObj.pick_list;
-        const pickCount = calPickCount(pickList);
-
-        ploggingObj.meta.plogging_total_score = ploggingTotalScore;
-        ploggingObj.meta.plogging_activity_score = ploggingActivityScore;
-        ploggingObj.meta.plogging_environment_score = ploggingEnvironmentScore;
 
         await sequelize.transaction(async (t) => {
             const userData = await User.findOneUser(userId, t);
@@ -128,11 +122,6 @@ const writePlogging = async function(req, res) {
             if(!originMonthScore) originMonthScore = Number(0);
             const resultMonthScore = Number(originMonthScore)+Number(ploggingTotalScore);
             await RedisClient.zadd(monthlyRankingKey, resultMonthScore, userId); // 랭킹서버에 insert
-
-            returnResult.score = { };
-            returnResult.score.totalScore = ploggingTotalScore;
-            returnResult.score.activityScore = ploggingActivityScore;
-            returnResult.score.environmentScore = ploggingEnvironmentScore;
 
             res.status(200).send(returnResult);
         });
@@ -182,6 +171,33 @@ const deletePlogging = async function(req, res) {
     
     }
 }
+const getPloggingScore = async function(req, res) {
+    let returnResult = { rc: 200, rcmsg: "success" };
+
+    const userId = req.userId;
+    let ploggingObj = req.body.ploggingData;
+    ploggingObj = JSON.parse(ploggingObj);
+
+    try {
+        // 해당 산책의 plogging 점수
+        const ploggingScoreArr = calcPloggingScore(ploggingObj);
+        const ploggingTotalScore = Number(ploggingScoreArr[0] + ploggingScoreArr[1]);
+        const ploggingActivityScore =  Number(ploggingScoreArr[0]);
+        const ploggingEnvironmentScore = Number(ploggingScoreArr[1]);
+
+        returnResult.score = { };
+        returnResult.score.totalScore = ploggingTotalScore;
+        returnResult.score.activityScore = ploggingActivityScore;
+        returnResult.score.environmentScore = ploggingEnvironmentScore;
+
+        res.status(200).send(returnResult);
+    } catch(e) {
+        logger.error(e.message);
+        returnResult.rc = 500;
+        returnResult.rcmsg = e.message;
+        res.status(500).send(returnResult);
+    }
+};
 
 // 산책 점수 계산 ( 운동점수, 환경점수 )
 function calcPloggingScore(ploggingObj) {
@@ -225,5 +241,6 @@ function calPickCount(pickList) {
 module.exports = {
    readPlogging,
    writePlogging,
-   deletePlogging
+   deletePlogging,
+   getPloggingScore
 };
