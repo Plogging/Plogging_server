@@ -6,8 +6,8 @@ const ploggingControls = require('../controllers/ploggingControllers.js');
 
 router.all('*',cors());
 
-router.get("/:targetUserId", swaggerValidation.validate, (req, res) => ploggingControls.readPlogging(req, res));// read
-router.post("/", upload.single('ploggingImg'), swaggerValidation.validate, (req, res) => ploggingControls.writePlogging(req, res)); // create
-router.delete("/", swaggerValidation.validate, (req, res) => ploggingControls.deletePlogging(req,res)); // delete
+router.get("/:targetUserId", swaggerValidation.validate, ploggingControls.readPlogging);// read
+router.post("/", upload.single('ploggingImg'), swaggerValidation.validate, ploggingControls.writePlogging); // create
+router.delete("/", swaggerValidation.validate, ploggingControls.deletePlogging); // delete
 
 module.exports = router;

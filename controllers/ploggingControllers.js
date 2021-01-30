@@ -1,15 +1,11 @@
 const fs = require('fs');
 const util = require('../util/common.js');
 const { promisify } = require('util');
-
 const ploggingFilePath = process.env.IMG_FILE_PATH + "/plogging/";
-const { ObjectId } = require('mongodb');
-const MongoPool = require('../config/mongoConfig.js');
 const RedisClient = require('../config/redisConfig.js');
-
+const PloggingSchema = require('../models/plogging');
 const User = require('../models/users.js');
 const {sequelize} = require('../models/index');
-
 const logger = require("../util/logger.js")("plogging.js");
 const logHelper = require("../util/logHelper.js");
 const lock = promisify(require('redis-lock')(RedisClient));
@@ -24,8 +20,8 @@ const readPlogging = async function(req, res) {
     logger.info("plogging read api !");
     logger.info(logHelper.reqWrapper(req, "plogging"));
 
-    let userId = req.userId; // api를 call한 userId
-    let targetUserId = req.params.targetUserId; // 산책이력을 조회를 할 userId
+    const userId = req.userId; // api를 call한 userId
+    const targetUserId = req.params.targetUserId; // 산책이력을 조회를 할 userId
     let ploggingCntPerPage = req.query.ploggingCntPerPage; // 한 페이지에 보여줄 산책이력 수
     let pageNumber = req.query.pageNumber; // 조회할 페이지 Number
 
@@ -44,17 +40,13 @@ const readPlogging = async function(req, res) {
         limit: ploggingCntPerPage
     }
 
-    let mongoConnection = null;
     let returnResult = { rc: 200, rcmsg: "success" };
 
     try {
-        mongoConnection = await MongoPool.db('plogging');
-        let PloggingList = await mongoConnection.collection('record').find(query,options).toArray();
-        returnResult.plogging_list = PloggingList;
+        returnResult.plogging_list = await PloggingSchema.readPloggingModel(query, options);
         res.status(200).send(returnResult);
     } catch(e) {
         logger.error(e.message);
-        mongoConnection=null;
         returnResult.rc = 500;
         returnResult = e.message;
         res.status(500).send(returnResult);
@@ -83,7 +75,6 @@ const writePlogging = async function(req, res) {
     if(req.file===undefined) ploggingObj.meta.plogging_img = `${process.env.SERVER_REQ_INFO}/plogging/baseImg.PNG`;
     else ploggingObj.meta.plogging_img = process.env.SERVER_REQ_INFO + '/' + req.file.path.split(`${process.env.IMG_FILE_PATH}/`)[1];
 
-    let mongoConnection = null;
     let redisUnLock = null;
     try {
         // 해당 산책의 plogging 점수
@@ -117,8 +108,7 @@ const writePlogging = async function(req, res) {
             await User.updateUserPloggingData(updatedPloggingData, userId, t);
 
             // mongodb update
-            mongoConnection = await MongoPool.db('plogging');
-            await mongoConnection.collection('record').insertOne(ploggingObj);
+            await PloggingSchema.writePloggingModel(ploggingObj);
 
             // 누적합 방식이라 조회후 기존점수에 현재 플로깅점수 더해서 다시저장
             // redis update
@@ -152,7 +142,6 @@ const writePlogging = async function(req, res) {
         returnResult.rcmsg = e.message;
         res.status(500).send(returnResult);
     } finally {
-        mongoConnection=null;
         if(redisUnLock) redisUnLock();
     }
 }
@@ -170,16 +159,11 @@ const deletePlogging = async function(req, res) {
     let mongoObjectId = req.query.objectId;
     let ploggingImgName = req.query.ploggingImgName; // plogging_20210106132743.PNG
     let ploggingImgPath = `${ploggingFilePath}${userId}/${ploggingImgName}`; 
-    let query = null;
 
     let returnResult = { rc: 200, rcmsg: "success" };
-    let mongoConnection = null;
     try {
-        mongoConnection = await MongoPool.db('plogging');
-        query = {"_id": ObjectId(mongoObjectId)};
-            
         // 산책이력 삭제
-        await mongoConnection.collection('record').deleteOne(query);
+        PloggingSchema.deletePloggingModel(mongoObjectId);
             
         // 산책이력 이미지 삭제
         if(fs.existsSync(ploggingImgPath)) fs.unlinkSync(ploggingImgPath);
@@ -195,7 +179,7 @@ const deletePlogging = async function(req, res) {
         returnResult.rcmsg = e.message;
         res.status(500).send(returnResult);
     } finally {
-        mongoConnection=null;
+    
     }
 }
 
