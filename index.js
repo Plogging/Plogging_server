@@ -1,5 +1,6 @@
 const express = require('express');
 const { promisify } = require('util');
+const { CustomError } = require('throw.js')
 
 const userRoutes = require('./routers/user.js');
 const PloggingInterface = require('./router/plogging.js');
@@ -89,11 +90,20 @@ const swaggerUi = require('swagger-ui-express');
     app.use('/rank', rankingRoutes); // 랭킹 관련 api는 ranking.js로 포워딩
     app.use('/plogging', new PloggingInterface(globalOption)); // 쓰레기 관련 api는 plogging.js로 포워딩        
 
-    // swagger spec을 이용한 request 검증
+    // 예외 처리
     // 반드시 라우팅 코드 이후에 위치해야 함
     app.use((err, req, res, next) => {
         if (err instanceof swaggerValidation.InputValidationError) {
             return res.status(400).send(err.errors.join(', '))
+        } else if (err instanceof CustomError) {
+            return res.status(err.statusCode)
+            .json({rc: err.statusCode, rcmsg: err.message})
+        } else {
+            if (process.env.NODE_ENV == "production") {
+                return res.status(500).json({rc: 500, rcmsg: "Internal error"})
+            } else {
+                return res.status(500).json({rc: 500, rcmsg: err.message})
+            }
         }
     })
 
