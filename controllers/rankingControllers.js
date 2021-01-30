@@ -50,9 +50,11 @@ const buildRankData = async rawRankData => {
     for (let i=0; i < userIds.length; i++) {
         userId = userIds[i]
         score = scores[i]
-        userInfo = userInfos[userId]
-        userInfo.score = score
-        rankData.push(userInfo)
+        let userInfo = userInfos[userId]
+        if (userInfos) {
+            userInfo.score = score
+            rankData.push(userInfo)
+        }
     }
     return rankData
 }
