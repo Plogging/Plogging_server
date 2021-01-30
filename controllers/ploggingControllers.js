@@ -1,5 +1,6 @@
 const fs = require('fs');
 const util = require('../util/common.js');
+const { promisify } = require('util');
 
 const ploggingFilePath = process.env.IMG_FILE_PATH + "/plogging/";
 const { ObjectId } = require('mongodb');
@@ -11,6 +12,7 @@ const {sequelize} = require('../models/index');
 
 const logger = require("../util/logger.js")("plogging.js");
 const logHelper = require("../util/logHelper.js");
+const lock = promisify(require('redis-lock')(RedisClient));
 
 /**
  * 산책 이력조회  (페이징 처리 필요)
@@ -75,7 +77,7 @@ const writePlogging = async function(req, res) {
     ploggingObj = JSON.parse(ploggingObj);
 
     ploggingObj.meta.user_id = userId;
-    ploggingObj.meta.create_time = util.getCurrentDateTime();    
+    ploggingObj.meta.created_time = util.getCurrentDateTime();    
 
     //이미지가 없을때는 baseImg insert
     if(req.file===undefined) ploggingObj.meta.plogging_img = `${process.env.SERVER_REQ_INFO}/plogging/baseImg.PNG`;
@@ -97,56 +99,55 @@ const writePlogging = async function(req, res) {
         ploggingObj.meta.plogging_activity_score = ploggingActivityScore;
         ploggingObj.meta.plogging_environment_score = ploggingEnvironmentScore;
 
-        const t = await sequelize.transaction;
-        const userData = await User.findOneUser(userId, t);
+        await sequelize.transaction(async (t) => {
+            const userData = await User.findOneUser(userId, t);
 
-        const updatedPloggingData = { };
-        // 주간
-        updatedPloggingData.updateWeekScore = userData.score_week + ploggingTotalScore;
-        updatedPloggingData.updateWeekDistance = userData.distance_week + ploggingDistance;
-        updatedPloggingData.updateWeekTrash = userData.trash_week + pickCount;
+            const updatedPloggingData = { };
+            // 주간
+            updatedPloggingData.scoreWeek = userData.score_week + ploggingTotalScore;
+            updatedPloggingData.distanceWeek = userData.distance_week + ploggingDistance;
+            updatedPloggingData.trashWeek = userData.trash_week + pickCount;
+            
+            // 월간
+            updatedPloggingData.scoreMonth = userData.score_month + ploggingTotalScore;
+            updatedPloggingData.distanceMonth = userData.distance_month + ploggingDistance;
+            updatedPloggingData.trashMonth = userData.trash_month + pickCount;
+
+            // update score
+            await User.updateUserPloggingData(updatedPloggingData, userId, t);
+
+            // mongodb update
+            mongoConnection = await MongoPool.db('plogging');
+            await mongoConnection.collection('record').insertOne(ploggingObj);
+
+            // 누적합 방식이라 조회후 기존점수에 현재 플로깅점수 더해서 다시저장
+            // redis update
+            const weeklyRankingKey = "weekly"
+            const monthlyRankingKey = "monthly"
+            redisUnLock = await lock("plogging-lock"); // redis lock
+
+            // 주간 합계
+            let originWeekScore = await RedisClient.zscore(weeklyRankingKey, userId);
         
-        // 월간
-        updatedPloggingData.updateMonthScore = userData.score_month + ploggingTotalScore;
-        updatedPloggingData.updateMonthDistance = userData.distance_month + ploggingDistance;
-        updatedPloggingData.updateMonthTrash = userData.trash_month + pickCount;
+            if(!originWeekScore) originWeekScore = Number(0);
+            const resultWeekScore = Number(originWeekScore)+Number(ploggingTotalScore);
+            await RedisClient.zadd(weeklyRankingKey, resultWeekScore, userId); // 랭킹서버에 insert
 
-        // update score
-        await User.updateUserPloggingData(updatedPloggingData, userId, t);
-        await t.commit();
+            // 월간 합계
+            let originMonthScore = await RedisClient.zscore(monthlyRankingKey, userId);       
+            if(!originMonthScore) originMonthScore = Number(0);
+            const resultMonthScore = Number(originMonthScore)+Number(ploggingTotalScore);
+            await RedisClient.zadd(monthlyRankingKey, resultMonthScore, userId); // 랭킹서버에 insert
 
-        // mongodb update
-        mongoConnection = await MongoPool.db('plogging');
-        await mongoConnection.collection('record').insertOne(ploggingObj);
+            returnResult.score = { };
+            returnResult.score.totalScore = ploggingTotalScore;
+            returnResult.score.activityScore = ploggingActivityScore;
+            returnResult.score.environmentScore = ploggingEnvironmentScore;
 
-        // 누적합 방식이라 조회후 기존점수에 현재 플로깅점수 더해서 다시저장
-        // redis update
-        const weeklyRankingKey = "weekly"
-        const monthlyRankingKey = "monthly"
-        redisUnLock = await this.lock("plogging-lock"); // redis lock
-
-        // 주간 합계
-        let originWeekScore = await RedisClient.zscore(weeklyRankingKey, userId);
-       
-        if(!originWeekScore) originWeekScore = Number(0);
-        const resultWeekScore = Number(originWeekScore)+Number(ploggingTotalScore);
-        await this.redisClient.zadd(weeklyRankingKey, resultWeekScore, userId); // 랭킹서버에 insert
-
-        // 월간 합계
-        let originMonthScore = await RedisClient.zscore(monthlyRankingKey, userId);       
-        if(!originMonthScore) originMonthScore = Number(0);
-        const resultMonthScore = Number(originMonthScore)+Number(ploggingTotalScore);
-        await RedisClient.zadd(monthlyRankingKey, resultMonthScore, userId); // 랭킹서버에 insert
-
-        returnResult.score = { };
-        returnResult.score.totalScore = ploggingTotalScore;
-        returnResult.score.activityScore = ploggingActivityScore;
-        returnResult.score.environmentScore = ploggingEnvironmentScore;
-
-        res.status(200).send(returnResult);
+            res.status(200).send(returnResult);
+        });
     } catch(e) {
         logger.error(e.message);
-        await t.rollback();
         returnResult.rc = 500;
         returnResult.rcmsg = e.message;
         res.status(500).send(returnResult);
@@ -181,7 +182,7 @@ const deletePlogging = async function(req, res) {
         await mongoConnection.collection('record').deleteOne(query);
             
         // 산책이력 이미지 삭제
-        fs.unlinkSync(ploggingImgPath);
+        if(fs.existsSync(ploggingImgPath)) fs.unlinkSync(ploggingImgPath);
 
         // 해당 산책의 점수 랭킹점수 삭제
         await RedisClient.zrem("weekly", userId);

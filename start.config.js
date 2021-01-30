@@ -17,13 +17,13 @@ module.exports = {
               "MONGODB_PASSWORD": "JjaoSaoP+IRVDBkXdDR4XMgTmkMut0VM",
               "REDIS_INFO": "121.130.220.217:40000", // 121.130.220.217:40000",
               "REDIS_PASSWORD":"JjaoSaoP+IRVDBkXdDR4XMgTmkMut0VM",
-              "MARIADB_INFO": "121.130.220.217:40001", //"121.130.220.217:40001",
+              "MARIADB_INFO": "127.0.0.1:3306", //"121.130.220.217:40001",
               "MARIADB_PASSWORD": "JjaoSaoP+IRVDBkXdDR4XMgTmkMut0VM",
-              "IMG_FILE_PATH": "E:file_test",
+              "IMG_FILE_PATH": "/mnt/Plogging_server/images",
               "ADMIN_EMAIL_ID": "ploggingteam@gmail.com",
               "ADMIN_EMAIL_PASSWORD": "murder^^6",
-              "SERVER_REQ_INFO": "http:121.130.220.217//:20000", //http:121.130.220.217//:20000",
-              "LOG_PATH": "E:\winston-log"
+              "SERVER_REQ_INFO": "http:127.0.0.1//:20000", //http:121.130.220.217//:20000",
+              "LOG_PATH": "/mnt/Plogging_server/images/log"
           },
           env_development: { // tb ( 라즈베리파이 서버 )
             "NODE_ENV": "development",

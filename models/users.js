@@ -1,7 +1,6 @@
 const {sequelize} = require('../models/index');
 const User = sequelize.models.user;
 
-
 const findOneUser = async(userId, t = null) => await User.findOne({ 
     where: {user_id: userId}
 }, {transaction: t});
@@ -51,17 +50,15 @@ const deleteUser = async(userId, t = null) => await User.destroy({
     where: {user_id: userId}
 }, { transaction: t});
 
-const updateUserPloggingData = async(updatedPloggingData, userId, t) => await User.update({
-        score_week: updatedPloggingData.score_week,
-        distance_week: updatedPloggingData.distance_week,
-        trash_week: updatedPloggingData.trash_week,
-        score_month: updatedPloggingData.score_month,
-        distance_month: updatedPloggingData.distance_month,
-        trash_month: updatedPloggingData.trash_month
-    },
-    { where: {user_id: userId}},
-    { transaction: t});
-
+const updateUserPloggingData = async(updatedPloggingData, userId, t) => await User.update({ 
+        score_week: Number(updatedPloggingData.scoreWeek),
+        distance_week: Number(updatedPloggingData.distanceWeek),
+        trash_week: Number(updatedPloggingData.trashWeek),
+        score_month: Number(updatedPloggingData.scoreMonth),
+        distance_month: Number(updatedPloggingData.distanceMonth),
+        trash_month: Number(updatedPloggingData.trashMonth)
+    },{ where: { user_id: userId } 
+    },{ transaction: t });
 
 module.exports = {
     findOneUser,
