@@ -1,0 +1,244 @@
+const fs = require('fs');
+const util = require('../util/common.js');
+
+const ploggingFilePath = process.env.IMG_FILE_PATH + "/plogging/";
+const { ObjectId } = require('mongodb');
+const MongoPool = require('../config/mongoConfig.js');
+const RedisClient = require('../config/redisConfig.js');
+
+const User = require('../models/users.js');
+const {sequelize} = require('../models/index');
+
+const logger = require("../util/logger.js")("plogging.js");
+const logHelper = require("../util/logHelper.js");
+
+/**
+ * 산책 이력조회  (페이징 처리 필요)
+ *  case 1. 최신순
+ *  case 2 .플로깅 점수순
+ *  case 2. 플로깅 거리순
+ */
+const readPlogging = async function(req, res) {
+    logger.info("plogging read api !");
+    logger.info(logHelper.reqWrapper(req, "plogging"));
+
+    let userId = req.userId; // api를 call한 userId
+    let targetUserId = req.params.targetUserId; // 산책이력을 조회를 할 userId
+    let ploggingCntPerPage = req.query.ploggingCntPerPage; // 한 페이지에 보여줄 산책이력 수
+    let pageNumber = req.query.pageNumber; // 조회할 페이지 Number
+
+    // default -> 각 페이지에 4개씩, 1번 페이지 조회
+    if(!ploggingCntPerPage) ploggingCntPerPage = 4;
+    if(!pageNumber) pageNumber = 1;
+
+    let searchType = Number(req.query.searchType); // 최신순(0), 점수순(1), 거리순(2)
+    let query = {"meta.user_id": targetUserId};
+    let sort_option = [{"meta.created_time": -1},
+                       {"meta.plogging_total_score": -1},
+                       {"meta.distance": -1}];  
+    let options = {
+        sort: sort_option[searchType],
+        skip: (pageNumber-1)*ploggingCntPerPage,
+        limit: ploggingCntPerPage
+    }
+
+    let mongoConnection = null;
+    let returnResult = { rc: 200, rcmsg: "success" };
+
+    try {
+        mongoConnection = await MongoPool.db('plogging');
+        let PloggingList = await mongoConnection.collection('record').find(query,options).toArray();
+        returnResult.plogging_list = PloggingList;
+        res.status(200).send(returnResult);
+    } catch(e) {
+        logger.error(e.message);
+        mongoConnection=null;
+        returnResult.rc = 500;
+        returnResult = e.message;
+        res.status(500).send(returnResult);
+    }
+}
+
+/**
+ * 산책 이력 등록
+ * - img는 optional. 만약, 입력안하면 baseImg로 세팅
+ */
+const writePlogging = async function(req, res) {
+    logger.info("plogging write api !");
+    logger.info(logHelper.reqWrapper(req, "plogging"));
+
+    let returnResult = { rc: 200, rcmsg: "success" };
+
+    const userId = req.userId;
+    let ploggingObj = req.body.ploggingData;
+    
+    ploggingObj = JSON.parse(ploggingObj);
+
+    ploggingObj.meta.user_id = userId;
+    ploggingObj.meta.create_time = util.getCurrentDateTime();    
+
+    //이미지가 없을때는 baseImg insert
+    if(req.file===undefined) ploggingObj.meta.plogging_img = `${process.env.SERVER_REQ_INFO}/plogging/baseImg.PNG`;
+    else ploggingObj.meta.plogging_img = process.env.SERVER_REQ_INFO + '/' + req.file.path.split(`${process.env.IMG_FILE_PATH}/`)[1];
+
+    let mongoConnection = null;
+    let redisUnLock = null;
+    try {
+        // 해당 산책의 plogging 점수
+        const ploggingScoreArr = calcPloggingScore(ploggingObj);
+        const ploggingTotalScore = Number(ploggingScoreArr[0] + ploggingScoreArr[1]);
+        const ploggingActivityScore =  Number(ploggingScoreArr[0]);
+        const ploggingEnvironmentScore = Number(ploggingScoreArr[1]);
+        const ploggingDistance = ploggingObj.meta.distance;
+        const pickList = ploggingObj.pick_list;
+        const pickCount = calPickCount(pickList);
+
+        ploggingObj.meta.plogging_total_score = ploggingTotalScore;
+        ploggingObj.meta.plogging_activity_score = ploggingActivityScore;
+        ploggingObj.meta.plogging_environment_score = ploggingEnvironmentScore;
+
+        const t = await sequelize.transaction;
+        const userData = await User.findOneUser(userId, t);
+
+        const updatedPloggingData = { };
+        // 주간
+        updatedPloggingData.updateWeekScore = userData.score_week + ploggingTotalScore;
+        updatedPloggingData.updateWeekDistance = userData.distance_week + ploggingDistance;
+        updatedPloggingData.updateWeekTrash = userData.trash_week + pickCount;
+        
+        // 월간
+        updatedPloggingData.updateMonthScore = userData.score_month + ploggingTotalScore;
+        updatedPloggingData.updateMonthDistance = userData.distance_month + ploggingDistance;
+        updatedPloggingData.updateMonthTrash = userData.trash_month + pickCount;
+
+        // update score
+        await User.updateUserPloggingData(updatedPloggingData, userId, t);
+        await t.commit();
+
+        // mongodb update
+        mongoConnection = await MongoPool.db('plogging');
+        await mongoConnection.collection('record').insertOne(ploggingObj);
+
+        // 누적합 방식이라 조회후 기존점수에 현재 플로깅점수 더해서 다시저장
+        // redis update
+        const weeklyRankingKey = "weekly"
+        const monthlyRankingKey = "monthly"
+        redisUnLock = await this.lock("plogging-lock"); // redis lock
+
+        // 주간 합계
+        let originWeekScore = await RedisClient.zscore(weeklyRankingKey, userId);
+       
+        if(!originWeekScore) originWeekScore = Number(0);
+        const resultWeekScore = Number(originWeekScore)+Number(ploggingTotalScore);
+        await this.redisClient.zadd(weeklyRankingKey, resultWeekScore, userId); // 랭킹서버에 insert
+
+        // 월간 합계
+        let originMonthScore = await RedisClient.zscore(monthlyRankingKey, userId);       
+        if(!originMonthScore) originMonthScore = Number(0);
+        const resultMonthScore = Number(originMonthScore)+Number(ploggingTotalScore);
+        await RedisClient.zadd(monthlyRankingKey, resultMonthScore, userId); // 랭킹서버에 insert
+
+        returnResult.score = { };
+        returnResult.score.totalScore = ploggingTotalScore;
+        returnResult.score.activityScore = ploggingActivityScore;
+        returnResult.score.environmentScore = ploggingEnvironmentScore;
+
+        res.status(200).send(returnResult);
+    } catch(e) {
+        logger.error(e.message);
+        await t.rollback();
+        returnResult.rc = 500;
+        returnResult.rcmsg = e.message;
+        res.status(500).send(returnResult);
+    } finally {
+        mongoConnection=null;
+        if(redisUnLock) redisUnLock();
+    }
+}
+
+/*
+ * 산책 이력삭제
+ *  ->산책이력의 objectId값을 파라미터로 전달
+ *   
+ */
+const deletePlogging = async function(req, res) {
+    logger.info("plogging delete api !");
+    logger.info(logHelper.reqWrapper(req, "plogging"));
+
+    let userId = req.userId;
+    let mongoObjectId = req.query.objectId;
+    let ploggingImgName = req.query.ploggingImgName; // plogging_20210106132743.PNG
+    let ploggingImgPath = `${ploggingFilePath}${userId}/${ploggingImgName}`; 
+    let query = null;
+
+    let returnResult = { rc: 200, rcmsg: "success" };
+    let mongoConnection = null;
+    try {
+        mongoConnection = await MongoPool.db('plogging');
+        query = {"_id": ObjectId(mongoObjectId)};
+            
+        // 산책이력 삭제
+        await mongoConnection.collection('record').deleteOne(query);
+            
+        // 산책이력 이미지 삭제
+        fs.unlinkSync(ploggingImgPath);
+
+        // 해당 산책의 점수 랭킹점수 삭제
+        await RedisClient.zrem("weekly", userId);
+        await RedisClient.zrem("monthly", userId);
+
+        res.status(200).send(returnResult);
+    } catch(e) {
+        logger.error(e.message);
+        returnResult.rc = 500;
+        returnResult.rcmsg = e.message;
+        res.status(500).send(returnResult);
+    } finally {
+        mongoConnection=null;
+    }
+}
+
+// 산책 점수 계산 ( 운동점수, 환경점수 )
+function calcPloggingScore(ploggingObj) {
+    let score = [ ]; // score[0]: 운동점수, score[1]: 환경점수
+    const pivotDistance = 300; // 300m
+    const movePerScore = 1; // 10m 이동시 1점 증가
+    const maxCountDistance = 10000; // 10km
+    const pickPerScore = 10; // 쓰레기 1개 주울때마다 10점 증가
+    
+    const distance = ploggingObj.meta.distance; // 플로깅 거리
+    const pickList = ploggingObj.pick_list; // 주운 쓰레기 리스트
+    
+    if(distance < pivotDistance) score[0] = 0; //300m 이하는 거리점수 없음
+    else {
+        if(maxCountDistance < distance) distance = maxCountDistance; // 10km 넘어가면 그 이상 거리점수 없음
+        score[0] = ((Math.floor(distance/10))*movePerScore) + addExtraScorePerKm(distance);
+    }
+
+    let pickCount=0;
+    for(let i=0; i<pickList.length; i++) pickCount += pickList[i].pick_count;
+    score[1]= pickCount*pickPerScore;
+
+    return score;
+};
+
+// 1km 마다 기본점수 폭 늘려준다. 해당 거리의 경우 추가되는 총 점수
+function addExtraScorePerKm(distance) {
+    const hopCnt = Math.floor(distance/1000);
+    let extraScore=0;
+    for(let i=1; i<=hopCnt; i++) extraScore += (i*10);
+    return extraScore;
+}
+
+// 쓰레기 주운갯수 계산
+function calPickCount(pickList) {
+    let pickCount=0;
+    for(let i=0; i<pickList.length; i++) pickCount += pickList[i].pick_count;
+    return pickCount;
+}
+
+module.exports = {
+   readPlogging,
+   writePlogging,
+   deletePlogging
+};
