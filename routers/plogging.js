@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const cors=require('cors');
 const swaggerValidation = require('../util/validator')
-const upload = require('../util/multerHelper').profileUpload;
+const upload = require('../util/multerHelper').plogFileUpload;
 const ploggingControls = require('../controllers/ploggingControllers.js');
 
 router.all('*',cors());
