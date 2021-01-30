@@ -1,6 +1,7 @@
 const poolAsyncAwait = require('../config/mysqlConfig.js').getMysqlPool2
 const logger = require("../util/logger.js")("ranking.js")
-const { USER_TABLE } = require('./user')
+//const { USER_TABLE } = require('../user')
+const { USER_TABLE } = 'user';
 const RankSchema = require('../models/ranking')
 
 const getGlobalRank = async (req, res) => {
