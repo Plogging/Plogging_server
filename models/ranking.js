@@ -18,7 +18,7 @@ RankSchema.getCountAndRankDataWithScores = async (rankType, offset, limit) => {
 
 RankSchema.getUserRankAndScore = async (rankType, userId) => {
     // TODO: rankType이 weekly나 monthly가 아닐 경우 throw
-    const [zrankResult, zscoreResult] = await this.redisClient.multi()
+    const [zrankResult, zscoreResult] = await redisClient.multi()
     .zrank(rankType, userId)
     .zscore(rankType, userId)
     .exec()
