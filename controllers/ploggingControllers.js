@@ -163,7 +163,7 @@ const deletePlogging = async function(req, res) {
     let returnResult = { rc: 200, rcmsg: "success" };
     try {
         // 산책이력 삭제
-        PloggingSchema.deletePloggingModel(mongoObjectId);
+        PloggingSchema.deletePlogging(mongoObjectId);
             
         // 산책이력 이미지 삭제
         if(fs.existsSync(ploggingImgPath)) fs.unlinkSync(ploggingImgPath);

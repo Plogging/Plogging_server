@@ -1,15 +1,14 @@
-const poolAsyncAwait = require('../config/mysqlConfig.js').getMysqlPool2
 const logger = require("../util/logger.js")("ranking.js")
-//const { USER_TABLE } = require('../user')
-const { USER_TABLE } = 'user';
+
 const RankSchema = require('../models/ranking')
+const { findOneUser, findUsers } = require('../models/users')
 
 const getGlobalRank = async (req, res) => {
     try {
         const rankType = req.query.rankType
         const offset = req.query.offset
         const limit = req.query.limit
-        const [count, rawRankData] = RankSchema.getCountAndRankDataWithScores(rankType, offset, limit)
+        const [count, rawRankData] = await RankSchema.getCountAndRankDataWithScores(rankType, offset, limit)
         const rankData = await buildRankData(rawRankData)
         const returnResult = {rc: 200, rcmsg: "success", count: count, rankData: rankData}
         res.status(200).json(returnResult)
@@ -25,7 +24,7 @@ const getUserRank = async (req, res) => {
         const rankType = req.query.rankType
         const targetUserId = req.params.id
         logger.info(`Fetching ${rankType} rank of user ${targetUserId} from redis...`)
-        const [rank, score] = RankSchema.getUserRankAndScore(rankType, targetUserId)
+        const [rank, score] = await RankSchema.getUserRankAndScore(rankType, targetUserId)
         const { userId, displayName, profileImg } = await getUserInfo(targetUserId)
         const userRankData = {userId: userId, displayName: displayName, profileImg: profileImg,
         rank: rank, score: score}
@@ -60,23 +59,18 @@ const buildRankData = async rawRankData => {
 }
 
 const getUserInfo = async userId => {
-    const query = `SELECT user_id, display_name, profile_img from ${USER_TABLE} WHERE user_id = ?`
-    logger.info(`Fetching user data of user ${userId} from DB...`)
-    const [rows, _] = await poolAsyncAwait.promise().query(query, [userId])
-    const { user_id, display_name, profile_img } = rows[0]
+    const fetched = await findOneUser(userId)
+    const { user_id, display_name, profile_img } = fetched.dataValues
     const userInfo = { userId: user_id, displayName: display_name, profileImg: profile_img }
     return userInfo
 }
 
 const getUserInfos = async userIds => {
     if (userIds.length == 0) return {}
-    const query = `SELECT user_id, display_name, profile_img from ${USER_TABLE} WHERE user_id in 
-    (` + userIds.map(() => '?') + `)`
-    logger.info(`Fetching user data of users ${userIds} from DB...`)
-    const [rows, _] = await poolAsyncAwait.promise().query(query, userIds)
     const userInfos = {}
-    rows.forEach(row => {
-        const { user_id, display_name, profile_img } = row
+    const fetched = await findUsers(userIds)
+    fetched.forEach(row => {
+        const { user_id, display_name, profile_img } = row.dataValues
         userInfos[user_id] = { userId: user_id, displayName: display_name, 
             profileImg: profile_img }
     })

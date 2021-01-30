@@ -1,8 +1,13 @@
 const {sequelize} = require('../models/index');
+const { Op } = require('sequelize')
 const User = sequelize.models.user;
 
 const findOneUser = async(userId, t = null) => await User.findOne({ 
     where: {user_id: userId}
+}, {transaction: t});
+
+const findUsers = async(userIds, t = null) => await User.findAll({
+    where: {user_id: {[Op.in]: userIds}}
 }, {transaction: t});
 
 const createUser = async(
@@ -62,6 +67,7 @@ const updateUserPloggingData = async(updatedPloggingData, userId, t) => await Us
 
 module.exports = {
     findOneUser,
+    findUsers,
     createUser,
     updateUserName,
     updateUserImg,
