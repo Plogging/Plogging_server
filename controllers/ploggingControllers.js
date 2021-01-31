@@ -1,6 +1,5 @@
 const fs = require('fs');
 const util = require('../util/common.js');
-const { promisify } = require('util');
 const ploggingFilePath = process.env.IMG_FILE_PATH + "/plogging/";
 const PloggingSchema = require('../models/plogging');
 const RankSchema = require('../models/ranking');
@@ -8,7 +7,6 @@ const User = require('../models/users.js');
 const {sequelize} = require('../models/index');
 const logger = require("../util/logger.js")("plogging.js");
 const logHelper = require("../util/logHelper.js");
-const { ploggingError } = require('throw.js');
 
 /**
  * 산책 이력조회  (페이징 처리 필요)
@@ -41,16 +39,8 @@ const readPlogging = async function(req, res) {
         limit: ploggingCntPerPage
     }
 
-    try {
-        returnResult.plogging_list = await PloggingSchema.readPloggingModel(query, options);
-        res.status(200).json(returnResult);
-    } catch(e) {
-        logger.error(e.message);
-        //returnResult.rc = 500;
-        //returnResult = e.message;
-        //res.status(500).json(returnResult);
-        throw new ploggingError('readPlogging api Error..');
-    }
+    returnResult.plogging_list = await PloggingSchema.readPloggingModel(query, options);
+    res.status(200).json(returnResult);
 }
 
 /**
@@ -80,10 +70,8 @@ const writePlogging = async function(req, res) {
     if(req.file===undefined) ploggingObj.meta.plogging_img = `${process.env.SERVER_REQ_INFO}/plogging/baseImg.PNG`;
     else ploggingObj.meta.plogging_img = process.env.SERVER_REQ_INFO + '/' + req.file.path.split(`${process.env.IMG_FILE_PATH}/`)[1];
 
-    try {
         await sequelize.transaction(async (t) => {
             const userData = await User.findOneUser(userId, t);
-
             const updatedPloggingData = { };
             // 주간
             updatedPloggingData.scoreWeek = userData.score_week + ploggingTotalScore;
@@ -106,15 +94,6 @@ const writePlogging = async function(req, res) {
 
             res.status(200).json(returnResult);
         });
-    } catch(e) {
-        logger.error(e.message);
-        //returnResult.rc = 500;
-        //returnResult.rcmsg = e.message;
-        //res.status(500).json(returnResult);
-        throw new ploggingError('writePlogging api Error..');
-    } finally {
-    
-    }
 }
 
 /*
@@ -132,23 +111,14 @@ const deletePlogging = async function(req, res) {
     let ploggingImgName = req.query.ploggingImgName; // plogging_20210106132743.PNG
     let ploggingImgPath = `${ploggingFilePath}${userId}/${ploggingImgName}`; 
 
-    try {
-        // 산책이력 삭제
-        PloggingSchema.deletePlogging(mongoObjectId);
+    // 산책이력 삭제
+    PloggingSchema.deletePlogging(mongoObjectId);
             
-        // 산책이력 이미지 삭제
-        if(fs.existsSync(ploggingImgPath)) fs.unlinkSync(ploggingImgPath);
-        res.status(200).json(returnResult);
-    } catch(e) {
-        logger.error(e.message);
-        //returnResult.rc = 500;
-        //returnResult.rcmsg = e.message;
-        //res.status(500).json(returnResult);
-        throw new ploggingError('deletePlogging api Error..');
-    } finally {
-    
-    }
+    // 산책이력 이미지 삭제
+    if(fs.existsSync(ploggingImgPath)) fs.unlinkSync(ploggingImgPath);
+    res.status(200).json(returnResult);
 }
+
 const getPloggingScore = async function(req, res) {
     logger.info("plogging getScore api !");
     logger.info(logHelper.reqWrapper(req, "plogging"));
@@ -158,26 +128,17 @@ const getPloggingScore = async function(req, res) {
     let ploggingObj = req.body.ploggingData;
     ploggingObj = JSON.parse(ploggingObj);
 
-    try {
-        // 해당 산책의 plogging 점수
-        const ploggingScoreArr = calcPloggingScore(ploggingObj);
-        const ploggingTotalScore = Number(ploggingScoreArr[0] + ploggingScoreArr[1]);
-        const ploggingActivityScore =  Number(ploggingScoreArr[0]);
-        const ploggingEnvironmentScore = Number(ploggingScoreArr[1]);
+    // 해당 산책의 plogging 점수
+    const ploggingScoreArr = calcPloggingScore(ploggingObj);
+    const ploggingTotalScore = Number(ploggingScoreArr[0] + ploggingScoreArr[1]);
+    const ploggingActivityScore =  Number(ploggingScoreArr[0]);
+    const ploggingEnvironmentScore = Number(ploggingScoreArr[1]);
 
-        returnResult.score = { };
-        returnResult.score.totalScore = ploggingTotalScore;
-        returnResult.score.activityScore = ploggingActivityScore;
-        returnResult.score.environmentScore = ploggingEnvironmentScore;
-
-        res.status(200).json(returnResult);
-    } catch(e) {
-        logger.error(e.message);
-        //returnResult.rc = 500;
-        //returnResult.rcmsg = e.message;
-        //res.status(500).json(returnResult);
-        throw new ploggingError('getPloggingScore api Error..');
-    }
+    returnResult.score = { };
+    returnResult.score.totalScore = ploggingTotalScore;
+    returnResult.score.activityScore = ploggingActivityScore;
+    returnResult.score.environmentScore = ploggingEnvironmentScore;
+    res.status(200).json(returnResult);
 };
 
 // 산책 점수 계산 ( 운동점수, 환경점수 )

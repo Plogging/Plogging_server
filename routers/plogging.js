@@ -13,3 +13,4 @@ router.delete("/", swaggerValidation.validate, errHandler(ploggingControls.delet
 router.post('/score', swaggerValidation.validate, errHandler(ploggingControls.getPloggingScore)); // get plogging score
 
 module.exports = router;
+ 
