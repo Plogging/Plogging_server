@@ -2,33 +2,26 @@ const nodemailer = require('nodemailer');
 const Email = require('email-templates');
 const logger = require("../util/logger.js")("user.js");
 const fs = require('fs');
-const User = require('../models/users.js');
+const { NotFound, Unauthorized, Conflict, InternalServerError } = require('throw.js')
+const UserSchema = require('../models/user.js');
 const filePath = process.env.IMG_FILE_PATH;
 const adminEmailId = process.env.ADMIN_EMAIL_ID;
 const adminEmailPassword = process.env.ADMIN_EMAIL_PASSWORD;
 const {sequelize} = require('../models/index');
-const MongoClient = require('../config/mongoConfig.js');
-const RedisClient = require('../config/redisConfig.js');
+const RankSchema = require('../models/ranking');
+const PloggingSchema = require('../models/plogging');
 
 const signIn = async(req, res) => {
     const userId = req.body.userId + ':custom';
     let returnResult = {};
     logger.info(`Logging in with [${userId}] ...`);
-    try {
-        const user = await User.findOneUser(userId);
-        if(user){
-            req.session.userId = userId;
-            returnResult.session = req.session.id;
-            returnResult.userImg = user.profile_img;
-            returnResult.userName = user.display_name;
-            res.json(returnResult);
-        }else{
-            res.sendStatus(401);
-        }
-    } catch (error) {
-        logger.error(error.message);
-        res.sendStatus(500);
-    }
+    const user = await UserSchema.findOneUser(userId);
+    if(!user){ throw new Unauthorized }
+    req.session.userId = userId;
+    returnResult.session = req.session.id;
+    returnResult.userImg = user.profile_img;
+    returnResult.userName = user.display_name;
+    res.json(returnResult);
 }
 
 const social = async(req, res) => {
@@ -36,38 +29,32 @@ const social = async(req, res) => {
     const userId = req.body.userId;
     const userName = req.body.userName;
     logger.info(`Connecting to [${userId}] from OAuth...`);
-    try {
-        await sequelize.transaction(async (t) => {
-            const user = await User.findOneUser(userId, t);
-            if(!user){
-                try {
-                    let userImg = 'https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg';
-                    const newUser = await User.createUser(userId, userName, userImg, null, t);
-                    req.session.userId = newUser.user_id;
-                    returnResult.session = req.session.id;
-                    returnResult.userImg = newUser.profile_img;
-                    returnResult.userName = newUser.display_name;
-                    res.status(201).json(returnResult);
-                } catch (error) {
-                    logger.error(error.message);
-                    if(error.original.errno === 1062){
-                        res.status(409).send('userName Conflict');
-                    }else{
-                        res.sendStatus(500);
-                    }
-                }
-            }else{
-                req.session.userId = user.user_id;
+    await sequelize.transaction(async (t) => {
+        const user = await UserSchema.findOneUser(userId, t);
+        if(!user){
+            try {
+                let userImg = 'https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg';
+                const newUser = await UserSchema.createUser(userId, userName, userImg, null, t);
+                req.session.userId = newUser.user_id;
                 returnResult.session = req.session.id;
-                returnResult.userImg = user.profile_img;
-                returnResult.userName = user.display_name;
-                res.json(returnResult);
+                returnResult.userImg = newUser.profile_img;
+                returnResult.userName = newUser.display_name;
+                res.status(201).json(returnResult);
+            } catch (error) {
+                logger.error(error.message);
+                if(error.original.errno === 1062){
+                    throw new Conflict('UserName Conflict');
+                }
+                throw new InternalServerError
             }
-        })
-    } catch (error) {
-        logger.error(error.message);
-        res.sendStatus(500);
-    }
+        }else{
+            req.session.userId = user.user_id;
+            returnResult.session = req.session.id;
+            returnResult.userImg = user.profile_img;
+            returnResult.userName = user.display_name;
+            res.json(returnResult);
+        }
+    })
 }
 
 const register = async(req, res) => {
@@ -77,91 +64,71 @@ const register = async(req, res) => {
     const userType = 'custom';
     const userId = req.body.userId + ':' + userType;
     logger.info(`Registering [${userId}] into maria DB...`);
-    try {
-        await sequelize.transaction(async (t) => {
-            const user = await User.findOneUser(userId, t);
-            if (!user) {
-                try {
-                    // set userImg
-                    let userImg = 'https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg';
-                    const newUser = await User.createUser(userId, userName, userImg, secretKey, t);
-                    req.session.userId = newUser.user_id;
-                    returnResult.session = req.session.id;
-                    returnResult.userImg = newUser.profile_img;
-                    returnResult.userName = newUser.display_name;
-                    res.status(201).json(returnResult);
-                } catch (error) {
-                    logger.error(error.message);
-                    if(error.original.errno === 1062){
-                        res.status(409).send('UserName Conflict');
-                    }else{
-                        res.sendStatus(500);
-                    }
-                }
-            }else{
-                logger.error(`Existed user's id for register [${req.body.userName}]`);
-                res.status(409).send('UserId Conflict');
+    await sequelize.transaction(async (t) => {
+        const user = await UserSchema.findOneUser(userId, t);
+        if (user) {
+            logger.error(`Existed user's id for register [${req.body.userName}]`);
+            throw new Conflict('UserId Conflict');
+        }
+        try {
+            // set userImg
+            let userImg = 'https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg';
+            const newUser = await UserSchema.createUser(userId, userName, userImg, secretKey, t);
+            req.session.userId = newUser.user_id;
+            returnResult.session = req.session.id;
+            returnResult.userImg = newUser.profile_img;
+            returnResult.userName = newUser.display_name;
+            res.status(201).json(returnResult);
+        } catch (error) {
+            logger.error(error.message);
+            if(error.original.errno === 1062){
+                throw new Conflict('UserName Conflict');
             }
-        })
-    } catch (error) {
-        logger.error(error.message);
-        res.sendStatus(500);
-    }
+            throw new InternalServerError
+        }
+    })
 }
 
 const checkUserId = async(req, res) => {
-    logger.info(`Checking [${req.session.userId}]...`);
-    try {
-        const user = await User.findOneUser(req.body.userId + ':custom');
-        user? res.status(400).send('userId which was existed'): res.sendStatus(200);
-    } catch (error) {
-        logger.error(error.message);
-        res.sendStatus(500);
-    }
+    logger.info(`Checking [${req.body.userId}]...`);
+    const user = await UserSchema.findOneUser(req.body.userId + ':custom');
+    user? res.status(400).send('userId which was existed'): res.sendStatus(200);
 }
 
 const getUserInfo = async(req, res) => {
     logger.info(`Getting [${req.params.id}] information...`);
     let returnResult = {};
-    try {
-        const user = await User.findOneUser(req.params.id);
-        if(user){
-            returnResult.userId = user.user_id;
-            returnResult.userImg = user.profile_img;
-            returnResult.userName = user.display_name;
-            returnResult.userScore = user.score;
-            returnResult.userDistance = user.distance;
-            returnResult.userTrash = user.trash;
-            res.json(returnResult);
-        }else{
-            logger.error(`No user for getting [${req.params.id}]`);
-            res.status(404).send('userId which was existed');
-        }
-    } catch (error) {
-        logger.error(error.message);
-        res.sendStatus(500);
+    const user = await UserSchema.findOneUser(req.params.id);
+    if(!user){
+        logger.error(`No user for getting [${req.params.id}]`);
+        throw new NotFound('userId which was existed');
     }
+    returnResult.userId = user.user_id;
+    returnResult.userImg = user.profile_img;
+    returnResult.userName = user.display_name;
+    returnResult.userScore = user.score;
+    returnResult.userDistance = user.distance;
+    returnResult.userTrash = user.trash;
+    res.json(returnResult);
 }
 
 const changeUserName = async(req, res) => {
     logger.info(`Changing user's name of [${req.session.userId}] ...`);
     let returnResult = {};
     try {
-        const [updatedCnt] = await User.updateUserName(req.session.userId, req.body.userName);
-        if(updatedCnt){
-            returnResult.userName = req.body.userName;
-            res.send(returnResult);
-        }else{
+        const [updatedCnt] = await UserSchema.updateUserName(req.session.userId, req.body.userName);
+        if(!updatedCnt){
             logger.error(`No user for updating name [${req.session.userId}]`);
-            res.sendStatus(500);
+            throw new InternalServerError
         }
+        returnResult.userName = req.body.userName;
+        res.send(returnResult);
     } catch (error) {
         logger.error(error.message);
         if(error.original.errno === 1062){
-            res.status(409).send('userName Conflict');
-        }else{
-            res.sendStatus(500);
+            throw new Conflict('UserName Conflict');
         }
+        throw new InternalServerError
     }
 }
 
@@ -169,49 +136,33 @@ const changeUserImage = async(req, res) => {
     logger.info(`Changing user's image of [${req.session.userId}] ...`);
     let returnResult = {};
     const profileImg = req.file.path;
-    try {
-        // TODO: sql 오류에도 파일 이미지는 정상으로 바뀜
-        // TODO: 추후 서버 연결 시 경로 변경
-        const [updatedCnt] = await User.updateUserImg(req.session.userId, profileImg);
-        if(updatedCnt){
-            returnResult.profileImg = profileImg;
-            res.send(returnResult);
-        }else{
-            logger.error(`No user for updating image [${req.session.userId}]`);
-            res.sendStatus(500);
-        }
-    } catch (error) {
-        logger.error(error.message);
-        res.sendStatus(500);
+    // TODO: sql 오류에도 파일 이미지는 정상으로 바뀜
+    // TODO: 추후 서버 연결 시 경로 변경
+    const [updatedCnt] = await UserSchema.updateUserImg(req.session.userId, profileImg);
+    if(!updatedCnt){
+        logger.error(`No user for updating image [${req.session.userId}]`);
+        throw new InternalServerError
     }
+    returnResult.profileImg = profileImg;
+    res.send(returnResult);
 }
 
 const changePassword = async(req, res) => {
     logger.info(`Changing user's password of [${req.session.userId}] ...`);
-    try {
-        const [updatedCnt] = await User.changeUserPassword(
-            req.session.userId,
-            req.body.newSecretKey,
-            req.body.existedSecretKey);
-        updatedCnt? res.sendStatus(200): res.status(400).send('No secret key');
-    } catch (error) {
-        logger.error(error.message);
-        res.sendStatus(500);
-    }
+    const [updatedCnt] = await UserSchema.changeUserPassword(
+        req.session.userId,
+        req.body.newSecretKey,
+        req.body.existedSecretKey);
+    updatedCnt? res.sendStatus(200): res.status(400).send('No secret key');
 }
 
 const temporaryPassword = async(req, res) => {
     logger.info(`Sending user's password of [${req.body.email}] to Email...`);
     const tempPassword = Math.random().toString(36).slice(2);
-    try {
-        await sendEmail(req.body.email, tempPassword);
-        const [updatedCnt] = await User.changeUserPassword(
-            req.body.email + ':custom', tempPassword);
-        updatedCnt? res.sendStatus(200): res.sendStatus(404);
-    } catch (error) {
-        logger.error(error.message);
-        res.sendStatus(500);
-    }
+    await sendEmail(req.body.email, tempPassword);
+    const [updatedCnt] = await UserSchema.changeUserPassword(
+        req.body.email + ':custom', tempPassword);
+    updatedCnt? res.sendStatus(200): res.sendStatus(404);
 }
 
 const signOut = async(req, res) => {
@@ -225,37 +176,27 @@ const signOut = async(req, res) => {
 const withdrawal = async(req, res) => {
     logger.info(`Withdrawing [${req.session.userId}] ...`);
     const userId = req.session.userId;
-    const redisClient = RedisClient;
+    const t = await sequelize.transaction();
+    const deletedCnt = await UserSchema.deleteUser(userId, t);
+    if(!deletedCnt){ 
+        logger.error(`No user for deleting [${userId}]`);
+        throw new InternalServerError
+    }
     try {
-        const t = await sequelize.transaction();
-        const deletedCnt = await User.deleteUser(userId, t);
-        if(deletedCnt){
-            try {
-                const mongoConnection = await MongoClient.connect();
-                const mongoPool = mongoConnection.db('plogging');
-                await mongoPool.collection('record').deleteMany({'meta.user_id': userId});
-                // 탈퇴 유저의 산책이력 이미지 전체 삭제
-                if(fs.existsSync(`${filePath}/${userId}`)){
-                    fs.rmdirSync(`${filePath}/${userId}`, { recursive: true });
-                }
-                // 해당 산책의 점수 랭킹점수 삭제
-                await redisClient.zrem('weekly', userId);
-                await redisClient.zrem('monthly', userId);
-                res.sendStatus(200);
-                await t.commit();
-                req.session.destroy();
-            } catch (error) {
-                logger.error(error.message);
-                await t.rollback();
-                res.sendStatus(500);
-            }
-        }else{
-            logger.error(`No user for deleting [${userId}]`);
-            res.sendStatus(500);
+        PloggingSchema.deletePloggingUser(userId);
+        // 탈퇴 유저의 산책이력 이미지 전체 삭제
+        if(fs.existsSync(`${filePath}/${userId}`)){
+            fs.rmdirSync(`${filePath}/${userId}`, { recursive: true });
         }
-    }catch (error) {
+        // 해당 산책의 점수 랭킹점수 삭제
+        RankSchema.delete(userId);
+        res.sendStatus(200);
+        await t.commit();
+        req.session.destroy();
+    } catch (error) {
         logger.error(error.message);
-        res.sendStatus(500);
+        await t.rollback();
+        throw new InternalServerError
     }
 }
 
