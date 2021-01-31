@@ -2,13 +2,12 @@ const fs = require('fs');
 const util = require('../util/common.js');
 const { promisify } = require('util');
 const ploggingFilePath = process.env.IMG_FILE_PATH + "/plogging/";
-const RedisClient = require('../config/redisConfig.js');
 const PloggingSchema = require('../models/plogging');
+const RankSchema = require('../models/ranking');
 const User = require('../models/users.js');
 const {sequelize} = require('../models/index');
 const logger = require("../util/logger.js")("plogging.js");
 const logHelper = require("../util/logHelper.js");
-const lock = promisify(require('redis-lock')(RedisClient));
 
 /**
  * 산책 이력조회  (페이징 처리 필요)
@@ -81,7 +80,6 @@ const writePlogging = async function(req, res) {
     if(req.file===undefined) ploggingObj.meta.plogging_img = `${process.env.SERVER_REQ_INFO}/plogging/baseImg.PNG`;
     else ploggingObj.meta.plogging_img = process.env.SERVER_REQ_INFO + '/' + req.file.path.split(`${process.env.IMG_FILE_PATH}/`)[1];
 
-    let redisUnLock = null;
     try {
 
         await sequelize.transaction(async (t) => {
@@ -98,30 +96,14 @@ const writePlogging = async function(req, res) {
             updatedPloggingData.distanceMonth = userData.distance_month + ploggingDistance;
             updatedPloggingData.trashMonth = userData.trash_month + pickCount;
 
-            // update score
+            // mariadb update
             await User.updateUserPloggingData(updatedPloggingData, userId, t);
 
             // mongodb update
             await PloggingSchema.writePloggingModel(ploggingObj);
 
-            // 누적합 방식이라 조회후 기존점수에 현재 플로깅점수 더해서 다시저장
             // redis update
-            const weeklyRankingKey = "weekly"
-            const monthlyRankingKey = "monthly"
-            redisUnLock = await lock("plogging-lock"); // redis lock
-
-            // 주간 합계
-            let originWeekScore = await RedisClient.zscore(weeklyRankingKey, userId);
-        
-            if(!originWeekScore) originWeekScore = Number(0);
-            const resultWeekScore = Number(originWeekScore)+Number(ploggingTotalScore);
-            await RedisClient.zadd(weeklyRankingKey, resultWeekScore, userId); // 랭킹서버에 insert
-
-            // 월간 합계
-            let originMonthScore = await RedisClient.zscore(monthlyRankingKey, userId);       
-            if(!originMonthScore) originMonthScore = Number(0);
-            const resultMonthScore = Number(originMonthScore)+Number(ploggingTotalScore);
-            await RedisClient.zadd(monthlyRankingKey, resultMonthScore, userId); // 랭킹서버에 insert
+            await RankSchema.update(userId, ploggingTotalScore);
 
             res.status(200).send(returnResult);
         });
@@ -131,7 +113,7 @@ const writePlogging = async function(req, res) {
         returnResult.rcmsg = e.message;
         res.status(500).send(returnResult);
     } finally {
-        if(redisUnLock) redisUnLock();
+    
     }
 }
 
@@ -156,11 +138,6 @@ const deletePlogging = async function(req, res) {
             
         // 산책이력 이미지 삭제
         if(fs.existsSync(ploggingImgPath)) fs.unlinkSync(ploggingImgPath);
-
-        // 해당 산책의 점수 랭킹점수 삭제
-        await RedisClient.zrem("weekly", userId);
-        await RedisClient.zrem("monthly", userId);
-
         res.status(200).send(returnResult);
     } catch(e) {
         logger.error(e.message);
