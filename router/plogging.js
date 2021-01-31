@@ -221,10 +221,6 @@ PloggingInterface.prototype.deletePlogging = async function(req, res) {
         // 산책이력 이미지 삭제
         fs.unlinkSync(ploggingImgPath);
 
-        // 해당 산책의 점수 랭킹점수 삭제
-        await this.redisClient.zrem("weekly", userId);
-        await this.redisClient.zrem("monthly", userId);
-
         res.status(200).send(returnResult);
     } catch(e) {
         logger.error(e.message);
