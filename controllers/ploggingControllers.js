@@ -19,6 +19,7 @@ const readPlogging = async function(req, res) {
     logger.info("plogging read api !");
     logger.info(logHelper.reqWrapper(req, "plogging"));
 
+    let returnResult = { rc: 200, rcmsg: "success" };
     const userId = req.userId; // api를 call한 userId
     const targetUserId = req.params.targetUserId; // 산책이력을 조회를 할 userId
     let ploggingCntPerPage = req.query.ploggingCntPerPage; // 한 페이지에 보여줄 산책이력 수
@@ -38,8 +39,6 @@ const readPlogging = async function(req, res) {
         skip: (pageNumber-1)*ploggingCntPerPage,
         limit: ploggingCntPerPage
     }
-
-    let returnResult = { rc: 200, rcmsg: "success" };
 
     try {
         returnResult.plogging_list = await PloggingSchema.readPloggingModel(query, options);
@@ -61,7 +60,6 @@ const writePlogging = async function(req, res) {
     logger.info(logHelper.reqWrapper(req, "plogging"));
 
     let returnResult = { rc: 200, rcmsg: "success" };
-
     const userId = req.userId;
     let ploggingObj = req.body.ploggingData;
     ploggingObj = JSON.parse(ploggingObj);
@@ -126,12 +124,12 @@ const deletePlogging = async function(req, res) {
     logger.info("plogging delete api !");
     logger.info(logHelper.reqWrapper(req, "plogging"));
 
+    let returnResult = { rc: 200, rcmsg: "success" };
     let userId = req.userId;
     let mongoObjectId = req.query.objectId;
     let ploggingImgName = req.query.ploggingImgName; // plogging_20210106132743.PNG
     let ploggingImgPath = `${ploggingFilePath}${userId}/${ploggingImgName}`; 
 
-    let returnResult = { rc: 200, rcmsg: "success" };
     try {
         // 산책이력 삭제
         PloggingSchema.deletePlogging(mongoObjectId);
@@ -149,8 +147,10 @@ const deletePlogging = async function(req, res) {
     }
 }
 const getPloggingScore = async function(req, res) {
-    let returnResult = { rc: 200, rcmsg: "success" };
+    logger.info("plogging getScore api !");
+    logger.info(logHelper.reqWrapper(req, "plogging"));
 
+    let returnResult = { rc: 200, rcmsg: "success" };
     const userId = req.userId;
     let ploggingObj = req.body.ploggingData;
     ploggingObj = JSON.parse(ploggingObj);
