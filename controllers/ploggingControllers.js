@@ -43,12 +43,12 @@ const readPlogging = async function(req, res) {
 
     try {
         returnResult.plogging_list = await PloggingSchema.readPloggingModel(query, options);
-        res.status(200).send(returnResult);
+        res.status(200).json(returnResult);
     } catch(e) {
         logger.error(e.message);
         returnResult.rc = 500;
         returnResult = e.message;
-        res.status(500).send(returnResult);
+        res.status(500).json(returnResult);
     }
 }
 
@@ -105,13 +105,13 @@ const writePlogging = async function(req, res) {
             // redis update
             await RankSchema.update(userId, ploggingTotalScore);
 
-            res.status(200).send(returnResult);
+            res.status(200).json(returnResult);
         });
     } catch(e) {
         logger.error(e.message);
         returnResult.rc = 500;
         returnResult.rcmsg = e.message;
-        res.status(500).send(returnResult);
+        res.status(500).json(returnResult);
     } finally {
     
     }
@@ -138,12 +138,12 @@ const deletePlogging = async function(req, res) {
             
         // 산책이력 이미지 삭제
         if(fs.existsSync(ploggingImgPath)) fs.unlinkSync(ploggingImgPath);
-        res.status(200).send(returnResult);
+        res.status(200).json(returnResult);
     } catch(e) {
         logger.error(e.message);
         returnResult.rc = 500;
         returnResult.rcmsg = e.message;
-        res.status(500).send(returnResult);
+        res.status(500).json(returnResult);
     } finally {
     
     }
@@ -167,12 +167,12 @@ const getPloggingScore = async function(req, res) {
         returnResult.score.activityScore = ploggingActivityScore;
         returnResult.score.environmentScore = ploggingEnvironmentScore;
 
-        res.status(200).send(returnResult);
+        res.status(200).json(returnResult);
     } catch(e) {
         logger.error(e.message);
         returnResult.rc = 500;
         returnResult.rcmsg = e.message;
-        res.status(500).send(returnResult);
+        res.status(500).json(returnResult);
     }
 };
 
