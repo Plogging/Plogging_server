@@ -41,7 +41,6 @@ const social = async(req, res) => {
                 returnResult.userName = newUser.display_name;
                 res.status(201).json(returnResult);
             } catch (error) {
-                logger.error(error.message);
                 if(error.original.errno === 1062){
                     throw new Conflict('UserName Conflict');
                 }
@@ -67,7 +66,6 @@ const register = async(req, res) => {
     await sequelize.transaction(async (t) => {
         const user = await UserSchema.findOneUser(userId, t);
         if (user) {
-            logger.error(`Existed user's id for register [${req.body.userName}]`);
             throw new Conflict('UserId Conflict');
         }
         try {
@@ -80,7 +78,6 @@ const register = async(req, res) => {
             returnResult.userName = newUser.display_name;
             res.status(201).json(returnResult);
         } catch (error) {
-            logger.error(error.message);
             if(error.original.errno === 1062){
                 throw new Conflict('UserName Conflict');
             }
@@ -100,7 +97,6 @@ const getUserInfo = async(req, res) => {
     let returnResult = {};
     const user = await UserSchema.findOneUser(req.params.id);
     if(!user){
-        logger.error(`No user for getting [${req.params.id}]`);
         throw new NotFound('userId which was existed');
     }
     returnResult.userId = user.user_id;
@@ -118,13 +114,11 @@ const changeUserName = async(req, res) => {
     try {
         const [updatedCnt] = await UserSchema.updateUserName(req.session.userId, req.body.userName);
         if(!updatedCnt){
-            logger.error(`No user for updating name [${req.session.userId}]`);
             throw new InternalServerError
         }
         returnResult.userName = req.body.userName;
         res.send(returnResult);
     } catch (error) {
-        logger.error(error.message);
         if(error.original.errno === 1062){
             throw new Conflict('UserName Conflict');
         }
@@ -140,7 +134,6 @@ const changeUserImage = async(req, res) => {
     // TODO: 추후 서버 연결 시 경로 변경
     const [updatedCnt] = await UserSchema.updateUserImg(req.session.userId, profileImg);
     if(!updatedCnt){
-        logger.error(`No user for updating image [${req.session.userId}]`);
         throw new InternalServerError
     }
     returnResult.profileImg = profileImg;
@@ -168,7 +161,6 @@ const temporaryPassword = async(req, res) => {
 const signOut = async(req, res) => {
     logger.info(`Signing out of [${req.session.userId}] ...`);
     req.session.destroy(function(err) {
-        logger.error(err);
         err? res.sendStatus(500): res.sendStatus(200);
     })
 }
@@ -179,7 +171,6 @@ const withdrawal = async(req, res) => {
     const t = await sequelize.transaction();
     const deletedCnt = await UserSchema.deleteUser(userId, t);
     if(!deletedCnt){ 
-        logger.error(`No user for deleting [${userId}]`);
         throw new InternalServerError
     }
     try {
@@ -194,7 +185,6 @@ const withdrawal = async(req, res) => {
         await t.commit();
         req.session.destroy();
     } catch (error) {
-        logger.error(error.message);
         await t.rollback();
         throw new InternalServerError
     }
