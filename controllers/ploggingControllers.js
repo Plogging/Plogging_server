@@ -8,6 +8,7 @@ const User = require('../models/users.js');
 const {sequelize} = require('../models/index');
 const logger = require("../util/logger.js")("plogging.js");
 const logHelper = require("../util/logHelper.js");
+const { ploggingError } = require('throw.js');
 
 /**
  * 산책 이력조회  (페이징 처리 필요)
@@ -45,9 +46,10 @@ const readPlogging = async function(req, res) {
         res.status(200).json(returnResult);
     } catch(e) {
         logger.error(e.message);
-        returnResult.rc = 500;
-        returnResult = e.message;
-        res.status(500).json(returnResult);
+        //returnResult.rc = 500;
+        //returnResult = e.message;
+        //res.status(500).json(returnResult);
+        throw new ploggingError('readPlogging api Error..');
     }
 }
 
@@ -79,7 +81,6 @@ const writePlogging = async function(req, res) {
     else ploggingObj.meta.plogging_img = process.env.SERVER_REQ_INFO + '/' + req.file.path.split(`${process.env.IMG_FILE_PATH}/`)[1];
 
     try {
-
         await sequelize.transaction(async (t) => {
             const userData = await User.findOneUser(userId, t);
 
@@ -107,9 +108,10 @@ const writePlogging = async function(req, res) {
         });
     } catch(e) {
         logger.error(e.message);
-        returnResult.rc = 500;
-        returnResult.rcmsg = e.message;
-        res.status(500).json(returnResult);
+        //returnResult.rc = 500;
+        //returnResult.rcmsg = e.message;
+        //res.status(500).json(returnResult);
+        throw new ploggingError('writePlogging api Error..');
     } finally {
     
     }
@@ -139,9 +141,10 @@ const deletePlogging = async function(req, res) {
         res.status(200).json(returnResult);
     } catch(e) {
         logger.error(e.message);
-        returnResult.rc = 500;
-        returnResult.rcmsg = e.message;
-        res.status(500).json(returnResult);
+        //returnResult.rc = 500;
+        //returnResult.rcmsg = e.message;
+        //res.status(500).json(returnResult);
+        throw new ploggingError('deletePlogging api Error..');
     } finally {
     
     }
@@ -170,9 +173,10 @@ const getPloggingScore = async function(req, res) {
         res.status(200).json(returnResult);
     } catch(e) {
         logger.error(e.message);
-        returnResult.rc = 500;
-        returnResult.rcmsg = e.message;
-        res.status(500).json(returnResult);
+        //returnResult.rc = 500;
+        //returnResult.rcmsg = e.message;
+        //res.status(500).json(returnResult);
+        throw new ploggingError('getPloggingScore api Error..');
     }
 };
 
