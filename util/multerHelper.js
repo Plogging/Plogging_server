@@ -1,4 +1,5 @@
 const fs = require('fs');
+const util = require('../util/common.js');
 const filePath = process.env.IMG_FILE_PATH;
 const ploggingFilePath = process.env.IMG_FILE_PATH + '/plogging/';
 const multer = require('multer');

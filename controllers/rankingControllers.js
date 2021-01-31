@@ -1,5 +1,6 @@
 const { NotFound } = require('throw.js')
 const logger = require("../util/logger.js")("ranking.js")
+
 const RankSchema = require('../models/ranking')
 const { findOneUser, findUsers } = require('../models/users')
 

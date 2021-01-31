@@ -550,27 +550,12 @@ paths:
           schema:
             type: object
             properties:
-              plogging:
-                type: object
-                properties:
-                  rc:
-                    type: number
-                    example: 200
-                  rcmsg:
-                    type: string
-                    example: 산책이력 등록 성공
-                  score:
-                    type: object
-                    properties:
-                      totalScore:
-                        type: number
-                        example: 3200
-                      activityScore:
-                        type: number
-                        example: 3000
-                      environmentScore:
-                        type: number
-                        example: 200
+              rc:
+                type: number
+                example: 200
+              rcmsg:
+                type: string
+                example: 산책이력 등록 성공
         400:
           description: Bad Request(parameter error)
           schema:
@@ -648,6 +633,79 @@ paths:
               rcmsg:
                 type: string
                 example: 산책이력 삭제 성공
+        401:
+          description: Unauthorized
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 401
+              rcmsg:
+                type: string
+                example: 권한이 없습니다.(로그인을 해주세요)
+        404:
+          description: Bad Request(url error)
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 404
+              rcmsg:
+                type: string
+                example: 요청 url을 확인해 주세요.
+        500:
+          description: server error
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 500
+              rcmsg:
+                type: string
+                example: 서버 오류.
+  /plogging/score:
+    post:
+      summary: 플로깅 점수 계산하기
+      tags: [Plogging]
+      parameters:
+        - in: header
+          name: sessionKey
+          type: string
+          required: true
+          description: 유저 sessionKey
+        - in: formData
+          name: ploggingData
+          type: string
+          example: '{"meta": { "distance": 1500, "calorie": 200, "flogging_time": 20 }, "pick_list": [{ "trash_type": 2, "pick_count": 100 }, { "trash_type": 1, "pick_count": 200 }]}'
+          required: true
+          description: 산책이력 데이터
+      responses:
+        200:
+          description: Success
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 200
+              rcmsg:
+                type: string
+                example: 플로깅 점수 계산 성공
+              score:
+                type: object
+                properties:
+                  totalScore:
+                    type: number
+                    example: 3200
+                  activityScore:
+                    type: number
+                    example: 3000
+                  environmentScore:
+                    type: number
+                    example: 200
         401:
           description: Unauthorized
           schema:
