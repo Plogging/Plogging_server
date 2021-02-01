@@ -17,9 +17,9 @@ PloggingSchema.writePloggingModel = async function(ploggingObj) {
 };
 
 // 산책 삭제
-PloggingSchema.deletePloggingModel = async function(mongoObjectId) {
+PloggingSchema.deletePloggingModel = async function(ploggingId) {
     let mongoConnection = await MongoPool.db(dbName);
-    const query = {"_id": ObjectId(mongoObjectId)};
+    const query = {"_id": ObjectId(ploggingId)};
     await mongoConnection.collection(collectionName).deleteOne(query);
 };
 

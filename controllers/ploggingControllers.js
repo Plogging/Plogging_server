@@ -107,12 +107,12 @@ const deletePlogging = async function(req, res) {
 
     let returnResult = { rc: 200, rcmsg: "success" };
     let userId = req.userId;
-    let mongoObjectId = req.query.objectId;
+    let ploggingId = req.query.ploggingId;
     let ploggingImgName = req.query.ploggingImgName; // plogging_20210106132743.PNG
     let ploggingImgPath = `${ploggingFilePath}${userId}/${ploggingImgName}`; 
 
     // 산책이력 삭제
-    PloggingSchema.deletePlogging(mongoObjectId);
+    PloggingSchema.deletePloggingModel(ploggingId);
             
     // 산책이력 이미지 삭제
     if(fs.existsSync(ploggingImgPath)) fs.unlinkSync(ploggingImgPath);

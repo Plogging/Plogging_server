@@ -424,7 +424,7 @@ paths:
                 example: 200
               rcmsg:
                 type: string
-                example: 산책이력 정보에 성공했습니다.
+                example: 산책이력 정보에 조회에 성공했습니다.
               plogging_list:
                 type: array
                 items:
@@ -610,7 +610,7 @@ paths:
           required: true
           description: 유저 SessionKey
         - in: query
-          name: objectId
+          name: ploggingId
           type: string
           required: true
           example: "5ff53c3ff9789143b86f863b"

@@ -94,7 +94,7 @@ const swaggerUi = require('swagger-ui-express');
     // 반드시 라우팅 코드 이후에 위치해야 함
     app.use((err, req, res, next) => {
 
-        logger.error(JSON.stringify({"rc": err.statusCode, "rcmsg": err.message}));
+        logger.error(JSON.stringify({"errorMsg": err.stack}));
         
         if (err instanceof swaggerValidation.InputValidationError) {
             return res.status(400).send(err.errors.join(', '))
