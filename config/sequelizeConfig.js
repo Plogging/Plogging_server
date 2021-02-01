@@ -1,12 +1,12 @@
 const fs = require('fs');
 const [ip, port] = process.env.MARIADB_INFO.split(":");
-// const jasypt = require('../util/common_jasypt.js');
-// const dbPassword = jasypt.decrypt(process.env.MARIADB_PASSWORD);
+const jasypt = require('../util/common_jasypt.js');
+const dbPassword = jasypt.decrypt(process.env.MARIADB_PASSWORD);
 
 module.exports = {
   local: {
     username: 'root',
-    password: 'kim414gh8020',
+    password: dbPassword,
     database: 'plogging',
     host: ip,
     port: port,
