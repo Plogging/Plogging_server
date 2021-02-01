@@ -22,11 +22,11 @@ const readPlogging = async function(req, res) {
     const userId = req.userId; // api를 call한 userId
     const targetUserId = req.params.targetUserId; // 산책이력을 조회를 할 userId
     let ploggingCntPerPage = req.query.ploggingCntPerPage; // 한 페이지에 보여줄 산책이력 수
-    let pageNumber = req.query.pageNumber; // 조회할 페이지 Number
+    let currentPageNumber = req.query.pageNumber; // 조회할 페이지 Number
 
     // default -> 각 페이지에 4개씩, 1번 페이지 조회
     if(!ploggingCntPerPage) ploggingCntPerPage = 4;
-    if(!pageNumber) pageNumber = 1;
+    if(!currentPageNumber) currentPageNumber = 1;
 
     let searchType = Number(req.query.searchType); // 최신순(0), 점수순(1), 거리순(2)
     let query = {"meta.user_id": targetUserId};
@@ -35,11 +35,20 @@ const readPlogging = async function(req, res) {
                        {"meta.distance": -1}];  
     let options = {
         sort: sort_option[searchType],
-        skip: (pageNumber-1)*ploggingCntPerPage,
+        skip: (currentPageNumber-1)*ploggingCntPerPage,
         limit: ploggingCntPerPage
     }
 
-    returnResult.plogging_list = await PloggingSchema.readPloggingModel(query, options);
+    const [allPloggingCount, plogging_list] = await PloggingSchema.readPloggingModel(query, options, targetUserId);
+    
+    const meta = { };
+    meta.startPageNumber=1;
+    meta.endPageNumber = calcLastPage(allPloggingCount, ploggingCntPerPage);
+    meta.currentPageNumber = currentPageNumber;
+
+    returnResult.meta = meta;
+    returnResult.plogging_list = plogging_list;
+
     res.status(200).json(returnResult);
 }
 
@@ -178,6 +187,12 @@ function calPickCount(pickList) {
     let pickCount=0;
     for(let i=0; i<pickList.length; i++) pickCount += pickList[i].pick_count;
     return pickCount;
+}
+
+// 마지막 페이지 수 계산
+function calcLastPage(allPloggingCount, ploggingCntPerPage) {
+    if(allPloggingCount % ploggingCntPerPage === 0) return allPloggingCount/ploggingCntPerPage;
+    else return Math.floor(allPloggingCount/ploggingCntPerPage) + 1;
 }
 
 module.exports = {
