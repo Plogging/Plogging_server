@@ -113,7 +113,7 @@ PloggingInterface.prototype.writePlogging = async function(req, res) {
     ploggingObj = JSON.parse(ploggingObj);
 
     ploggingObj.meta.user_id = userId;
-    ploggingObj.meta.create_time = util.getCurrentDateTime();    
+    ploggingObj.meta.created_time = util.getCurrentDateTime();    
 
     //이미지가 없을때는 baseImg insert
     if(req.file===undefined) ploggingObj.meta.plogging_img = `${process.env.SERVER_REQ_INFO}/plogging/baseImg.PNG`;
