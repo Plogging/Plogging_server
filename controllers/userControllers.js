@@ -174,7 +174,7 @@ const withdrawal = async(req, res) => {
         throw new InternalServerError
     }
     try {
-        PloggingSchema.deletePloggingUser(userId);
+        PloggingSchema.deletePloogingsModel(userId);
         // 탈퇴 유저의 산책이력 이미지 전체 삭제
         if(fs.existsSync(`${filePath}/${userId}`)){
             fs.rmdirSync(`${filePath}/${userId}`, { recursive: true });
