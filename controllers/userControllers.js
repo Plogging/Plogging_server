@@ -2,7 +2,7 @@ const nodemailer = require('nodemailer');
 const Email = require('email-templates');
 const logger = require("../util/logger.js")("user.js");
 const fs = require('fs');
-const { NotFound, Unauthorized, Conflict, InternalServerError } = require('throw.js')
+const { NotFound, Unauthorized, Conflict, InternalServerError, BadRequest } = require('throw.js')
 const UserSchema = require('../models/user.js');
 const filePath = process.env.IMG_FILE_PATH;
 const adminEmailId = process.env.ADMIN_EMAIL_ID;
@@ -18,6 +18,8 @@ const signIn = async(req, res) => {
     const user = await UserSchema.findOneUser(userId);
     if(!user){ throw new Unauthorized }
     req.session.userId = userId;
+    returnResult.rc = 200;
+    returnResult.rcmsg = 'OK';
     returnResult.session = req.session.id;
     returnResult.userImg = user.profile_img;
     returnResult.userName = user.display_name;
@@ -36,6 +38,8 @@ const social = async(req, res) => {
                 let userImg = 'https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg';
                 const newUser = await UserSchema.createUser(userId, userName, userImg, null, t);
                 req.session.userId = newUser.user_id;
+                returnResult.rc = 201;
+                returnResult.rcmsg = 'Created';
                 returnResult.session = req.session.id;
                 returnResult.userImg = newUser.profile_img;
                 returnResult.userName = newUser.display_name;
@@ -48,6 +52,8 @@ const social = async(req, res) => {
             }
         }else{
             req.session.userId = user.user_id;
+            returnResult.rc = 200;
+            returnResult.rcmsg = 'OK';
             returnResult.session = req.session.id;
             returnResult.userImg = user.profile_img;
             returnResult.userName = user.display_name;
@@ -73,6 +79,8 @@ const register = async(req, res) => {
             let userImg = 'https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg';
             const newUser = await UserSchema.createUser(userId, userName, userImg, secretKey, t);
             req.session.userId = newUser.user_id;
+            returnResult.rc = 201;
+            returnResult.rcmsg = 'Created';
             returnResult.session = req.session.id;
             returnResult.userImg = newUser.profile_img;
             returnResult.userName = newUser.display_name;
@@ -89,7 +97,11 @@ const register = async(req, res) => {
 const checkUserId = async(req, res) => {
     logger.info(`Checking [${req.body.userId}]...`);
     const user = await UserSchema.findOneUser(req.body.userId + ':custom');
-    user? res.status(400).send('userId which was existed'): res.sendStatus(200);
+    if(user){
+        throw new BadRequest('userId which was existed');
+    }else{
+        res.json({rc: 200, rcmsg: 'OK'});
+    }
 }
 
 const getUserInfo = async(req, res) => {
@@ -99,6 +111,8 @@ const getUserInfo = async(req, res) => {
     if(!user){
         throw new NotFound('userId which was existed');
     }
+    returnResult.rc = 200;
+    returnResult.rcmsg = 'OK';
     returnResult.userId = user.user_id;
     returnResult.userImg = user.profile_img;
     returnResult.userName = user.display_name;
@@ -116,6 +130,8 @@ const changeUserName = async(req, res) => {
         if(!updatedCnt){
             throw new InternalServerError
         }
+        returnResult.rc = 200;
+        returnResult.rcmsg = 'OK';
         returnResult.userName = req.body.userName;
         res.send(returnResult);
     } catch (error) {
@@ -136,6 +152,8 @@ const changeUserImage = async(req, res) => {
     if(!updatedCnt){
         throw new InternalServerError
     }
+    returnResult.rc = 200;
+    returnResult.rcmsg = 'OK';
     returnResult.profileImg = profileImg;
     res.send(returnResult);
 }
@@ -146,7 +164,11 @@ const changePassword = async(req, res) => {
         req.session.userId,
         req.body.newSecretKey,
         req.body.existedSecretKey);
-    updatedCnt? res.sendStatus(200): res.status(400).send('No secret key');
+    if(updatedCnt) {
+        res.json({rc: 200, rcmsg: 'OK'});
+    }else{
+        throw new BadRequest('No secret key');
+    }
 }
 
 const temporaryPassword = async(req, res) => {
@@ -155,13 +177,21 @@ const temporaryPassword = async(req, res) => {
     await sendEmail(req.body.email, tempPassword);
     const [updatedCnt] = await UserSchema.changeUserPassword(
         req.body.email + ':custom', tempPassword);
-    updatedCnt? res.sendStatus(200): res.sendStatus(404);
+    if(updatedCnt) {
+        res.json({rc: 200, rcmsg: 'OK'});
+    }else{
+        throw new NotFound('No secret key');
+    }
 }
 
 const signOut = async(req, res) => {
     logger.info(`Signing out of [${req.session.userId}] ...`);
     req.session.destroy(function(err) {
-        err? res.sendStatus(500): res.sendStatus(200);
+        if(err) {
+            throw new InternalServerError;
+        }else{
+            res.json({rc: 200, rcmsg: 'OK'});
+        }
     })
 }
 
@@ -170,7 +200,7 @@ const withdrawal = async(req, res) => {
     const userId = req.session.userId;
     const t = await sequelize.transaction();
     const deletedCnt = await UserSchema.deleteUser(userId, t);
-    if(!deletedCnt){ 
+    if(!deletedCnt){
         throw new InternalServerError
     }
     try {
@@ -181,7 +211,7 @@ const withdrawal = async(req, res) => {
         }
         // 해당 산책의 점수 랭킹점수 삭제
         RankSchema.delete(userId);
-        res.sendStatus(200);
+        res.json({rc: 200, rcmsg: 'OK'});
         await t.commit();
         req.session.destroy();
     } catch (error) {
