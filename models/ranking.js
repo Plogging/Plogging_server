@@ -5,11 +5,11 @@ const RankSchema = {}
 RankSchema.WEEKLY = "weekly"
 RankSchema.MONTHLY = "monthly"
 
-RankSchema.getCountAndRankDataWithScores = async (rankType, offset, limit) => {
+RankSchema.getCountAndRankDataWithScores = async (rankType, cntPerPage, pageNumber) => {
     // TODO: rankType이 weekly나 monthly가 아닐 경우 throw
     const [zcountResult, zrevrangeResult] = await redisClient.multi()
     .zcount(rankType, "-inf", "+inf")
-    .zrevrange(rankType, offset, offset+limit-1, "withscores")
+    .zrevrange(rankType, cntPerPage * (pageNumber - 1), cntPerPage * pageNumber - 1, "withscores")
     .exec()
     const count = zcountResult[1]
     const rankDataWithScores = zrevrangeResult[1]

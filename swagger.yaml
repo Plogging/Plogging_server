@@ -1112,16 +1112,16 @@ paths:
           enum: [weekly, monthly]
           required: true
           description: 랭킹 유형 (주간 / 월간)
-        - name: offset
+        - name: rankCntPerPage
           in: query
           type: integer
-          required: true
-          description: 랭킹 offset
-        - name: limit
+          required: false
+          description: 페이지당 랭킹 데이터 갯수
+        - name: pageNumber
           in: query
           type: integer
-          required: true
-          description: 랭킹 limit (offset부터 몇 개의 데이터를 가져올건지)
+          required: false
+          description: 페이지 넘버
       responses:
         200:
           description: Success
@@ -1134,10 +1134,19 @@ paths:
               rcmsg:
                 type: string
                 example: success
-              count:
-                type: number
-                example: 991
-              rankData:
+              meta:
+                type: object
+                properties:
+                  startPageNumber:
+                    type: number
+                    example: 1
+                  endPageNumber:
+                    type: number
+                    example: 99
+                  currentPageNumber:
+                    type: number
+                    example: 1
+              data:
                 type: array
                 items:
                   type: object
@@ -1246,7 +1255,7 @@ paths:
               rcmsg:
                 type: string
                 example: success
-              userRankData:
+              data:
                 type: object
                 properties:
                   userId:

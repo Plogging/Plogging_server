@@ -3,17 +3,19 @@ const logger = require("../util/logger.js")("ranking.js")
 
 const RankSchema = require('../models/ranking')
 const { findOneUser, findUsers } = require('../models/users')
+const pagingHelper = require('../util/pagingHelper')
 
 const getGlobalRank = async (req, res) => {
     const rankType = req.query.rankType
-    const offset = req.query.offset
-    const limit = req.query.limit
-    const [count, rawRankData] = await RankSchema.getCountAndRankDataWithScores(rankType, offset, limit)
+    const rankCntPerPage = req.query.rankCntPerPage ?? 10
+    const pageNumber = req.query.pageNumber ?? 1
+    const [count, rawRankData] = await RankSchema.getCountAndRankDataWithScores(rankType, rankCntPerPage, pageNumber)
     if (!count || !rawRankData) {
         throw new NotFound("Rank data doesn't exist in Redis.")
     }
     const rankData = await buildRankData(rawRankData)
-    const returnResult = {rc: 200, rcmsg: "success", count: count, rankData: rankData}
+    const meta = {startPageNumber: 1, endPageNumber: pagingHelper.calcLastPage(count, rankCntPerPage), currentPageNumber: pageNumber}
+    const returnResult = {rc: 200, rcmsg: "success", meta: meta, data: rankData}
     res.status(200).json(returnResult)
 }
 
@@ -28,7 +30,7 @@ const getUserRank = async (req, res) => {
     const { userId, displayName, profileImg } = await getUserInfo(targetUserId)
     const userRankData = {userId: userId, displayName: displayName, profileImg: profileImg,
     rank: rank, score: score}
-    const returnResult = {rc: 200, rcmsg: "success", userRankData: userRankData}
+    const returnResult = {rc: 200, rcmsg: "success", data: userRankData}
     res.status(200).json(returnResult)
 }
 
