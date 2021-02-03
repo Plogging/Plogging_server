@@ -1,16 +1,17 @@
-const {sequelize} = require('../models/index');
+const {sequelize} = require('./index');
 const { Op } = require('sequelize')
 const User = sequelize.models.user;
+const UserSchema = {};
 
-const findOneUser = async(userId, t = null) => await User.findOne({ 
+UserSchema.findOneUser = async(userId, t = null) => await User.findOne({ 
     where: {user_id: userId}
 }, {transaction: t});
 
-const findUsers = async(userIds, t = null) => await User.findAll({
+UserSchema.findUsers = async(userIds, t = null) => await User.findAll({
     where: {user_id: {[Op.in]: userIds}}
 }, {transaction: t});
 
-const createUser = async(
+UserSchema.createUser = async(
     userId,
     userName,
     userImg,
@@ -27,15 +28,15 @@ const createUser = async(
         }, {transaction: t});
     };
 
-const updateUserName = async(userId, userName) => await User.update({
+UserSchema.updateUserName = async(userId, userName) => await User.update({
     display_name: userName
 }, { where: { user_id: userId}});
 
-const updateUserImg = async(userId, profileImg) => await User.update({
+UserSchema.updateUserImg = async(userId, profileImg) => await User.update({
     profile_img: profileImg
 }, { where: { user_id: userId}});
 
-const changeUserPassword = async(
+UserSchema.changeUserPassword = async(
     userId, 
     newSecretKey, 
     existedSecretKey= null) =>  
@@ -51,11 +52,11 @@ const changeUserPassword = async(
         }}
     );
 
-const deleteUser = async(userId, t = null) => await User.destroy({
+UserSchema.deleteUser = async(userId, t = null) => await User.destroy({
     where: {user_id: userId}
 }, { transaction: t});
 
-const updateUserPloggingData = async(updatedPloggingData, userId, t) => await User.update({ 
+UserSchema.updateUserPloggingData = async(updatedPloggingData, userId, t = null) => await User.update({ 
         score_week: Number(updatedPloggingData.scoreWeek),
         distance_week: Number(updatedPloggingData.distanceWeek),
         trash_week: Number(updatedPloggingData.trashWeek),
@@ -65,13 +66,4 @@ const updateUserPloggingData = async(updatedPloggingData, userId, t) => await Us
     },{ where: { user_id: userId } 
     },{ transaction: t });
 
-module.exports = {
-    findOneUser,
-    findUsers,
-    createUser,
-    updateUserName,
-    updateUserImg,
-    changeUserPassword,
-    deleteUser,
-    updateUserPloggingData
-}
+module.exports = UserSchema;

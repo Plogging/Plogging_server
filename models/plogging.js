@@ -27,5 +27,12 @@ PloggingSchema.deletePloggingModel = async function (ploggingId) {
     await mongoConnection.collection(collectionName).deleteOne(query);
 };
 
+// 사용자 산책 기록 삭제
+PloggingSchema.deletePloogingsModel = async function(userId) {
+    let mongoConnection = await MongoPool.db(dbName);
+    const query = {'meta.user_id': userId};
+    await mongoConnection.collection(collectionName).deleteMany(query);
+};
+
 module.exports = PloggingSchema;
 
