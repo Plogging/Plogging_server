@@ -209,6 +209,7 @@ UserInterface.prototype.signOut = async function(req, res) {
         if(err) {
             res.sendStatus(500);
         }else {
+	    res.clearCookie('connect.sid');
             res.sendStatus(200);
         }
     })
