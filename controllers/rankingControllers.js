@@ -2,10 +2,12 @@ const { NotFound } = require('throw.js')
 const logger = require("../util/logger.js")("ranking.js")
 
 const RankSchema = require('../models/ranking')
-const { findOneUser, findUsers } = require('../models/users')
+const { findOneUser, findUsers } = require('../models/user')
 const pagingHelper = require('../util/pagingHelper')
 
 const getGlobalRank = async (req, res) => {
+    const aa = 1
+    const a = aa ?? 1
     const rankType = req.query.rankType
     const rankCntPerPage = req.query.rankCntPerPage ?? 10
     const pageNumber = req.query.pageNumber ?? 1

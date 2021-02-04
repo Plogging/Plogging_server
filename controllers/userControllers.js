@@ -17,6 +17,7 @@ const signIn = async(req, res) => {
     logger.info(`Logging in with [${userId}] ...`);
     const user = await UserSchema.findOneUser(userId);
     if(!user){ throw new Unauthorized }
+    // res.cookie('co',200,{signed: true});
     req.session.userId = userId;
     returnResult.rc = 200;
     returnResult.rcmsg = 'OK';

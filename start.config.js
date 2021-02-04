@@ -11,19 +11,18 @@ module.exports = {
           env: { // 로컬
               "NODE_ENV": "local",
               "PORT": 20000,
-              "LOG_PATH": "",
               "LOG_LEVEL": "debug",
               "MONGODB_INFO": "121.130.220.217:40002", //"121.130.220.217:40002",
               "MONGODB_PASSWORD": "JjaoSaoP+IRVDBkXdDR4XMgTmkMut0VM",
-              "REDIS_INFO": "121.130.220.217:40000", // 121.130.220.217:40000",
+              "REDIS_INFO": "127.0.0.1:6379", // 121.130.220.217:40000",
               "REDIS_PASSWORD":"JjaoSaoP+IRVDBkXdDR4XMgTmkMut0VM",
               "MARIADB_INFO": "127.0.0.1:3306", //"121.130.220.217:40001",
               "MARIADB_PASSWORD": "JjaoSaoP+IRVDBkXdDR4XMgTmkMut0VM",
-              "IMG_FILE_PATH": "/mnt/Plogging_server/images",
+              "IMG_FILE_PATH": "E:file_test",
               "ADMIN_EMAIL_ID": "ploggingteam@gmail.com",
               "ADMIN_EMAIL_PASSWORD": "murder^^6",
               "SERVER_REQ_INFO": "http:127.0.0.1//:20000", //http:121.130.220.217//:20000",
-              "LOG_PATH": "/mnt/Plogging_server/images/log"
+              "LOG_PATH": "E:\winston-log"
           },
           env_development: { // tb ( 라즈베리파이 서버 )
             "NODE_ENV": "development",

@@ -3,7 +3,7 @@ const util = require('../util/common.js');
 const ploggingFilePath = process.env.IMG_FILE_PATH + "/plogging/";
 const PloggingSchema = require('../models/plogging');
 const RankSchema = require('../models/ranking');
-const User = require('../models/users.js');
+const User = require('../models/user.js');
 const { sequelize } = require('../models/index');
 const logger = require("../util/logger.js")("plogging.js");
 const logHelper = require("../util/logHelper.js");
@@ -24,7 +24,6 @@ const readPlogging = async function (req, res) {
     const targetUserId = req.params.targetUserId; // 산책이력을 조회를 할 userId
     let ploggingCntPerPage = req.query.ploggingCntPerPage; // 한 페이지에 보여줄 산책이력 수
     let currentPageNumber = req.query.pageNumber; // 조회할 페이지 Number
-
     // default -> 각 페이지에 4개씩, 1번 페이지 조회
     if (!ploggingCntPerPage) ploggingCntPerPage = 4;
     if (!currentPageNumber) currentPageNumber = 1;
