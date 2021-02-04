@@ -30,15 +30,15 @@ const swaggerUi = require('swagger-ui-express');
 
     app.use(express.static(process.env.IMG_FILE_PATH)); // 정적파일 제공
 
-    // redis sessionStorage 설정
+    // redis sessionStorage 설정 ( ttl 설정안하면 default 24시간 )
     app.use(session({
         store : new redisStore({ // default는 메모리에 저장
-            client: redisClient,
-            ttl: 60*30 // expires ( per in second ) - 30분
+            client: redisClient
+            //ttl: 60*30 // expires ( per in second ) - 30분
         }),
         secret: 'plogging', // sessionId를 만들때 key로 쓰이는거 같음
         resave: false,
-        saveUninitialized: true,
+        saveUninitialized: false
     }));
 
     // 전역 설정
