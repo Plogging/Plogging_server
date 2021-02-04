@@ -1,31 +1,29 @@
 const express = require('express');
-const { promisify } = require('util');
+const { CustomError } = require('throw.js')
 
-const UserInterface = require("./router/user.js");
-const PloggingInterface = require('./router/plogging.js');
-const RankingInterface = require('./router/ranking.js');
+const userRoutes = require('./routers/user.js');
+const rankingRoutes = require('./routers/ranking')
+const ploggingRoutes = require('./routers/plogging');
 const bodyParser = require('body-parser');
-const poolCallback = require("./config/mysqlConfig.js").getMysqlPool; // callback
-const poolAsyncAwait = require("./config/mysqlConfig.js").getMysqlPool2; // async await
-const redisClient = require("./config/redisConfig.js");
-const MongoClient = require("./config/mongoConfig.js");
+const redisClient = require('./config/redisConfig.js');
+const MongoClient = require('./config/mongoConfig.js');
 const swaggerValidation = require('./util/validator.js');
+const {sequelize} = require('./models/index');
 const logger = require("./util/logger.js")("index.js");
-const logHelper = require("./util/logHelper.js");
 
 const session = require('express-session');
 const redisStore = require('connect-redis')(session);
-const multer  = require('multer');
 const YAML = require('yamljs');
 
 // node-swagger
 const swaggerUi = require('swagger-ui-express');
 
 (async () => {
-    const swaggerDocument = YAML.load('./swagger.yaml')
-    const mongoConnectionPool = await MongoClient.connect();
+    const swaggerDocument = YAML.load('./swagger.yaml');
+    await MongoClient.connect();
 
     const app = express();
+    sequelize.sync();
 
     app.use(bodyParser.urlencoded({extended: false}));
     app.use(bodyParser.json());
@@ -38,7 +36,7 @@ const swaggerUi = require('swagger-ui-express');
             client: redisClient
             //ttl: 60*30 // expires ( per in second ) - 30분
         }),
-        secret: "plogging", // sessionId를 만들때 key로 쓰이는거 같음
+        secret: 'plogging', // sessionId를 만들때 key로 쓰이는거 같음
         resave: false,
         saveUninitialized: false
     }));
@@ -46,12 +44,7 @@ const swaggerUi = require('swagger-ui-express');
     // 전역 설정
     const globalOption = {};
     globalOption.PORT = process.env.PORT;
-    globalOption.mysqlPool=poolCallback;
-    globalOption.mysqlPool2=poolAsyncAwait;
-    globalOption.redisClient=redisClient;
-    globalOption.fileInterface = multer;
-    globalOption.MongoPool=mongoConnectionPool;
-
+   
     app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument)); // node-swaggwer
 
     /**
@@ -66,7 +59,9 @@ const swaggerUi = require('swagger-ui-express');
         // 세션 체크 공통 모듈
         if((req.path === '/user' && req.method === 'POST') || 
             (req.path === '/user/password-temp') || 
-            (req.path === '/user/sign-in')) next();
+            (req.path === '/user/sign-in') ||
+            (req.path === '/user/social') ||
+            (req.path === '/user/check')) next();
         else {
             const sessionKey = req.get('sessionKey');
             if(sessionKey === req.session.id) {  // 세션 값이 있는 경우 ( 로그인이 되어있는 경우 )
@@ -77,16 +72,28 @@ const swaggerUi = require('swagger-ui-express');
             }
         }
     });
+    
+    app.use('/user', userRoutes);
+    app.use('/rank', rankingRoutes); // 랭킹 관련 api는 ranking.js로 포워딩
+    app.use('/plogging',ploggingRoutes); // 산책이력 관련 api는 plogging.js로 포워딩        
 
-    app.use('/user', new UserInterface(globalOption)); // 유저 관려 api는 user.js로 포워딩
-    app.use('/rank', new RankingInterface(globalOption)); // 랭킹 관련 api는 ranking.js로 포워딩
-    app.use('/plogging', new PloggingInterface(globalOption)); // 쓰레기 관련 api는 plogging.js로 포워딩        
-
-    // swagger spec을 이용한 request 검증
+    // 예외 처리
     // 반드시 라우팅 코드 이후에 위치해야 함
     app.use((err, req, res, next) => {
+
+        logger.error(JSON.stringify({"errorMsg": err.stack}));
+        
         if (err instanceof swaggerValidation.InputValidationError) {
-            return res.status(400).send(err.errors.join(", "))
+            return res.status(400).send(err.errors.join(', '))
+        } else if (err instanceof CustomError) {
+            return res.status(err.statusCode)
+            .json({rc: err.statusCode, rcmsg: err.message})
+        } else {
+            if (process.env.NODE_ENV == "production") {
+                return res.status(500).json({rc: 500, rcmsg: "Internal error"})
+            } else {
+                return res.status(500).json({rc: 500, rcmsg: err.message})
+            }
         }
     })
 

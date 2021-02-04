@@ -1,10 +1,178 @@
-swagger: "2.0"
+swagger: '2.0'
 info:
   title: Plogging
   version: 1.0.0
   description: Plogging API docs
 
 paths:
+  /user/sign-in:
+    post:
+      summary: 로그인
+      tags: [User]
+      parameters:
+        - in: body
+          name: user
+          description: userId는 email만 받는다.
+          schema:
+            type: object
+            required:
+              - userId
+              - secretKey
+            properties:
+              rc:
+                type: number
+                example: 200
+              rcmsg:
+                type: string
+                example: OK
+              userId:
+                type: string
+                example: ganghee@nate.com
+              secretKey:
+                type: string
+                example: 1234qwer
+      responses:
+        200:
+          description: 회원 로그인 성공
+          schema:
+            type: object
+            properties:
+              session:
+                type: string
+                example: 0q8DptSJiinhbspcQwK6wxUtvNkmNano
+              userImg:
+                type: string
+                example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
+              userName:
+                type: string
+                example: 쓰담이
+        400:
+          description: Bad Request (body should have required property [userId/ secretKey])
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 400
+              rcmsg:
+                type: string
+                example: body should have required property [userId/ secretKey]
+        401:
+          description: No userId or No secretKey from DB
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 401
+              rcmsg:
+                type: string
+                example: No userId or No secretKey from DB
+        500:
+          description: Internal Server Error
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 500
+              rcmsg:
+                type: string
+                example: Internal Server Error
+  /user/social:
+    post:
+      summary: OAuth login
+      tags: [User]
+      parameters:
+        - in: body
+          name: user
+          description: userId는 email:[type] 으로 구분자 ':'를 사용한다. type은 [kakao, naver, apple] 중 하나다. 409의 에러인 경우 userName 충돌이며 회원가입 실패이다.
+          schema:
+            type: object
+            required:
+              - userId
+              - userName
+            properties:
+              userId:
+                type: string
+                example: ganghee@naver.com:naver
+              userName:
+                type: string
+                example: 쓰담이
+      responses:
+        200:
+          description: 기존 회원 로그인 성공
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 200
+              rcmsg:
+                type: string
+                example: OK
+              session:
+                type: string
+                example: 0q8DptSJiinhbspcQwK6wxUtvNkmNano
+              userImg:
+                type: string
+                example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
+              userName:
+                type: string
+                example: 쓰담이
+        201:
+          description: OAuth 신규 회원 등록 성공
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 201
+              rcmsg:
+                type: string
+                example: Created
+              session:
+                type: string
+                example: 0q8DptSJiinhbspcQwK6wxUtvNkmNano
+              userImg:
+                type: string
+                example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
+              userName:
+                type: string
+                example: 쓰담이
+        400:
+          description: Bad Request (body should have required property [userId/ userName])
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 400
+              rcmsg:
+                type: string
+                example: Bad Request
+        409:
+          description: Conflict (user name conflict)
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 409
+              rcmsg:
+                type: string
+                example: Conflict
+        500:
+          description: Internal Server Error
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 500
+              rcmsg:
+                type: string
+                example: Internal Server Error
   /user:
     post:
       summary: 회원가입하기
@@ -12,47 +180,79 @@ paths:
       parameters:
         - in: body
           name: user
-          description: userId는 email:type 으로 구분자 ':'를 사용합니다. type은 custom입니다.
+          description: userId는 단순히 email만 받는다.
           schema:
-              type: object
-              required:
-                - userName
-                - userId
-                - secretKey
-              properties:
-                userId:
-                  type: string
-                  example: ganghee@naver.com:naver.com
-                userName:
-                  type: string
-                  example: 쓰담이
-                secretKey:
-                  type: string
-                  example: 1234qwer
+            type: object
+            required:
+              - userName
+              - userId
+              - secretKey
+            properties:
+              userId:
+                type: string
+                example: ganghee@naver.com
+              userName:
+                type: string
+                example: 쓰담이
+              secretKey:
+                type: string
+                example: 1234qwer
       responses:
         201:
           description: 회원가입 성공
           schema:
             type: object
             properties:
-                session:
-                    type: string
-                    example: 0q8DptSJiinhbspcQwK6wxUtvNkmNano
-                userImg:
-                    type: string
-                    example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
-                userName:
-                    type: string
-                    example: 쓰담이
+              rc:
+                type: number
+                example: 201
+              rcmsg:
+                type: string
+                example: Created
+              session:
+                type: string
+                example: 0q8DptSJiinhbspcQwK6wxUtvNkmNano
+              userImg:
+                type: string
+                example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
+              userName:
+                type: string
+                example: 쓰담이
         400:
-          description: Bad Request (parameter error)
+          description: Bad Request (body should have required property [userId])
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 400
+              rcmsg:
+                type: string
+                example: Bad Request
         409:
-          description: Conflict (display name conflict)
+          description: Conflict ('user name conflict' or 'userId conflict')
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 409
+              rcmsg:
+                type: string
+                example: Conflict
         500:
           description: Internal Server Error
-    get:
-      summary: 사용자 정보 가져오기
-      description: 사용자 id(email + type), 사용자 닉네임, 프로필 사진을 가져온다.
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 500
+              rcmsg:
+                type: string
+                example: Internal Server Error
+    delete:
+      summary: 회원탈퇴
       tags: [User]
       parameters:
         - in: header
@@ -62,26 +262,243 @@ paths:
           description: 유저 SessionKey
       responses:
         200:
-          description: 2개의 파라미터를 받아 성공적으로 변경
+          description: OK
           schema:
             type: object
             properties:
-                userId:
-                    type: string
-                    example: abc@naver.com:naver.com
-                userImg:
-                    type: string
-                    example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
-                userName:
-                    type: string
-                    example: 쓰담이
-        400:
-          description: Bad Request (parameter error)
+              rc:
+                type: number
+                example: 200
+              rcmsg:
+                type: string
+                example: OK
+        401:
+          description: Unauthorized (sessionKey 유효하지 않을 때)
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 401
+              rcmsg:
+                type: string
+                example: Unauthorized
         500:
           description: Internal Server Error
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 500
+              rcmsg:
+                type: string
+                example: Internal Server Error
+  /user/check:
+    post:
+      summary: 사용자 아이디 유효성 확인
+      tags: [User]
+      parameters:
+        - in: body
+          name: userId
+          description: 회원 가입하기 전에 해당 id가 존재하는지 확인한다.
+          schema:
+            type: object
+            required:
+              - userId
+            properties:
+              userId:
+                type: string
+                example: ganghee@nate.com
+      responses:
+        200:
+          description: OK (Useable user id)
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 200
+              rcmsg:
+                type: string
+                example: OK
+        404:
+          description: userId which was existed
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 404
+              rcmsg:
+                type: string
+                example: userId which was existed
+        500:
+          description: Internal Server error
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 500
+              rcmsg:
+                type: string
+                example: Internal Server error
+  /user/{id}:
+    get:
+      summary: 사용자 정보 가져오기
+      description: targetUserId의 사용자 닉네임, 프로필 사진, 플로깅 점수, 플로깅 거리, 쓰레기 주운 갯수를 가져온다.
+      tags: [User]
+      parameters:
+        - in: header
+          name: sessionKey
+          type: string
+          required: true
+          description: 유저 SessionKey
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 조회할 유저 id
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 200
+              rcmsg:
+                type: string
+                example: OK
+              userId:
+                type: string
+                example: abc@naver.com:naver
+              userImg:
+                type: string
+                example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
+              userName:
+                type: string
+                example: 쓰담이
+              userScore:
+                type: string
+                example: 1000
+              userDistance:
+                type: string
+                example: 12
+              userTrash:
+                type: string
+                example: 99
+        400:
+          description: Bad Request (찾는 id가 없을 때)
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 400
+              rcmsg:
+                type: string
+                example: Bad Request
+        401:
+          description: Unauthorized (sessionKey 유효하지 않을 때)
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 401
+              rcmsg:
+                type: string
+                example: Unauthorized
+        500:
+          description: Internal Server Error
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 500
+              rcmsg:
+                type: string
+                example: Internal Server Error
+  /user/name:
     put:
-      summary: 사용자 정보변경
-      description: 반드시 2개의 파라미터를 받아야한다.
+      summary: 사용자 프로필 이름 변경
+      description: 사용자의 이름을 변경합니다.
+      tags: [User]
+      produces:
+        - application/json
+      parameters:
+        - in: header
+          name: sessionKey
+          type: string
+          required: true
+          description: 유저 SessionKey
+        - in: body
+          name: name
+          description: 사용자 이름 받기
+          schema:
+            type: object
+            required:
+              - userName
+            properties:
+              userName:
+                type: string
+                example: 쓰담이
+      responses:
+        200:
+          description: 사용자 이름 성공적으로 변경
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 200
+              rcmsg:
+                type: string
+                example: OK
+              userName:
+                type: string
+                example: 쓰담이
+        401:
+          description: Unauthorized (sessionKey 유효하지 않을 때)
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 401
+              rcmsg:
+                type: string
+                example: Unauthorized
+        409:
+          description: userName Conflict
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 409
+              rcmsg:
+                type: string
+                example: userName Conflict
+        500:
+          description: Internal Server Error
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 500
+              rcmsg:
+                type: string
+                example: Internal Server Error
+  /user/image:
+    put:
+      summary: 사용자 프로필 이미지 변경
+      description: 사용자의 프로필 이미지를 변경합니다.
       tags: [User]
       consumes:
         - multipart/form-data
@@ -98,127 +515,43 @@ paths:
           type: file
           required: true
           description: 사용자의 사진을 업로드 합니다.
-        - in: formData
-          name: displayName
-          type: string
-          description: 사용자의 이름을 변경합니다.
-          required: true
       responses:
         200:
-          description: 2개의 파라미터를 받아 성공적으로 변경
+          description: 프로필 이미지 성공적으로 변경
           schema:
             type: object
             properties:
+              rc:
+                type: number
+                example: 200
+              rcmsg:
+                type: string
+                example: OK
               userImg:
                 type: string
                 example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
-              userName:
-                type: string
-                example: 쓰담이
-        400:
-          description: Bad Request (parameter error)
-        409:
-          description: Conflict (display name conflict)
-        500:
-          description: Internal Server Error
-                
-    delete:
-      summary: 회원탈퇴
-      tags: [User]
-      parameters:
-        - in: header
-          name: sessionKey
-          type: string
-          required: true
-          description: 유저 SessionKey
-      responses:
-        200:
-          description: OK
-        400:
-          description: Bad Request
-        500:
-          description: Internal Server Error
-          
-  /user/sign-in:
-    post:
-      summary: 로그인 하기
-      tags: [User]
-      parameters:
-        - in: body
-          name: user
-          description: userId는 email:type 으로 구분자 ':'를 사용합니다. 자체 로그인인 경우는 custom으로 하면됩니다. 자체로그인인 경우는 secretKey를 꼭 받아야 합니다.
-          schema:
-              type: object
-              required:
-                - userId
-              properties:
-                userId:
-                  type: string
-                  example: ganghee@naver.com:naver.com
-                userName:
-                  type: string
-                  example: 쓰담이
-                secretKey:
-                  type: string
-                  example: 1234qwer
-      responses:
-        200:
-          description: 기존 회원 로그인 성공
-          schema:
-            type: object
-            properties:
-                session:
-                    type: string
-                    example: 0q8DptSJiinhbspcQwK6wxUtvNkmNano
-                userImg:
-                    type: string
-                    example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
-                userName:
-                    type: string
-                    example: 쓰담이
-        201:
-          description: 신규 회원 로그인 성공 (회원 가입)
-          schema:
-            type: object
-            properties:
-                session:
-                    type: string
-                    example: 0q8DptSJiinhbspcQwK6wxUtvNkmNano
-                userImg:
-                    type: string
-                    example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
-                userName:
-                    type: string
-                    example: 쓰담이
-        400:
-          description: Bad Request (parameter error)
         401:
-          description: Unauthorized (password error)
-        404:
-          description: Not Found (custom 로그인 시 저장된 id 없음)
-        409:
-          description: Conflict (display name conflict)
+          description: Unauthorized (sessionKey 유효하지 않을 때)
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 401
+              rcmsg:
+                type: string
+                example: Unauthorized
         500:
           description: Internal Server Error
-    
-  /user/sign-out:
-    get:
-      summary: 사용자 로그아웃
-      tags: [User]
-      parameters:
-        - in: header
-          name: sessionKey
-          type: string
-          required: true
-          description: 유저 SessionKey
-      responses:
-        200:
-          description: OK
-        400:
-          description: Bad Request
-        500:
-          description: Internal Server Error
-                  
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 500
+              rcmsg:
+                type: string
+                example: Internal Server Error
   /user/password:
     put:
       summary: 비밀번호 변경
@@ -231,49 +564,181 @@ paths:
           description: 유저 SessionKey
         - in: body
           name: secretKey
-          description: 암호화된 비밀번호
+          description: Password which was encrypted.
           schema:
-              type: object
-              required:
-                - secretKey
-                - userId
-              properties:
-                secretKey:
-                  type: string
-                  example: qwerqwer
+            type: object
+            required:
+              - newSecretKey
+              - existedSecretKey
+            properties:
+              newSecretKey:
+                type: string
+                description: Password which will be changed.
+              existedSecretKey:
+                type: string
+                description: Password witch being.
       responses:
         200:
           description: OK
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 200
+              rcmsg:
+                type: string
+                example: OK
         400:
-          description: Bad Request
+          description: Not matched secret key
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 400
+              rcmsg:
+                type: string
+                example: Internal Server Error
+        401:
+          description: Unauthorized (session key error)
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 401
+              rcmsg:
+                type: string
+                example: Unauthorized
         500:
           description: Internal Server Error
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 500
+              rcmsg:
+                type: string
+                example: Internal Server Error
   /user/password-temp:
     put:
-      summary: 임시 비밀번호 변경
+      summary: 임시 비밀번호 발급
       tags: [User]
       parameters:
         - in: body
           name: email
           description: 임시 비밀번호를 받는 이메일 주소
           schema:
-              type: object
-              required:
-                - email
-              properties:
-                email:
-                  type: string
-                  example: heeheewuwu@gmail.com
+            type: object
+            required:
+              - email
+            properties:
+              email:
+                type: string
+                example: heeheewuwu@gmail.com
       responses:
         200:
           description: OK
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 200
+              rcmsg:
+                type: string
+                example: OK
         400:
-          description: Bad Request
+          description: Bad Request (body에 email 파라미터가 없을 때)
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 400
+              rcmsg:
+                type: string
+                example: Bad Request
+        401:
+          description: Unauthorized (session key error)
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 401
+              rcmsg:
+                type: string
+                example: Unauthorized
         404:
           description: Not Found (no email)
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 404
+              rcmsg:
+                type: string
+                example: Not Found
         500:
           description: Internal Server Error
-
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 500
+              rcmsg:
+                type: string
+                example: Internal Server Error
+  /user/sign-out:
+    put:
+      summary: 사용자 로그아웃
+      tags: [User]
+      parameters:
+        - in: header
+          name: sessionKey
+          type: string
+          required: true
+          description: 유저 SessionKey
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 200
+              rcmsg:
+                type: string
+                example: OK
+        401:
+          description: Unauthorized (sessionKey 유효하지 않을 때)
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 401
+              rcmsg:
+                type: string
+                example: Unauthorized
+        500:
+          description: Internal Server Error
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 500
+              rcmsg:
+                type: string
+                example: Internal Server Error
+  
   /plogging/{targetUserId}:
     get:
       summary: 산책이력 가져오기
@@ -316,7 +781,7 @@ paths:
                 example: 200
               rcmsg:
                 type: string
-                example: 산책이력 정보에 성공했습니다.
+                example: 산책이력 정보에 조회에 성공했습니다.
               plogging_list:
                 type: array
                 items:
@@ -324,7 +789,7 @@ paths:
                   properties:
                     _id:
                       type: string
-                      example: "5ff53c3ff9789143b86f863b"
+                      example: '5ff53c3ff9789143b86f863b'
                     meta:
                       type: object
                       properties:
@@ -346,7 +811,7 @@ paths:
                           example: 20
                         plogging_img:
                           type: string
-                          example: "http://localhost:20000/plogging/xowns4817@naver.com-naver/plogging_20210106132743.PNG"
+                          example: 'http://localhost:20000/plogging/xowns4817@naver.com-naver/plogging_20210106132743.PNG'
                         plogging_total_score:
                           type: number
                           example: 100000
@@ -442,27 +907,12 @@ paths:
           schema:
             type: object
             properties:
-              plogging:
-                type: object
-                properties:
-                  rc:
-                    type: number
-                    example: 200
-                  rcmsg:
-                    type: string
-                    example: 산책이력 등록 성공
-                  score:
-                    type: object
-                    properties:
-                      totalScore:
-                        type: number
-                        example: 3200
-                      activityScore:
-                        type: number
-                        example: 3000
-                      environmentScore:
-                        type: number
-                        example: 200
+              rc:
+                type: number
+                example: 200
+              rcmsg:
+                type: string
+                example: 산책이력 등록 성공
         400:
           description: Bad Request(parameter error)
           schema:
@@ -517,7 +967,7 @@ paths:
           required: true
           description: 유저 SessionKey
         - in: query
-          name: objectId
+          name: ploggingId
           type: string
           required: true
           example: "5ff53c3ff9789143b86f863b"
@@ -573,6 +1023,79 @@ paths:
               rcmsg:
                 type: string
                 example: 서버 오류.
+  /plogging/score:
+    post:
+      summary: 플로깅 점수 계산하기
+      tags: [Plogging]
+      parameters:
+        - in: header
+          name: sessionKey
+          type: string
+          required: true
+          description: 유저 sessionKey
+        - in: formData
+          name: ploggingData
+          type: string
+          example: '{"meta": { "distance": 1500, "calorie": 200, "flogging_time": 20 }, "pick_list": [{ "trash_type": 2, "pick_count": 100 }, { "trash_type": 1, "pick_count": 200 }]}'
+          required: true
+          description: 산책이력 데이터
+      responses:
+        200:
+          description: Success
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 200
+              rcmsg:
+                type: string
+                example: 플로깅 점수 계산 성공
+              score:
+                type: object
+                properties:
+                  totalScore:
+                    type: number
+                    example: 3200
+                  activityScore:
+                    type: number
+                    example: 3000
+                  environmentScore:
+                    type: number
+                    example: 200
+        401:
+          description: Unauthorized
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 401
+              rcmsg:
+                type: string
+                example: 권한이 없습니다.(로그인을 해주세요)
+        404:
+          description: Bad Request(url error)
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 404
+              rcmsg:
+                type: string
+                example: 요청 url을 확인해 주세요.
+        500:
+          description: server error
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 500
+              rcmsg:
+                type: string
+                example: 서버 오류.
   /rank/global:
     get:
       summary: 글로벌 랭킹 가져오기
@@ -589,16 +1112,16 @@ paths:
           enum: [weekly, monthly]
           required: true
           description: 랭킹 유형 (주간 / 월간)
-        - name: offset
+        - name: rankCntPerPage
           in: query
           type: integer
-          required: true
-          description: 랭킹 offset
-        - name: limit
+          required: false
+          description: 페이지당 랭킹 데이터 갯수
+        - name: pageNumber
           in: query
           type: integer
-          required: true
-          description: 랭킹 limit (offset부터 몇 개의 데이터를 가져올건지)
+          required: false
+          description: 페이지 넘버
       responses:
         200:
           description: Success
@@ -611,10 +1134,19 @@ paths:
               rcmsg:
                 type: string
                 example: success
-              count:
-                type: number
-                example: 991
-              rankData:
+              meta:
+                type: object
+                properties:
+                  startPageNumber:
+                    type: number
+                    example: 1
+                  endPageNumber:
+                    type: number
+                    example: 99
+                  currentPageNumber:
+                    type: number
+                    example: 1
+              data:
                 type: array
                 items:
                   type: object
@@ -630,43 +1162,43 @@ paths:
                 example:
                   - userId: happy@gamil.com:kakao
                     displayName: 해피
-                    profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
+                    profileImg: 'https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg'
                     score: 19480
                   - userId: choco@gamil.com:kakao
                     displayName: 초코
-                    profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
+                    profileImg: 'https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg'
                     score: 17000
                   - userId: bori@gamil.com:kakao
                     displayName: 보리
-                    profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
+                    profileImg: 'https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg'
                     score: 16500
                   - userid: ttori@gamil.com:kakao
                     displayName: 또리
-                    profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
+                    profileImg: 'https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg'
                     score: 16000
                   - userId: momo@gamil.com:kakao
                     displayName: 모모
-                    profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
+                    profileImg: 'https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg'
                     score: 15500
                   - userid: congi@gamil.com:kakao
                     displayName: 콩이
-                    profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
+                    profileImg: 'https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg'
                     score: 14500
                   - userId: coco@gamil.com:kakao
                     displayName: 코코
-                    profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
+                    profileImg: 'https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg'
                     score: 14000
                   - userId: hoya@gamil.com:kakao
                     displayName: 호야
-                    profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
+                    profileImg: 'https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg'
                     score: 13500
                   - userId: zzangu@gamil.com:kakao
                     displayName: 짱구
-                    profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
+                    profileImg: 'https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg'
                     score: 13000
                   - userId: duri@gamil.com:kakao
                     displayName: 두리
-                    profileImg: "https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg"
+                    profileImg: 'https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg'
                     score: 12000
         400:
           description: Bad Request(parameter error)
@@ -723,7 +1255,7 @@ paths:
               rcmsg:
                 type: string
                 example: success
-              userRankData:
+              data:
                 type: object
                 properties:
                   userId:
