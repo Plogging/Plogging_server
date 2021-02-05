@@ -29,11 +29,11 @@ const readPlogging = async function (req, res) {
     if (!ploggingCntPerPage) ploggingCntPerPage = 4;
     if (!currentPageNumber) currentPageNumber = 1;
 
-    let searchType = Number(req.query.searchType); // 최신순(0), 점수순(1), 거리순(2)
+    let searchType = Number(req.query.searchType); // 최신순(0), 점수순(1), 모은 쓰레기 순(2)
     let query = { "meta.user_id": targetUserId };
     let sort_option = [{ "meta.created_time": -1 },
     { "meta.plogging_total_score": -1 },
-    { "meta.distance": -1 }];
+    { "meta.plogging_trash_count": -1 }];
     let options = {
         sort: sort_option[searchType],
         skip: (currentPageNumber - 1) * ploggingCntPerPage,
@@ -77,6 +77,7 @@ const writePlogging = async function (req, res) {
     const pickList = ploggingObj.trash_list;
     const pickCount = calPickCount(pickList);
     ploggingObj.meta.plogging_total_score = ploggingTotalScore;
+    ploggingObj.meta.plogging_trash_count = pickCount;
 
     //이미지가 없을때는 baseImg insert
     if (req.file === undefined) ploggingObj.meta.plogging_img = `${process.env.SERVER_REQ_INFO}/plogging/baseImg.PNG`;
@@ -140,6 +141,8 @@ const getPloggingScore = async function (req, res) {
     let ploggingObj = req.body.ploggingData;
     ploggingObj = JSON.parse(ploggingObj);
 
+    validatePloggingData(ploggingObj);
+    
     // 해당 산책의 plogging 점수
     const ploggingScoreArr = calcPloggingScore(ploggingObj);
     const ploggingTotalScore = Number(ploggingScoreArr[0] + ploggingScoreArr[1]);

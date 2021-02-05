@@ -759,7 +759,7 @@ paths:
           type: number
           enum: [0, 1, 2]
           required: true
-          description: 조회 type ( 최신순 / 점수순 / 거리순)
+          description: 조회 type ( 최신순 / 점수순 / 모은 쓰레기 순)
         - in: query
           name: ploggingCntPerPage
           type: number
@@ -898,7 +898,7 @@ paths:
         - in: formData
           name: ploggingData
           type: string
-          example: '{"meta": { "distance": 1500, "calorie": 200, "flogging_time": 20 }, "pick_list": [{ "trash_type": 2, "pick_count": 100 }, { "trash_type": 1, "pick_count": 200 }]}'
+          example: '{"meta": { "distance": 1500, "calorie": 200, "plogging_time": 20 }, "trash_list": [{ "trash_type": 2, "pick_count": 100 }, { "trash_type": 1, "pick_count": 200 }]}'
           required: true
           description: 산책이력 데이터
       responses:
@@ -914,7 +914,7 @@ paths:
                 type: string
                 example: 산책이력 등록 성공
         400:
-          description: Bad Request(parameter error)
+          description: parameter error
           schema:
             type: object
             properties:
@@ -923,7 +923,7 @@ paths:
                 example: 400
               rcmsg:
                 type: string
-                example: query should have required property 'searchType'
+                example: 산책 데이터를 확인해주세요.
         401:
           description: Unauthorized
           schema:
@@ -1036,7 +1036,7 @@ paths:
         - in: formData
           name: ploggingData
           type: string
-          example: '{"meta": { "distance": 1500, "calorie": 200, "flogging_time": 20 }, "pick_list": [{ "trash_type": 2, "pick_count": 100 }, { "trash_type": 1, "pick_count": 200 }]}'
+          example: '{"meta": { "distance": 1500, "calorie": 200, "plogging_time": 20 }, "trash_list": [{ "trash_type": 2, "pick_count": 100 }, { "trash_type": 1, "pick_count": 200 }]}'
           required: true
           description: 산책이력 데이터
       responses:
@@ -1063,6 +1063,17 @@ paths:
                   environmentScore:
                     type: number
                     example: 200
+        400:
+          description: parameter error
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 400
+              rcmsg:
+                type: string
+                example: 산책 데이터를 확인해주세요.
         401:
           description: Unauthorized
           schema:
