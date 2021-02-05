@@ -8,6 +8,7 @@ const { sequelize } = require('../models/index');
 const logger = require("../util/logger.js")("plogging.js");
 const logHelper = require("../util/logHelper.js");
 const pagingHelper = require('../util/pagingHelper');
+const { BadRequest } = require('throw.js');
 
 /**
  * 산책 이력조회  (페이징 처리 필요)
@@ -28,11 +29,11 @@ const readPlogging = async function (req, res) {
     if (!ploggingCntPerPage) ploggingCntPerPage = 4;
     if (!currentPageNumber) currentPageNumber = 1;
 
-    let searchType = Number(req.query.searchType); // 최신순(0), 점수순(1), 거리순(2)
+    let searchType = Number(req.query.searchType); // 최신순(0), 점수순(1), 모은 쓰레기 순(2)
     let query = { "meta.user_id": targetUserId };
     let sort_option = [{ "meta.created_time": -1 },
     { "meta.plogging_total_score": -1 },
-    { "meta.distance": -1 }];
+    { "meta.plogging_trash_count": -1 }];
     let options = {
         sort: sort_option[searchType],
         skip: (currentPageNumber - 1) * ploggingCntPerPage,
@@ -65,15 +66,18 @@ const writePlogging = async function (req, res) {
     let ploggingObj = req.body.ploggingData;
     ploggingObj = JSON.parse(ploggingObj);
 
+    validatePloggingData(ploggingObj); // 산책 데이터 validation check
+
     ploggingObj.meta.user_id = userId;
     ploggingObj.meta.created_time = util.getCurrentDateTime();
 
     const ploggingScoreArr = calcPloggingScore(ploggingObj);
     const ploggingTotalScore = Number(ploggingScoreArr[0] + ploggingScoreArr[1]);
     const ploggingDistance = ploggingObj.meta.distance;
-    const pickList = ploggingObj.pick_list;
+    const pickList = ploggingObj.trash_list;
     const pickCount = calPickCount(pickList);
     ploggingObj.meta.plogging_total_score = ploggingTotalScore;
+    ploggingObj.meta.plogging_trash_count = pickCount;
 
     //이미지가 없을때는 baseImg insert
     if (req.file === undefined) ploggingObj.meta.plogging_img = `${process.env.SERVER_REQ_INFO}/plogging/baseImg.PNG`;
@@ -137,6 +141,8 @@ const getPloggingScore = async function (req, res) {
     let ploggingObj = req.body.ploggingData;
     ploggingObj = JSON.parse(ploggingObj);
 
+    validatePloggingData(ploggingObj);
+    
     // 해당 산책의 plogging 점수
     const ploggingScoreArr = calcPloggingScore(ploggingObj);
     const ploggingTotalScore = Number(ploggingScoreArr[0] + ploggingScoreArr[1]);
@@ -159,7 +165,7 @@ function calcPloggingScore(ploggingObj) {
     const pickPerScore = 10; // 쓰레기 1개 주울때마다 10점 증가
 
     const distance = ploggingObj.meta.distance; // 플로깅 거리
-    const pickList = ploggingObj.pick_list; // 주운 쓰레기 리스트
+    const pickList = ploggingObj.trash_list; // 주운 쓰레기 리스트
 
     if (distance < pivotDistance) score[0] = 0; //300m 이하는 거리점수 없음
     else {
@@ -187,6 +193,39 @@ function calPickCount(pickList) {
     let pickCount = 0;
     for (let i = 0; i < pickList.length; i++) pickCount += pickList[i].pick_count;
     return pickCount;
+}
+
+// 산책이력 값 validation check
+/**
+ * 
+ * @param {*} ploggingObj 
+ *   type -> jsonString
+ * 
+ *  {
+ *    "meta": {
+ *       "distance": 2000,
+ *       "calorie": 200,
+ *       "plogging_time": 20
+ *    },
+ *    "trash_list" : [
+ *      { "trash_type": 2, "pick_count": 100}, {"trash_type": 1, "pick_count": 200}
+ *     ]
+ *  }
+ */
+function validatePloggingData(ploggingObj) {
+
+    const meta = ploggingObj.meta;
+    const trashList = ploggingObj.trash_list;
+
+    if(!meta.distance || !meta.calorie || !meta.plogging_time || !trashList) {
+        throw new BadRequest('산책 meta 데이터를 확인해주세요.');
+    }
+
+    for (let i = 0; i < trashList.length; i++) {
+        if(!trashList[i].trash_type || !trashList[i].pick_count) {
+            throw new BadRequest('산책 trash_list 데이터를 확인해주세요.');
+        }
+    }
 }
 
 module.exports = {
