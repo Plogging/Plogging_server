@@ -1,5 +1,5 @@
 const express = require('express');
-const { CustomError } = require('throw.js')
+const { CustomError, Unauthorized } = require('throw.js')
 
 const userRoutes = require('./routers/user.js');
 const rankingRoutes = require('./routers/ranking')
@@ -27,28 +27,26 @@ const swaggerUi = require('swagger-ui-express');
 
     app.use(bodyParser.urlencoded({extended: false}));
     app.use(bodyParser.json());
-
     app.use(express.static(process.env.IMG_FILE_PATH)); // 정적파일 제공
 
-    // redis sessionStorage 설정 ( ttl 설정안하면 default 24시간 )
+    // redis sessionStorage 설정
     app.use(session({
         store : new redisStore({ // default는 메모리에 저장
-            client: redisClient
-            //ttl: 60*30 // expires ( per in second ) - 30분
+            client: redisClient,
         }),
         secret: 'plogging', // sessionId를 만들때 key로 쓰이는거 같음
         resave: false,
-        saveUninitialized: false
+        saveUninitialized: true,
     }));
 
     // 전역 설정
     const globalOption = {};
     globalOption.PORT = process.env.PORT;
-   
     app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument)); // node-swaggwer
 
     /**
-    * step 1. userId가 파라미터로 들어왔는지 확인 ( req.query.userId )
+    * step 1. userId가 파라미터로 들어왔는지 확인 ( req.query
+    * .userId )
     * step 2. 
     *    2-1. 파라미터로 안들어왔다면 redis에서 조회한 값으로 userId 세팅 ( 산책이력 조회, 산책이력 등록, 산책이력 삭제 )
     *    2-2. 파라미터로 들어왔다면 파리미터로 들어온 값으로 userId 세팅 ( 산책이력 조회 ) 
@@ -64,11 +62,11 @@ const swaggerUi = require('swagger-ui-express');
             (req.path === '/user/check')) next();
         else {
             const sessionKey = req.get('sessionKey');
-            if(sessionKey === req.session.id) {  // 세션 값이 있는 경우 ( 로그인이 되어있는 경우 )
+            if(req.session.id) {  // 세션 값이 있는 경우 ( 로그인이 되어있는 경우 )
                 req.userId = req.session.userId;
                 next();
             } else { // 세션 값이 없는 경우 ( 로그인이 안되어 있는 경우 )
-                res.sendStatus(401);
+                throw new Unauthorized
             }
         }
     });
@@ -84,7 +82,7 @@ const swaggerUi = require('swagger-ui-express');
         logger.error(JSON.stringify({"errorMsg": err.stack}));
         
         if (err instanceof swaggerValidation.InputValidationError) {
-            return res.status(400).send(err.errors.join(', '))
+            return res.status(400).json({rc: 400, rcmsg: err.errors.join(', ')})
         } else if (err instanceof CustomError) {
             return res.status(err.statusCode)
             .json({rc: err.statusCode, rcmsg: err.message})
@@ -101,3 +99,4 @@ const swaggerUi = require('swagger-ui-express');
         console.log(`server on ${globalOption.PORT} !`);
     })
 })();
+

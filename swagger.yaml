@@ -254,12 +254,6 @@ paths:
     delete:
       summary: 회원탈퇴
       tags: [User]
-      parameters:
-        - in: header
-          name: sessionKey
-          type: string
-          required: true
-          description: 유저 SessionKey
       responses:
         200:
           description: OK
@@ -350,11 +344,6 @@ paths:
       description: targetUserId의 사용자 닉네임, 프로필 사진, 플로깅 점수, 플로깅 거리, 쓰레기 주운 갯수를 가져온다.
       tags: [User]
       parameters:
-        - in: header
-          name: sessionKey
-          type: string
-          required: true
-          description: 유저 SessionKey
         - in: path
           name: id
           type: string
@@ -431,11 +420,6 @@ paths:
       produces:
         - application/json
       parameters:
-        - in: header
-          name: sessionKey
-          type: string
-          required: true
-          description: 유저 SessionKey
         - in: body
           name: name
           description: 사용자 이름 받기
@@ -505,11 +489,6 @@ paths:
       produces:
         - application/json
       parameters:
-        - in: header
-          name: sessionKey
-          type: string
-          required: true
-          description: 유저 SessionKey
         - in: formData
           name: profileImg
           type: file
@@ -557,11 +536,6 @@ paths:
       summary: 비밀번호 변경
       tags: [User]
       parameters:
-        - in: header
-          name: sessionKey
-          type: string
-          required: true
-          description: 유저 SessionKey
         - in: body
           name: secretKey
           description: Password which was encrypted.
@@ -698,12 +672,6 @@ paths:
     put:
       summary: 사용자 로그아웃
       tags: [User]
-      parameters:
-        - in: header
-          name: sessionKey
-          type: string
-          required: true
-          description: 유저 SessionKey
       responses:
         200:
           description: OK

@@ -17,7 +17,6 @@ const signIn = async(req, res) => {
     logger.info(`Logging in with [${userId}] ...`);
     const user = await UserSchema.findOneUser(userId);
     if(!user){ throw new Unauthorized }
-    // res.cookie('co',200,{signed: true});
     req.session.userId = userId;
     returnResult.rc = 200;
     returnResult.rcmsg = 'OK';
@@ -191,6 +190,7 @@ const signOut = async(req, res) => {
         if(err) {
             throw new InternalServerError;
         }else{
+            res.clearCookie('connect.sid');
             res.json({rc: 200, rcmsg: 'OK'});
         }
     })
@@ -199,25 +199,26 @@ const signOut = async(req, res) => {
 const withdrawal = async(req, res) => {
     logger.info(`Withdrawing [${req.session.userId}] ...`);
     const userId = req.session.userId;
-    const t = await sequelize.transaction();
+    const t = await sequelize.transaction(); 
     const deletedCnt = await UserSchema.deleteUser(userId, t);
     if(!deletedCnt){
         throw new InternalServerError
     }
-    try {
-        PloggingSchema.deletePloogingsModel(userId);
+    try {   
+        await PloggingSchema.deletePloogingsModel(userId);
         // 탈퇴 유저의 산책이력 이미지 전체 삭제
         if(fs.existsSync(`${filePath}/${userId}`)){
             fs.rmdirSync(`${filePath}/${userId}`, { recursive: true });
         }
         // 해당 산책의 점수 랭킹점수 삭제
-        RankSchema.delete(userId);
+        await RankSchema.delete(userId);
         res.json({rc: 200, rcmsg: 'OK'});
-        await t.commit();
+        res.clearCookie('connect.sid');
         req.session.destroy();
-    } catch (error) {
+        await t.commit();
+    }catch(err) {
         await t.rollback();
-        throw new InternalServerError
+        throw new InternalServerError;
     }
 }
 
