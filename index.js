@@ -66,7 +66,7 @@ const swaggerUi = require('swagger-ui-express');
                 req.userId = req.session.userId;
                 next();
             } else { // 세션 값이 없는 경우 ( 로그인이 안되어 있는 경우 )
-                throw new Unauthorized
+                throw new Unauthorized( "로그인 후 서비스를 이용해 주세요");
             }
         }
     });
