@@ -63,7 +63,7 @@ const swaggerUi = require('swagger-ui-express');
             (req.path === '/user/social') ||
             (req.path === '/user/check')) next();
         else {
-            if(req.session.id) {  // 세션 값이 있는 경우 ( 로그인이 되어있는 경우 )
+            if(req.session.userId) {  // 세션 값이 있는 경우 ( 로그인이 되어있는 경우 )
                 req.userId = req.session.userId;
                 next();
             } else { // 세션 값이 없는 경우 ( 로그인이 안되어 있는 경우 )
