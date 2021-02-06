@@ -19,12 +19,7 @@ paths:
               - userId
               - secretKey
             properties:
-              rc:
-                type: number
-                example: 200
-              rcmsg:
-                type: string
-                example: OK
+              
               userId:
                 type: string
                 example: ganghee@nate.com
@@ -37,9 +32,12 @@ paths:
           schema:
             type: object
             properties:
-              session:
+              rc:
+                type: number
+                example: 200
+              rcmsg:
                 type: string
-                example: 0q8DptSJiinhbspcQwK6wxUtvNkmNano
+                example: OK
               userImg:
                 type: string
                 example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
@@ -111,9 +109,6 @@ paths:
               rcmsg:
                 type: string
                 example: OK
-              session:
-                type: string
-                example: 0q8DptSJiinhbspcQwK6wxUtvNkmNano
               userImg:
                 type: string
                 example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
@@ -131,9 +126,6 @@ paths:
               rcmsg:
                 type: string
                 example: Created
-              session:
-                type: string
-                example: 0q8DptSJiinhbspcQwK6wxUtvNkmNano
               userImg:
                 type: string
                 example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
@@ -209,9 +201,6 @@ paths:
               rcmsg:
                 type: string
                 example: Created
-              session:
-                type: string
-                example: 0q8DptSJiinhbspcQwK6wxUtvNkmNano
               userImg:
                 type: string
                 example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg

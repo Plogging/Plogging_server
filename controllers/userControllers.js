@@ -20,7 +20,6 @@ const signIn = async(req, res) => {
     req.session.userId = userId;
     returnResult.rc = 200;
     returnResult.rcmsg = 'OK';
-    returnResult.session = req.session.id;
     returnResult.userImg = user.profile_img;
     returnResult.userName = user.display_name;
     res.json(returnResult);
@@ -40,7 +39,6 @@ const social = async(req, res) => {
                 req.session.userId = newUser.user_id;
                 returnResult.rc = 201;
                 returnResult.rcmsg = 'Created';
-                returnResult.session = req.session.id;
                 returnResult.userImg = newUser.profile_img;
                 returnResult.userName = newUser.display_name;
                 res.status(201).json(returnResult);
@@ -54,7 +52,6 @@ const social = async(req, res) => {
             req.session.userId = user.user_id;
             returnResult.rc = 200;
             returnResult.rcmsg = 'OK';
-            returnResult.session = req.session.id;
             returnResult.userImg = user.profile_img;
             returnResult.userName = user.display_name;
             res.json(returnResult);
@@ -81,7 +78,6 @@ const register = async(req, res) => {
             req.session.userId = newUser.user_id;
             returnResult.rc = 201;
             returnResult.rcmsg = 'Created';
-            returnResult.session = req.session.id;
             returnResult.userImg = newUser.profile_img;
             returnResult.userName = newUser.display_name;
             res.status(201).json(returnResult);
