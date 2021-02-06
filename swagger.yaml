@@ -279,7 +279,7 @@ paths:
                 example: Internal Server Error
   /user/check:
     post:
-      summary: 사용자 아이디 유효성 확인
+      summary: 사용자 아이디 가입 확인
       tags: [User]
       parameters:
         - in: body
@@ -359,13 +359,22 @@ paths:
               userName:
                 type: string
                 example: 쓰담이
-              userScore:
+              scoreMonthly:
                 type: string
                 example: 1000
-              userDistance:
+              distanceMonthly:
                 type: string
                 example: 12
-              userTrash:
+              trashMonthly:
+                type: string
+                example: 99
+              scoreWeekly:
+                type: string
+                example: 1000
+              distanceWeekly:
+                type: string
+                example: 12
+              trashWeekly:
                 type: string
                 example: 99
         400:
