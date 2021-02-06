@@ -317,14 +317,14 @@ paths:
               rcmsg:
                 type: string
                 example: OK
-        404:
+        400:
           description: userId which was existed
           schema:
             type: object
             properties:
               rc:
                 type: number
-                example: 404
+                example: 400
               rcmsg:
                 type: string
                 example: userId which was existed
