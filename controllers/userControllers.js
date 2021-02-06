@@ -16,7 +16,7 @@ const signIn = async(req, res) => {
     let returnResult = {};
     logger.info(`Logging in with [${userId}] ...`);
     const user = await UserSchema.findOneUser(userId);
-    if(!user){ throw new Unauthorized }
+    if(!user){ throw new Unauthorized('No UserId') }
     req.session.userId = userId;
     returnResult.rc = 200;
     returnResult.rcmsg = 'OK';
@@ -179,7 +179,7 @@ const temporaryPassword = async(req, res) => {
     if(updatedCnt) {
         res.json({rc: 200, rcmsg: 'OK'});
     }else{
-        throw new NotFound('No secret key');
+        throw new NotFound('No UserId');
     }
 }
 
