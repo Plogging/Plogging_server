@@ -710,11 +710,6 @@ paths:
       summary: 산책이력 가져오기
       tags: [Plogging]
       parameters:
-        - in: header
-          name: sessionKey
-          type: string
-          required: true
-          description: 유저 SessionKey
         - in: path
           name: targetUserId
           type: string
@@ -851,11 +846,6 @@ paths:
       produces:
         - application/json
       parameters:
-        - in: header
-          name: sessionKey
-          type: string
-          required: true
-          description: 유저 SessionKey
         - in: formData
           name: ploggingImg
           type: file
@@ -927,11 +917,6 @@ paths:
       summary: 산책 이력 삭제하기
       tags: [Plogging]
       parameters:
-        - in: header
-          name: sessionKey
-          type: string
-          required: true
-          description: 유저 SessionKey
         - in: query
           name: ploggingId
           type: string
@@ -994,11 +979,6 @@ paths:
       summary: 플로깅 점수 계산하기
       tags: [Plogging]
       parameters:
-        - in: header
-          name: sessionKey
-          type: string
-          required: true
-          description: 유저 sessionKey
         - in: formData
           name: ploggingData
           type: string
@@ -1078,11 +1058,6 @@ paths:
       summary: 글로벌 랭킹 가져오기
       tags: [Ranking]
       parameters:
-        - in: header
-          name: sessionKey
-          type: string
-          required: true
-          description: 유저 SessionKey
         - name: rankType
           in: query
           type: string
@@ -1204,11 +1179,6 @@ paths:
       summary: 유저 랭킹 가져오기
       tags: [Ranking]
       parameters:
-        - in: header
-          name: sessionKey
-          type: string
-          required: true
-          description: 유저 SessionKey
         - name: rankType
           in: query
           type: string
