@@ -36,7 +36,7 @@ const swaggerUi = require('swagger-ui-express');
         }),
         secret: 'plogging', // sessionId를 만들때 key로 쓰이는거 같음
         resave: false,
-        saveUninitialized: true,
+        saveUninitialized: false,
     }));
 
     // 전역 설정
