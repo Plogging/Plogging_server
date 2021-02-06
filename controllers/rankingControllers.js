@@ -6,11 +6,9 @@ const { findOneUser, findUsers } = require('../models/user')
 const pagingHelper = require('../util/pagingHelper')
 
 const getGlobalRank = async (req, res) => {
-    const aa = 1
-    const a = aa ?? 1
     const rankType = req.query.rankType
-    const rankCntPerPage = req.query.rankCntPerPage ?? 10
-    const pageNumber = req.query.pageNumber ?? 1
+    const rankCntPerPage = (req.query.rankCntPerPage == null) ? 10 : req.query.rankCntPerPage
+    const pageNumber = (req.query.pageNumber == null) ? 1 : req.query.pageNumber
     const [count, rawRankData] = await RankSchema.getCountAndRankDataWithScores(rankType, rankCntPerPage, pageNumber)
     if (!count || !rawRankData) {
         throw new NotFound("Rank data doesn't exist in Redis.")
