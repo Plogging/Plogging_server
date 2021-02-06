@@ -21,7 +21,7 @@ module.exports = {
   },
   development: {
     username: 'root',
-    password: 'password',
+    password: dbPassword,
     database: 'plogging',
     host: ip,
     port: port,
