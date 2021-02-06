@@ -8,7 +8,6 @@ const collectionName = 'record';
 // 산책 조회
 PloggingSchema.readPloggingModel = async function (query, options, targetUserId) {
     const mongoConnection = await MongoPool.db(dbName);
-
     const allPloggingCount = await mongoConnection.collection(collectionName).find({ "meta.user_id": targetUserId }).count();
     const plogginList = await mongoConnection.collection(collectionName).find(query, options).toArray();
     return [allPloggingCount, plogginList];
@@ -28,8 +27,8 @@ PloggingSchema.deletePloggingModel = async function (ploggingId) {
 };
 
 // 사용자 산책 기록 삭제
-PloggingSchema.deletePloogingsModel = async function(userId) {
-    let mongoConnection = await MongoPool.db(dbName);
+PloggingSchema.deletePloggingsModel = async function(userId) {
+    const mongoConnection = await MongoPool.db(dbName);
     const query = {'meta.user_id': userId};
     await mongoConnection.collection(collectionName).deleteMany(query);
 };

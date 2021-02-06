@@ -19,12 +19,7 @@ paths:
               - userId
               - secretKey
             properties:
-              rc:
-                type: number
-                example: 200
-              rcmsg:
-                type: string
-                example: OK
+              
               userId:
                 type: string
                 example: ganghee@nate.com
@@ -37,9 +32,12 @@ paths:
           schema:
             type: object
             properties:
-              session:
+              rc:
+                type: number
+                example: 200
+              rcmsg:
                 type: string
-                example: 0q8DptSJiinhbspcQwK6wxUtvNkmNano
+                example: OK
               userImg:
                 type: string
                 example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
@@ -111,9 +109,6 @@ paths:
               rcmsg:
                 type: string
                 example: OK
-              session:
-                type: string
-                example: 0q8DptSJiinhbspcQwK6wxUtvNkmNano
               userImg:
                 type: string
                 example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
@@ -131,9 +126,6 @@ paths:
               rcmsg:
                 type: string
                 example: Created
-              session:
-                type: string
-                example: 0q8DptSJiinhbspcQwK6wxUtvNkmNano
               userImg:
                 type: string
                 example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
@@ -209,9 +201,6 @@ paths:
               rcmsg:
                 type: string
                 example: Created
-              session:
-                type: string
-                example: 0q8DptSJiinhbspcQwK6wxUtvNkmNano
               userImg:
                 type: string
                 example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
@@ -230,7 +219,7 @@ paths:
                 type: string
                 example: Bad Request
         409:
-          description: Conflict ('user name conflict' or 'userId conflict')
+          description: Conflict ('UserName Conflict' or 'UserId Conflict')
           schema:
             type: object
             properties:
@@ -254,12 +243,6 @@ paths:
     delete:
       summary: 회원탈퇴
       tags: [User]
-      parameters:
-        - in: header
-          name: sessionKey
-          type: string
-          required: true
-          description: 유저 SessionKey
       responses:
         200:
           description: OK
@@ -296,7 +279,7 @@ paths:
                 example: Internal Server Error
   /user/check:
     post:
-      summary: 사용자 아이디 유효성 확인
+      summary: 사용자 아이디 가입 확인
       tags: [User]
       parameters:
         - in: body
@@ -322,14 +305,14 @@ paths:
               rcmsg:
                 type: string
                 example: OK
-        404:
+        400:
           description: userId which was existed
           schema:
             type: object
             properties:
               rc:
                 type: number
-                example: 404
+                example: 400
               rcmsg:
                 type: string
                 example: userId which was existed
@@ -350,11 +333,6 @@ paths:
       description: targetUserId의 사용자 닉네임, 프로필 사진, 플로깅 점수, 플로깅 거리, 쓰레기 주운 갯수를 가져온다.
       tags: [User]
       parameters:
-        - in: header
-          name: sessionKey
-          type: string
-          required: true
-          description: 유저 SessionKey
         - in: path
           name: id
           type: string
@@ -381,13 +359,22 @@ paths:
               userName:
                 type: string
                 example: 쓰담이
-              userScore:
+              scoreMonthly:
                 type: string
                 example: 1000
-              userDistance:
+              distanceMonthly:
                 type: string
                 example: 12
-              userTrash:
+              trashMonthly:
+                type: string
+                example: 99
+              scoreWeekly:
+                type: string
+                example: 1000
+              distanceWeekly:
+                type: string
+                example: 12
+              trashWeekly:
                 type: string
                 example: 99
         400:
@@ -431,11 +418,6 @@ paths:
       produces:
         - application/json
       parameters:
-        - in: header
-          name: sessionKey
-          type: string
-          required: true
-          description: 유저 SessionKey
         - in: body
           name: name
           description: 사용자 이름 받기
@@ -505,11 +487,6 @@ paths:
       produces:
         - application/json
       parameters:
-        - in: header
-          name: sessionKey
-          type: string
-          required: true
-          description: 유저 SessionKey
         - in: formData
           name: profileImg
           type: file
@@ -557,11 +534,6 @@ paths:
       summary: 비밀번호 변경
       tags: [User]
       parameters:
-        - in: header
-          name: sessionKey
-          type: string
-          required: true
-          description: 유저 SessionKey
         - in: body
           name: secretKey
           description: Password which was encrypted.
@@ -698,12 +670,6 @@ paths:
     put:
       summary: 사용자 로그아웃
       tags: [User]
-      parameters:
-        - in: header
-          name: sessionKey
-          type: string
-          required: true
-          description: 유저 SessionKey
       responses:
         200:
           description: OK
@@ -759,7 +725,7 @@ paths:
           type: number
           enum: [0, 1, 2]
           required: true
-          description: 조회 type ( 최신순 / 점수순 / 거리순)
+          description: 조회 type ( 최신순 / 점수순 / 모은 쓰레기 순)
         - in: query
           name: ploggingCntPerPage
           type: number
@@ -898,7 +864,7 @@ paths:
         - in: formData
           name: ploggingData
           type: string
-          example: '{"meta": { "distance": 1500, "calorie": 200, "flogging_time": 20 }, "pick_list": [{ "trash_type": 2, "pick_count": 100 }, { "trash_type": 1, "pick_count": 200 }]}'
+          example: '{"meta": { "distance": 1500, "calorie": 200, "plogging_time": 20 }, "trash_list": [{ "trash_type": 2, "pick_count": 100 }, { "trash_type": 1, "pick_count": 200 }]}'
           required: true
           description: 산책이력 데이터
       responses:
@@ -914,7 +880,7 @@ paths:
                 type: string
                 example: 산책이력 등록 성공
         400:
-          description: Bad Request(parameter error)
+          description: parameter error
           schema:
             type: object
             properties:
@@ -923,7 +889,7 @@ paths:
                 example: 400
               rcmsg:
                 type: string
-                example: query should have required property 'searchType'
+                example: 산책 데이터를 확인해주세요.
         401:
           description: Unauthorized
           schema:
@@ -1036,7 +1002,7 @@ paths:
         - in: formData
           name: ploggingData
           type: string
-          example: '{"meta": { "distance": 1500, "calorie": 200, "flogging_time": 20 }, "pick_list": [{ "trash_type": 2, "pick_count": 100 }, { "trash_type": 1, "pick_count": 200 }]}'
+          example: '{"meta": { "distance": 1500, "calorie": 200, "plogging_time": 20 }, "trash_list": [{ "trash_type": 2, "pick_count": 100 }, { "trash_type": 1, "pick_count": 200 }]}'
           required: true
           description: 산책이력 데이터
       responses:
@@ -1063,6 +1029,17 @@ paths:
                   environmentScore:
                     type: number
                     example: 200
+        400:
+          description: parameter error
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 400
+              rcmsg:
+                type: string
+                example: 산책 데이터를 확인해주세요.
         401:
           description: Unauthorized
           schema:
