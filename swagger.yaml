@@ -219,7 +219,7 @@ paths:
                 type: string
                 example: Bad Request
         409:
-          description: Conflict ('user name conflict' or 'userId conflict')
+          description: Conflict ('Username Conflict')
           schema:
             type: object
             properties:
@@ -228,7 +228,19 @@ paths:
                 example: 409
               rcmsg:
                 type: string
-                example: Conflict
+                example: Username Conflict
+        410:
+          description: Gone ('UserId Conflict')
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 410
+              rcmsg:
+                type: string
+                example: UserId Conflict
+        
         500:
           description: Internal Server Error
           schema:

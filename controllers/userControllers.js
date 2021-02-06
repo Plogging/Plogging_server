@@ -69,7 +69,7 @@ const register = async(req, res) => {
     await sequelize.transaction(async (t) => {
         const user = await UserSchema.findOneUser(userId, t);
         if (user) {
-            throw new Conflict('UserId Conflict');
+            res.status(410).json({rc: 410, rcmsg: 'UserId Conflict'});
         }
         try {
             // set userImg
