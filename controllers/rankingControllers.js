@@ -2,7 +2,7 @@ const { NotFound } = require('throw.js')
 const logger = require("../util/logger.js")("ranking.js")
 
 const RankSchema = require('../models/ranking')
-const { findOneUser, findUsers } = require('../models/user')
+const UserSchema = require('../models/user')
 const pagingHelper = require('../util/pagingHelper')
 
 const getGlobalRank = async (req, res) => {
@@ -58,7 +58,7 @@ const buildRankData = async rawRankData => {
 }
 
 const getUserInfo = async userId => {
-    const fetched = await findOneUser(userId)
+    const fetched = await UserSchema.findOneUser(userId)
     if (!fetched) {
         throw new NotFound("User data doesn't exist in DB.")
     }
@@ -70,7 +70,7 @@ const getUserInfo = async userId => {
 const getUserInfos = async userIds => {
     if (userIds.length == 0) return {}
     const userInfos = {}
-    const fetched = await findUsers(userIds)
+    const fetched = await UserSchema.findUsers(userIds)
     if (!fetched) {
         throw new NotFound("User data not found in DB.")
     }
