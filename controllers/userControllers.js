@@ -15,8 +15,8 @@ const signIn = async(req, res) => {
     const userId = req.body.userId + ':custom';
     let returnResult = {};
     logger.info(`Logging in with [${userId}] ...`);
-    const user = await UserSchema.findOneUser(userId);
-    if(!user){ throw new Unauthorized('No UserId') }
+    const user = await UserSchema.findOneUser(userId, req.body.secretKey);
+    if(!user){ throw new Unauthorized('No userId or No secretKey from DB') }
     req.session.userId = userId;
     returnResult.rc = 200;
     returnResult.rcmsg = 'OK';
@@ -31,7 +31,7 @@ const social = async(req, res) => {
     const userName = req.body.userName;
     logger.info(`Connecting to [${userId}] from OAuth...`);
     await sequelize.transaction(async (t) => {
-        const user = await UserSchema.findOneUser(userId, t);
+        const user = await UserSchema.findOneUser(userId, null, t);
         if(!user){
             try {
                 let userImg = 'https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg';
@@ -67,7 +67,7 @@ const register = async(req, res) => {
     const userId = req.body.userId + ':' + userType;
     logger.info(`Registering [${userId}] into maria DB...`);
     await sequelize.transaction(async (t) => {
-        const user = await UserSchema.findOneUser(userId, t);
+        const user = await UserSchema.findOneUser(userId, null, t);
         if (user) {
             res.status(410).json({rc: 410, rcmsg: 'UserId Conflict'});
         }
@@ -105,7 +105,7 @@ const getUserInfo = async(req, res) => {
     let returnResult = {};
     const user = await UserSchema.findOneUser(req.params.id);
     if(!user){
-        throw new NotFound('userId which was existed');
+        throw new NotFound('userId which was not existed');
     }
     returnResult.rc = 200;
     returnResult.rcmsg = 'OK';
