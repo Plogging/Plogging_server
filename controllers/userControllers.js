@@ -2,7 +2,7 @@ const nodemailer = require('nodemailer');
 const Email = require('email-templates');
 const logger = require("../util/logger.js")("user.js");
 const fs = require('fs');
-const { NotFound, Unauthorized, Conflict, InternalServerError, BadRequest } = require('throw.js')
+const { NotFound, Unauthorized, Conflict, InternalServerError } = require('throw.js')
 const UserSchema = require('../models/user.js');
 const filePath = process.env.IMG_FILE_PATH;
 const adminEmailId = process.env.ADMIN_EMAIL_ID;
@@ -94,9 +94,9 @@ const checkUserId = async(req, res) => {
     logger.info(`Checking [${req.body.userId}]...`);
     const user = await UserSchema.findOneUser(req.body.userId + ':custom');
     if(user){
-        throw new BadRequest('userId which was existed');
+        res.json({rc: 201, rcmsg: 'userId which is existed'});
     }else{
-        res.json({rc: 200, rcmsg: 'OK'});
+        res.json({rc: 200, rcmsg: 'userId which is not existed'});
     }
 }
 
@@ -166,7 +166,7 @@ const changePassword = async(req, res) => {
     if(updatedCnt) {
         res.json({rc: 200, rcmsg: 'OK'});
     }else{
-        throw new BadRequest('No secret key');
+        res.json({rc: 402, rcmsg: 'No userId or No secretKey from DB'});
     }
 }
 

@@ -142,7 +142,7 @@ paths:
                 example: 400
               rcmsg:
                 type: string
-                example: Bad Request
+                example: body should have required property userId
         409:
           description: Conflict (user name conflict)
           schema:
@@ -277,7 +277,7 @@ paths:
                 example: 401
               rcmsg:
                 type: string
-                example: Unauthorized
+                example: 로그인 후 서비스를 이용해 주세요
         500:
           description: Internal Server Error
           schema:
@@ -307,7 +307,7 @@ paths:
                 example: ganghee@nate.com
       responses:
         200:
-          description: OK (Useable user id)
+          description: OK (userId which is not existed)
           schema:
             type: object
             properties:
@@ -316,9 +316,20 @@ paths:
                 example: 200
               rcmsg:
                 type: string
-                example: OK
+                example: userId which is not existed
+        201:
+          description: userId which is existed
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 201
+              rcmsg:
+                type: string
+                example: userId which is existed
         400:
-          description: userId which was existed
+          description: Bad Request (body should have required property userId)
           schema:
             type: object
             properties:
@@ -327,7 +338,7 @@ paths:
                 example: 400
               rcmsg:
                 type: string
-                example: userId which was existed
+                example: body should have required property userId
         500:
           description: Internal Server error
           schema:
@@ -389,17 +400,6 @@ paths:
               trashWeekly:
                 type: string
                 example: 99
-        400:
-          description: Bad Request (찾는 id가 없을 때)
-          schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 400
-              rcmsg:
-                type: string
-                example: Bad Request
         401:
           description: Unauthorized (sessionKey 유효하지 않을 때)
           schema:
@@ -410,7 +410,18 @@ paths:
                 example: 401
               rcmsg:
                 type: string
-                example: Unauthorized
+                example: 로그인 후 서비스를 이용해 주세요
+        404:
+          description: Not Found (찾는 id가 없을 때)
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 404
+              rcmsg:
+                type: string
+                example: userId which was not existed
         500:
           description: Internal Server Error
           schema:
@@ -456,6 +467,17 @@ paths:
               userName:
                 type: string
                 example: 쓰담이
+        400:
+          description: Bad Request (body should have required property name)
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 400
+              rcmsg:
+                type: string
+                example: body should have required property name
         401:
           description: Unauthorized (sessionKey 유효하지 않을 때)
           schema:
@@ -466,7 +488,7 @@ paths:
                 example: 401
               rcmsg:
                 type: string
-                example: Unauthorized
+                example: 로그인 후 서비스를 이용해 주세요
         409:
           description: userName Conflict
           schema:
@@ -529,7 +551,7 @@ paths:
                 example: 401
               rcmsg:
                 type: string
-                example: Unauthorized
+                example: 로그인 후 서비스를 이용해 주세요
         500:
           description: Internal Server Error
           schema:
@@ -574,7 +596,7 @@ paths:
                 type: string
                 example: OK
         400:
-          description: Not matched secret key
+          description: Bad Request (body should have required property [newSecretKey/ existedSecretKey])
           schema:
             type: object
             properties:
@@ -583,9 +605,9 @@ paths:
                 example: 400
               rcmsg:
                 type: string
-                example: Internal Server Error
+                example: body should have required property [newSecretKey/ existedSecretKey]
         401:
-          description: Unauthorized (session key error)
+          description: Unauthorized (sessionKey 유효하지 않을 때)
           schema:
             type: object
             properties:
@@ -594,7 +616,18 @@ paths:
                 example: 401
               rcmsg:
                 type: string
-                example: Unauthorized
+                example: 로그인 후 서비스를 이용해 주세요
+        402:
+          description: No userId or No secretKey from DB
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 402
+              rcmsg:
+                type: string
+                example: No userId or No secretKey from DB
         500:
           description: Internal Server Error
           schema:
@@ -635,7 +668,7 @@ paths:
                 type: string
                 example: OK
         400:
-          description: Bad Request (body에 email 파라미터가 없을 때)
+          description: Bad Request (body should have required property email)
           schema:
             type: object
             properties:
@@ -644,18 +677,7 @@ paths:
                 example: 400
               rcmsg:
                 type: string
-                example: Bad Request
-        401:
-          description: Unauthorized (session key error)
-          schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 401
-              rcmsg:
-                type: string
-                example: Unauthorized
+                example: body should have required property email
         404:
           description: Not Found (no email)
           schema:
@@ -704,7 +726,7 @@ paths:
                 example: 401
               rcmsg:
                 type: string
-                example: Unauthorized
+                example: 로그인 후 서비스를 이용해 주세요
         500:
           description: Internal Server Error
           schema:
