@@ -1,6 +1,6 @@
 FROM node:12
 
-WORKDIR /app
+WORKDIR /mnt/Plogging_server
 
 COPY . .
 
