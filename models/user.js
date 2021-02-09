@@ -1,4 +1,4 @@
-adconst {sequelize} = require('./index');
+const {sequelize} = require('./index');
 const { Op } = require('sequelize')
 const User = sequelize.models.user;
 const UserSchema = {};
