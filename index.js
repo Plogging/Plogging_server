@@ -1,4 +1,5 @@
 const express = require('express');
+const fs = require('fs');
 const { CustomError, Unauthorized } = require('throw.js')
 
 const userRoutes = require('./routers/user.js');
@@ -14,6 +15,13 @@ const logger = require("./util/logger.js")("index.js");
 const session = require('express-session');
 const redisStore = require('connect-redis')(session);
 const YAML = require('yamljs');
+
+const http = require('http');
+const https = require('https');
+const sslOptions = {
+    key: fs.readFileSync('./sslFiles/privkey1.pem'),
+    cert: fs.readFileSync('./sslFiles/cert1.pem')
+};
 
 // node-swagger
 const swaggerUi = require('swagger-ui-express');
@@ -96,8 +104,14 @@ const swaggerUi = require('swagger-ui-express');
         }
     })
 
-    app.listen(globalOption.PORT, function(req, res) {
-        console.log(`server on ${globalOption.PORT} !`);
-    })
+    if(process.env.NODE_ENV === 'local') {
+        http.createServer(app).listen(globalOption.PORT, function(req, res){
+            console.log(`server on ${globalOption.PORT} !`);
+        })
+    } else if(process.env.NODE_ENV === 'development') {
+        https.createServer(sslOptions, app).listen(globalOption.PORT, function(req, res){
+            console.log(`server on ${globalOption.PORT} !`);
+        })
+    }
 })();
 
