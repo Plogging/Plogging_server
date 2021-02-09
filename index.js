@@ -44,7 +44,15 @@ const swaggerUi = require('swagger-ui-express');
         }),
         secret: 'plogging', // sessionId를 만들때 key로 쓰이는거 같음
         resave: false,
-        saveUninitialized: false,
+        saveUninitialized: false
+        /**
+         * 쿠키값 설정 
+         *  cookie: {
+         *      httpOnly: true, -> defualt가 true임. true로하면 js코드로 cookie값 접근안되고, 클라가 header에서 쿠키 받을 수 있음. false로 주면
+         *      클라에서 쿠키에 있는 세션id를 못 받으므로 true로 줘야함
+         *      secure: false -> default가 false 임 -> true로 바꾸게되면 https에서만 쿠키값 가져올 수 있음
+         *  }
+         */
     }));
 
     // 전역 설정
