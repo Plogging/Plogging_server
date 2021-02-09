@@ -58,7 +58,7 @@ const buildRankData = async rawRankData => {
 }
 
 const getUserInfo = async userId => {
-    const fetched = await UserSchema.findOneUser(userId, null)
+    const fetched = await UserSchema.findOneUser(userId)
     if (!fetched) {
         throw new NotFound("User data doesn't exist in DB.")
     }
