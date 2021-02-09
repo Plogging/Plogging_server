@@ -84,7 +84,7 @@ const writePlogging = async function (req, res) {
     else ploggingObj.meta.plogging_img = process.env.SERVER_REQ_INFO + '/' + req.file.path.split(`${process.env.IMG_FILE_PATH}/`)[1];
 
     await sequelize.transaction(async (t) => {
-        const userData = await User.findOneUser(userId, t);
+        const userData = await User.findOneUser(userId, null, t);
         const updatedPloggingData = {};
         // 주간
         updatedPloggingData.scoreWeek = userData.score_week + ploggingTotalScore;
