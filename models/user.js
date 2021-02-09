@@ -3,10 +3,9 @@ const { Op } = require('sequelize')
 const User = sequelize.models.user;
 const UserSchema = {};
 
-UserSchema.findOneUser = async(userId, secretKey = null, t = null) => await User.findOne({ 
+UserSchema.findOneUser = async(userId, t = null) => await User.findOne({ 
     where: {
-        user_id: userId,
-        secret_key: secretKey
+        user_id: userId
     }
 }, {transaction: t});
 
