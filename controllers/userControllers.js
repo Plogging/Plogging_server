@@ -2,7 +2,7 @@ const nodemailer = require('nodemailer');
 const Email = require('email-templates');
 const logger = require("../util/logger.js")("user.js");
 const fs = require('fs');
-const { NotFound, Unauthorized, Conflict, InternalServerError, BadRequest } = require('throw.js')
+const { NotFound, Unauthorized, Conflict, InternalServerError } = require('throw.js')
 const UserSchema = require('../models/user.js');
 const filePath = process.env.IMG_FILE_PATH;
 const adminEmailId = process.env.ADMIN_EMAIL_ID;
@@ -15,8 +15,8 @@ const signIn = async(req, res) => {
     const userId = req.body.userId + ':custom';
     let returnResult = {};
     logger.info(`Logging in with [${userId}] ...`);
-    const user = await UserSchema.findOneUser(userId);
-    if(!user){ throw new Unauthorized }
+    const user = await UserSchema.findOneUser(userId, req.body.secretKey);
+    if(!user){ throw new Unauthorized('No userId or No secretKey from DB') }
     req.session.userId = userId;
     returnResult.rc = 200;
     returnResult.rcmsg = 'OK';
@@ -31,7 +31,7 @@ const social = async(req, res) => {
     const userName = req.body.userName;
     logger.info(`Connecting to [${userId}] from OAuth...`);
     await sequelize.transaction(async (t) => {
-        const user = await UserSchema.findOneUser(userId, t);
+        const user = await UserSchema.findOneUser(userId, null, t);
         if(!user){
             try {
                 let userImg = 'https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg';
@@ -67,9 +67,9 @@ const register = async(req, res) => {
     const userId = req.body.userId + ':' + userType;
     logger.info(`Registering [${userId}] into maria DB...`);
     await sequelize.transaction(async (t) => {
-        const user = await UserSchema.findOneUser(userId, t);
+        const user = await UserSchema.findOneUser(userId, null, t);
         if (user) {
-            throw new Conflict('UserId Conflict');
+            res.status(410).json({rc: 410, rcmsg: 'UserId Conflict'});
         }
         try {
             // set userImg
@@ -94,9 +94,9 @@ const checkUserId = async(req, res) => {
     logger.info(`Checking [${req.body.userId}]...`);
     const user = await UserSchema.findOneUser(req.body.userId + ':custom');
     if(user){
-        throw new BadRequest('userId which was existed');
+        res.json({rc: 201, rcmsg: 'userId which is existed'});
     }else{
-        res.json({rc: 200, rcmsg: 'OK'});
+        res.json({rc: 200, rcmsg: 'userId which is not existed'});
     }
 }
 
@@ -105,7 +105,7 @@ const getUserInfo = async(req, res) => {
     let returnResult = {};
     const user = await UserSchema.findOneUser(req.params.id);
     if(!user){
-        throw new NotFound('userId which was existed');
+        throw new NotFound('userId which was not existed');
     }
     returnResult.rc = 200;
     returnResult.rcmsg = 'OK';
@@ -166,7 +166,7 @@ const changePassword = async(req, res) => {
     if(updatedCnt) {
         res.json({rc: 200, rcmsg: 'OK'});
     }else{
-        throw new BadRequest('No secret key');
+        res.json({rc: 402, rcmsg: 'No userId or No secretKey from DB'});
     }
 }
 
@@ -179,7 +179,7 @@ const temporaryPassword = async(req, res) => {
     if(updatedCnt) {
         res.json({rc: 200, rcmsg: 'OK'});
     }else{
-        throw new NotFound('No secret key');
+        throw new NotFound('No UserId');
     }
 }
 
