@@ -1,10 +1,13 @@
-const {sequelize} = require('./index');
+adconst {sequelize} = require('./index');
 const { Op } = require('sequelize')
 const User = sequelize.models.user;
 const UserSchema = {};
 
-UserSchema.findOneUser = async(userId, t = null) => await User.findOne({ 
-    where: {user_id: userId}
+UserSchema.findOneUser = async(userId, secretKey = null, t = null) => await User.findOne({ 
+    where: {
+        user_id: userId,
+        secret_key: secretKey
+    }
 }, {transaction: t});
 
 UserSchema.findUsers = async(userIds, t = null) => await User.findAll({
