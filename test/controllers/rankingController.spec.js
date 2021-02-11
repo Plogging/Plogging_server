@@ -2,17 +2,17 @@ const chai = require('chai')
 const chaiAsPromised = require('chai-as-promised')
 const sinon = require('sinon')
 const httpMocks = require('node-mocks-http')
+const proxyquire = require('proxyquire')
 const { NotFound } = require('throw.js')
-const { getGlobalRank, getUserRank } = require('../../controllers/rankingControllers')
-const RankSchema = require('../../models/ranking')
-const UserSchema = require('../../models/user')
 const { expect } = require('chai')
 
 chai.use(chaiAsPromised)
 
+let getGlobalRank, getUserRank
+
 describe("rankingController test", () => {
     before(() => {
-        const getCountAndRankDataWithScores = sinon.stub(RankSchema, "getCountAndRankDataWithScores")
+        const getCountAndRankDataWithScores = sinon.stub()
         getCountAndRankDataWithScores.withArgs("weekly", 3, 16).returns(
             [97, [
                 "mimi@naver.com:kakao", 1560,
@@ -22,11 +22,11 @@ describe("rankingController test", () => {
         )
         getCountAndRankDataWithScores.withArgs("weekly", 3, 0).returns([null, null])
 
-        const getUserRankAndScore = sinon.stub(RankSchema, "getUserRankAndScore")
+        const getUserRankAndScore = sinon.stub()
         getUserRankAndScore.withArgs("weekly", "mimi@naver.com:kakao").returns([45, 1560])
         getUserRankAndScore.withArgs("weekly", "nothing@gmail.com:custom").returns([null, null])
 
-        const findUsers = sinon.stub(UserSchema, "findUsers")
+        const findUsers = sinon.stub()
         findUsers.withArgs(
             ["mimi@naver.com:kakao", "happy@gmail.com:custom", "coco@naver.com:naver"]
         ).returns(
@@ -49,7 +49,7 @@ describe("rankingController test", () => {
             ]
         )
 
-        const findOneUser = sinon.stub(UserSchema, "findOneUser")
+        const findOneUser = sinon.stub()
         findOneUser.withArgs("mimi@naver.com:kakao").returns(
             {dataValues: {
                 user_id: "mimi@naver.com:kakao",
@@ -57,6 +57,17 @@ describe("rankingController test", () => {
                 profile_img: "some/path/to/img"
             }}
         )
+
+        ({ getGlobalRank, getUserRank } = proxyquire("../../controllers/rankingControllers", {
+            "../models/ranking": {
+                getCountAndRankDataWithScores: getCountAndRankDataWithScores,
+                getUserRankAndScore: getUserRankAndScore
+            },
+            "../models/user": {
+                findUsers: findUsers,
+                findOneUser: findOneUser
+            }
+        }))
 
         const expect = chai.expect
     })
