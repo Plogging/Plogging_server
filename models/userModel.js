@@ -22,7 +22,10 @@ module.exports = ((sequelize,DataTypes)=>{
         email:{
             type: DataTypes.STRING(50)
         },
-        secret_key:{
+        digest:{
+            type: DataTypes.STRING
+        },
+        salt:{
             type: DataTypes.STRING
         },
         score_month:{

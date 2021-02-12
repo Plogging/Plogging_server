@@ -10,12 +10,17 @@ const adminEmailPassword = process.env.ADMIN_EMAIL_PASSWORD;
 const {sequelize} = require('../models/index');
 const RankSchema = require('../models/ranking');
 const PloggingSchema = require('../models/plogging');
+const crypto = require('crypto');
 
 const signIn = async(req, res) => {
     const userId = req.body.userId + ':custom';
     let returnResult = {};
     logger.info(`Logging in with [${userId}] ...`);
-    const user = await UserSchema.findOneUser(userId, req.body.secretKey);
+    const findUserId = await UserSchema.findOneUser(userId);
+    if(!findUserId){ throw new Unauthorized('No userId or No secretKey from DB') }
+    const digest = crypto.pbkdf2Sync(req.body.secretKey, findUserId.salt, 10000, 64, 'sha512').toString('base64')
+    const user = await UserSchema.findOneUser(userId, digest);
+    console.log(userId, digest)
     if(!user){ throw new Unauthorized('No userId or No secretKey from DB') }
     req.session.userId = userId;
     returnResult.rc = 200;
@@ -35,7 +40,7 @@ const social = async(req, res) => {
         if(!user){
             try {
                 let userImg = 'https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg';
-                const newUser = await UserSchema.createUser(userId, userName, userImg, null, t);
+                const newUser = await UserSchema.createUser(userId, userName, userImg, null, null, t);
                 req.session.userId = newUser.user_id;
                 returnResult.rc = 201;
                 returnResult.rcmsg = 'Created';
@@ -66,6 +71,7 @@ const register = async(req, res) => {
     const userType = 'custom';
     const userId = req.body.userId + ':' + userType;
     logger.info(`Registering [${userId}] into maria DB...`);
+    
     await sequelize.transaction(async (t) => {
         const user = await UserSchema.findOneUser(userId, null, t);
         if (user) {
@@ -74,7 +80,9 @@ const register = async(req, res) => {
         try {
             // set userImg
             let userImg = 'https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg';
-            const newUser = await UserSchema.createUser(userId, userName, userImg, secretKey, t);
+            const salt = (await crypto.randomBytes(32)).toString('hex');
+            const digest = crypto.pbkdf2Sync(secretKey, salt, 10000, 64, 'sha512').toString('base64');
+            const newUser = await UserSchema.createUser(userId, userName, userImg, digest, salt, t);
             req.session.userId = newUser.user_id;
             returnResult.rc = 201;
             returnResult.rcmsg = 'Created';
@@ -82,7 +90,7 @@ const register = async(req, res) => {
             returnResult.userName = newUser.display_name;
             res.status(201).json(returnResult);
         } catch (error) {
-            if(error.original.errno === 1062){
+            if(error.original && error.original.errno === 1062){
                 throw new Conflict('UserName Conflict');
             }
             throw new InternalServerError
@@ -159,10 +167,16 @@ const changeUserImage = async(req, res) => {
 
 const changePassword = async(req, res) => {
     logger.info(`Changing user's password of [${req.session.userId}] ...`);
+    const findUserId = await UserSchema.findOneUser(req.session.userId);
+    if(!findUserId){ throw new Unauthorized('No userId from DB') }
+    const existedDigest = crypto.pbkdf2Sync(req.body.existedSecretKey, findUserId.salt, 10000, 64, 'sha512').toString('base64')
+    const salt = (await crypto.randomBytes(32)).toString('hex');
+    const digest = crypto.pbkdf2Sync(req.body.newSecretKey, salt, 10000, 64, 'sha512').toString('base64')
     const [updatedCnt] = await UserSchema.changeUserPassword(
         req.session.userId,
-        req.body.newSecretKey,
-        req.body.existedSecretKey);
+        digest,
+        salt,
+        existedDigest);
     if(updatedCnt) {
         res.json({rc: 200, rcmsg: 'OK'});
     }else{
@@ -174,8 +188,13 @@ const temporaryPassword = async(req, res) => {
     logger.info(`Sending user's password of [${req.body.email}] to Email...`);
     const tempPassword = Math.random().toString(36).slice(2);
     await sendEmail(req.body.email, tempPassword);
+    const salt = (await crypto.randomBytes(32)).toString('hex');
+    const digest = crypto.pbkdf2Sync(tempPassword, salt, 10000, 64, 'sha512').toString('base64')
     const [updatedCnt] = await UserSchema.changeUserPassword(
-        req.body.email + ':custom', tempPassword);
+        req.body.email + ':custom',
+        digest,
+        salt
+        );
     if(updatedCnt) {
         res.json({rc: 200, rcmsg: 'OK'});
     }else{
