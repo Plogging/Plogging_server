@@ -11,20 +11,21 @@ const {sequelize} = require('../models/index');
 const RankSchema = require('../models/ranking');
 const PloggingSchema = require('../models/plogging');
 const crypto = require('crypto');
+const coString = require('../util/commonString');
 
 const signIn = async(req, res) => {
     const userId = req.body.userId + ':custom';
     let returnResult = {};
     logger.info(`Logging in with [${userId}] ...`);
     const findUserId = await UserSchema.findOneUser(userId);
-    if(!findUserId){ throw new Unauthorized('No userId or No secretKey from DB') }
+    if(!findUserId){ throw new Unauthorized(coString.ERR_AUTHORIZATION) }
     const digest = crypto.pbkdf2Sync(req.body.secretKey, findUserId.salt, 10000, 64, 'sha512').toString('base64')
     const user = await UserSchema.findOneUser(userId, digest);
     console.log(userId, digest)
-    if(!user){ throw new Unauthorized('No userId or No secretKey from DB') }
+    if(!user){ throw new Unauthorized(coString.ERR_AUTHORIZATION) }
     req.session.userId = userId;
     returnResult.rc = 200;
-    returnResult.rcmsg = 'OK';
+    returnResult.rcmsg = coString.SUCCESS;
     returnResult.userImg = user.profile_img;
     returnResult.userName = user.display_name;
     res.json(returnResult);
@@ -43,20 +44,20 @@ const social = async(req, res) => {
                 const newUser = await UserSchema.createUser(userId, userName, userImg, null, null, t);
                 req.session.userId = newUser.user_id;
                 returnResult.rc = 201;
-                returnResult.rcmsg = 'Created';
+                returnResult.rcmsg = coString.CREATED;
                 returnResult.userImg = newUser.profile_img;
                 returnResult.userName = newUser.display_name;
                 res.status(201).json(returnResult);
             } catch (error) {
                 if(error.original.errno === 1062){
-                    throw new Conflict('UserName Conflict');
+                    throw new Conflict(coString.EXISTED_NAME);
                 }
                 throw new InternalServerError
             }
         }else{
             req.session.userId = user.user_id;
             returnResult.rc = 200;
-            returnResult.rcmsg = 'OK';
+            returnResult.rcmsg = coString.SUCCESS;
             returnResult.userImg = user.profile_img;
             returnResult.userName = user.display_name;
             res.json(returnResult);
@@ -75,7 +76,7 @@ const register = async(req, res) => {
     await sequelize.transaction(async (t) => {
         const user = await UserSchema.findOneUser(userId, null, t);
         if (user) {
-            res.status(410).json({rc: 410, rcmsg: 'UserId Conflict'});
+            res.status(410).json({rc: 410, rcmsg: coString.EXISTED_ID});
         }
         try {
             // set userImg
@@ -85,13 +86,13 @@ const register = async(req, res) => {
             const newUser = await UserSchema.createUser(userId, userName, userImg, digest, salt, t);
             req.session.userId = newUser.user_id;
             returnResult.rc = 201;
-            returnResult.rcmsg = 'Created';
+            returnResult.rcmsg = coString.CREATED;
             returnResult.userImg = newUser.profile_img;
             returnResult.userName = newUser.display_name;
             res.status(201).json(returnResult);
         } catch (error) {
             if(error.original && error.original.errno === 1062){
-                throw new Conflict('UserName Conflict');
+                throw new Conflict(coString.EXISTED_NAME);
             }
             throw new InternalServerError
         }
@@ -102,9 +103,9 @@ const checkUserId = async(req, res) => {
     logger.info(`Checking [${req.body.userId}]...`);
     const user = await UserSchema.findOneUser(req.body.userId + ':custom');
     if(user){
-        res.json({rc: 201, rcmsg: 'userId which is existed'});
+        res.json({rc: 201, rcmsg: coString.EXISTED_ID});
     }else{
-        res.json({rc: 200, rcmsg: 'userId which is not existed'});
+        res.json({rc: 200, rcmsg: coString.NOT_FOUND_USER_ID});
     }
 }
 
@@ -113,10 +114,10 @@ const getUserInfo = async(req, res) => {
     let returnResult = {};
     const user = await UserSchema.findOneUser(req.params.id);
     if(!user){
-        throw new NotFound('userId which was not existed');
+        throw new NotFound(coString.NOT_FOUND_USER_ID);
     }
     returnResult.rc = 200;
-    returnResult.rcmsg = 'OK';
+    returnResult.rcmsg = coString.SUCCESS;
     returnResult.userId = user.user_id;
     returnResult.userImg = user.profile_img;
     returnResult.userName = user.display_name;
@@ -138,12 +139,12 @@ const changeUserName = async(req, res) => {
             throw new InternalServerError
         }
         returnResult.rc = 200;
-        returnResult.rcmsg = 'OK';
+        returnResult.rcmsg = coString.SUCCESS;
         returnResult.userName = req.body.userName;
         res.send(returnResult);
     } catch (error) {
         if(error.original.errno === 1062){
-            throw new Conflict('UserName Conflict');
+            throw new Conflict(coString.EXISTED_NAME);
         }
         throw new InternalServerError
     }
@@ -160,7 +161,7 @@ const changeUserImage = async(req, res) => {
         throw new InternalServerError
     }
     returnResult.rc = 200;
-    returnResult.rcmsg = 'OK';
+    returnResult.rcmsg = coString.SUCCESS;
     returnResult.profileImg = profileImg;
     res.send(returnResult);
 }
@@ -168,7 +169,7 @@ const changeUserImage = async(req, res) => {
 const changePassword = async(req, res) => {
     logger.info(`Changing user's password of [${req.session.userId}] ...`);
     const findUserId = await UserSchema.findOneUser(req.session.userId);
-    if(!findUserId){ throw new Unauthorized('No userId from DB') }
+    if(!findUserId){ throw new Unauthorized(coString.ERR_EMAIL) }
     const existedDigest = crypto.pbkdf2Sync(req.body.existedSecretKey, findUserId.salt, 10000, 64, 'sha512').toString('base64')
     const salt = (await crypto.randomBytes(32)).toString('hex');
     const digest = crypto.pbkdf2Sync(req.body.newSecretKey, salt, 10000, 64, 'sha512').toString('base64')
@@ -178,9 +179,9 @@ const changePassword = async(req, res) => {
         salt,
         existedDigest);
     if(updatedCnt) {
-        res.json({rc: 200, rcmsg: 'OK'});
+        res.json({rc: 200, rcmsg: coString.SUCCESS});
     }else{
-        res.json({rc: 402, rcmsg: 'No userId or No secretKey from DB'});
+        res.json({rc: 402, rcmsg: coString.ERR_PASSWORD});
     }
 }
 
@@ -198,16 +199,18 @@ const temporaryPassword = async(req, res) => {
         salt
         );
     if(updatedCnt) {
-        res.json({rc: 200, rcmsg: 'OK'});
+        res.json({rc: 200, rcmsg: coString.SUCCESS});
     }else{
-        throw new NotFound('No UserId');
+        throw new NotFound(coString.NOT_FOUND_USER_ID);
     }
 }
 
 const confirmPassword = async(req, res) => {
     logger.info(`Sending user's encrypt for password of [${req.body.email}] to Email...`);
+    const findUserId = await UserSchema.findOneUser(req.session.userId);
+    if(!findUserId){ throw new Unauthorized(coString.ERR_EMAIL) }
     await sendEmail(req.body.email);
-    res.json({rc: 200, rcmsg: 'OK'});
+    res.json({rc: 200, rcmsg: coString.SUCCESS});
 }
 
 const signOut = async(req, res) => {
@@ -217,7 +220,7 @@ const signOut = async(req, res) => {
             throw new InternalServerError;
         }else{
             res.clearCookie('connect.sid');
-            res.json({rc: 200, rcmsg: 'OK'});
+            res.json({rc: 200, rcmsg: coString.SUCCESS});
         }
     })
 }
@@ -238,7 +241,7 @@ const withdrawal = async(req, res) => {
         }
         // 해당 산책의 점수 랭킹점수 삭제
         await RankSchema.delete(userId);
-        res.json({rc: 200, rcmsg: 'OK'});
+        res.json({rc: 200, rcmsg: coString.SUCCESS});
         res.clearCookie('connect.sid');
         req.session.destroy();
         await t.commit();
