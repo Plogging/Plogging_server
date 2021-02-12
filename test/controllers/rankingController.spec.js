@@ -4,7 +4,7 @@ const sinon = require('sinon')
 const httpMocks = require('node-mocks-http')
 const proxyquire = require('proxyquire')
 const { NotFound } = require('throw.js')
-const { expect } = require('chai')
+const { expect } = chai
 
 chai.use(chaiAsPromised)
 
@@ -68,8 +68,6 @@ describe("rankingController test", () => {
                 findOneUser: findOneUser
             }
         }))
-
-        const expect = chai.expect
     })
 
     it("getGlobalRank should create response in expected way", async () => {
