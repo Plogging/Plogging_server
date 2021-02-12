@@ -639,7 +639,7 @@ paths:
               rcmsg:
                 type: string
                 example: Internal Server Error
-  /user/password-temp:
+  /user/password/confirm:
     put:
       summary: 임시 비밀번호 발급
       tags: [User]

@@ -1,0 +1,16 @@
+<html>
+    <head>
+        <link rel='stylesheet' href='/stylesheets/style.css' />
+    </head>
+    <body>
+        <div>
+            <p>비밀번호 확인 메일입니다.</p>
+            <p>아래의 버튼을 클릭하면 임시 비밀번호가 아래 이메일로 발송됩니다.</p>
+            <form action="http://localhost:20000/user/password/temp" method="POST" target="iframe1">
+                <input type='hidden' name = "email" value = <%= name %> />
+                <input type = "submit" value = "전송"/>
+            </form>
+        </div>
+        <iframe id="iframe1" name="iframe1" style="display:none; width:1px; height:1px; border:0;"></iframe>
+    </body>
+</html>

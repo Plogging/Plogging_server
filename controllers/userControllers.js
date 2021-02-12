@@ -185,6 +185,8 @@ const changePassword = async(req, res) => {
 }
 
 const temporaryPassword = async(req, res) => {
+    console.log(req)
+    console.log()
     logger.info(`Sending user's password of [${req.body.email}] to Email...`);
     const tempPassword = Math.random().toString(36).slice(2);
     await sendEmail(req.body.email, tempPassword);
@@ -200,6 +202,12 @@ const temporaryPassword = async(req, res) => {
     }else{
         throw new NotFound('No UserId');
     }
+}
+
+const confirmPassword = async(req, res) => {
+    logger.info(`Sending user's encrypt for password of [${req.body.email}] to Email...`);
+    await sendEmail(req.body.email);
+    res.json({rc: 200, rcmsg: 'OK'});
 }
 
 const signOut = async(req, res) => {
@@ -241,9 +249,9 @@ const withdrawal = async(req, res) => {
 }
 
 const sendEmail = async(userEmail, tempPassword) => {
-    let emailStringList = ['signUp', '[Eco run] 회원가입을 축하합니다!'];
+    let emailStringList = ['confirmPassword', '[Eco run] 임시 비밀번호 확인 메일입니다'];
     if(tempPassword){
-        emailStringList = ['password', '[Eco run] 임시 비밀번호 입니다'];
+        emailStringList = ['updatePassword', '[Eco run] 임시 비밀번호 입니다'];
     }
     let transporter = nodemailer.createTransport({
         service: 'gmail',
@@ -286,6 +294,7 @@ module.exports = {
     changeUserImage,
     changePassword,
     temporaryPassword,
+    confirmPassword,
     signOut,
     withdrawal
 }
