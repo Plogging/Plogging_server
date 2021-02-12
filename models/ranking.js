@@ -1,4 +1,5 @@
 const redisClient = require('../config/redisConfig.js')
+const logger = require("../util/logger.js")("ranking.js")
 
 const RankSchema = {}
 
@@ -11,6 +12,7 @@ RankSchema.SCORE_MONTHLY = "score_monthly"
 
 RankSchema.getCountAndRankDataWithScores = async (rankType, cntPerPage, pageNumber) => {
     // TODO: rankType이 SCORE_WEEKLY나 SCORE_MONTHLY가 아닐 경우 throw
+    logger.info(`Trying to get ${rankType} global rank data from Redis.`)
     const [zcountResult, zrevrangeResult] = await redisClient.multi()
     .zcount(rankType, "-inf", "+inf")
     .zrevrange(rankType, cntPerPage * (pageNumber - 1), cntPerPage * pageNumber - 1, "withscores")
@@ -52,6 +54,7 @@ RankSchema.getUserScore = async (rankType, userId) => {
 
 RankSchema.getUserRankAndScore = async (rankType, userId) => {
     // TODO: rankType이 SCORE_WEEKLY나 SCORE_MONTHLY가 아닐 경우 throw
+    logger.info(`Trying to get ${rankType} user rank data of ${userId} from Redis.`)
     const [zrankResult, zscoreResult] = await redisClient.multi()
     .zrevrank(rankType, userId)
     .zscore(rankType, userId)
