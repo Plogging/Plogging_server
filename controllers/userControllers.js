@@ -21,8 +21,8 @@ const signIn = async(req, res) => {
     if(!findUserId){ throw new Unauthorized(coString.ERR_AUTHORIZATION) }
     const digest = crypto.pbkdf2Sync(req.body.secretKey, findUserId.salt, 10000, 64, 'sha512').toString('base64')
     const user = await UserSchema.findOneUser(userId, digest);
-    console.log(userId, digest)
     if(!user){ throw new Unauthorized(coString.ERR_AUTHORIZATION) }
+    await UserSchema.updateSignInDate(userId);
     req.session.userId = userId;
     returnResult.rc = 200;
     returnResult.rcmsg = coString.SUCCESS;
@@ -186,11 +186,9 @@ const changePassword = async(req, res) => {
 }
 
 const temporaryPassword = async(req, res) => {
-    console.log(req)
-    console.log()
     logger.info(`Sending user's password of [${req.body.email}] to Email...`);
     const tempPassword = Math.random().toString(36).slice(2);
-    await sendEmail(req.body.email, tempPassword);
+    await sendEmail('tempPassword', req.body.email, tempPassword);
     const salt = (await crypto.randomBytes(32)).toString('hex');
     const digest = crypto.pbkdf2Sync(tempPassword, salt, 10000, 64, 'sha512').toString('base64')
     const [updatedCnt] = await UserSchema.changeUserPassword(
@@ -209,7 +207,7 @@ const confirmPassword = async(req, res) => {
     logger.info(`Sending user's encrypt for password of [${req.body.email}] to Email...`);
     const findUserId = await UserSchema.findOneUser(req.session.userId);
     if(!findUserId){ throw new Unauthorized(coString.ERR_EMAIL) }
-    await sendEmail(req.body.email);
+    await sendEmail('confirmPassword',req.body.email);
     res.json({rc: 200, rcmsg: coString.SUCCESS});
 }
 
@@ -251,10 +249,19 @@ const withdrawal = async(req, res) => {
     }
 }
 
-const sendEmail = async(userEmail, tempPassword) => {
+const sendEmail = async(type, userEmail, tempPassword) => {
     let emailStringList = ['confirmPassword', '[Eco run] 임시 비밀번호 확인 메일입니다'];
-    if(tempPassword){
-        emailStringList = ['updatePassword', '[Eco run] 임시 비밀번호 입니다'];
+    switch(type) {
+        case 'confirmPassword':
+            emailStringList = ['confirmPassword', '[Eco run] 임시 비밀번호 확인 메일입니다']
+            break;
+        case 'tempPassword':
+            emailStringList = ['tempPassword', '[Eco run] 임시 비밀번호 입니다'];
+            break;
+        case 'inactiveAccount':
+            emailStringList = ['inactiveAccount', '[Eco run] 휴면 계정 알림입니다.'];
+            break;
+        default:
     }
     let transporter = nodemailer.createTransport({
         service: 'gmail',
@@ -299,5 +306,6 @@ module.exports = {
     temporaryPassword,
     confirmPassword,
     signOut,
-    withdrawal
+    withdrawal,
+    sendEmail
 }

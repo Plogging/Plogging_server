@@ -51,6 +51,14 @@ module.exports = ((sequelize,DataTypes)=>{
         trash_week:{
             type: DataTypes.INTEGER,
             defaultValue: 0
+        },
+        last_signin:{
+            type: DataTypes.DATE,
+            defaultValue: DataTypes.NOW
+        },
+        active_account:{
+            type: DataTypes.BOOLEAN,
+            defaultValue: 1
         }
     },{
         timestamps: true,
