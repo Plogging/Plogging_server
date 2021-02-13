@@ -12,6 +12,7 @@ const RankSchema = require('../models/ranking');
 const PloggingSchema = require('../models/plogging');
 const crypto = require('crypto');
 const coString = require('../util/commonString');
+let timer
 
 const signIn = async(req, res) => {
     const userId = req.body.userId + ':custom';
@@ -19,10 +20,19 @@ const signIn = async(req, res) => {
     logger.info(`Logging in with [${userId}] ...`);
     const findUserId = await UserSchema.findOneUser(userId);
     if(!findUserId){ throw new Unauthorized(coString.ERR_AUTHORIZATION) }
+    if(findUserId.err_count === 4) throw new Unauthorized(coString.ERR_PASSWORD_COUNT);
     const digest = crypto.pbkdf2Sync(req.body.secretKey, findUserId.salt, 10000, 64, 'sha512').toString('base64')
     const user = await UserSchema.findOneUser(userId, digest);
-    if(!user){ throw new Unauthorized(coString.ERR_AUTHORIZATION) }
+    if(!user){
+        await passwordErr(userId);
+        clearTimeout(timer);
+        timer = setTimeout(passwordErr, 1000 * 60 * 5, userId, 1);
+        if(findUserId.err_count === 3) throw new Unauthorized(coString.ERR_PASSWORD_ALERT);
+        else throw new Unauthorized(coString.ERR_AUTHORIZATION) 
+    }
     await UserSchema.updateSignInDate(userId);
+    await passwordErr(userId, 1);
+    clearTimeout(timer);
     req.session.userId = userId;
     returnResult.rc = 200;
     returnResult.rcmsg = coString.SUCCESS;
@@ -292,6 +302,10 @@ const sendEmail = async(type, userEmail, tempPassword) => {
             password: tempPassword
         }})
         .then((logger.info(`${userEmail} email has been sent!`)))
+}
+
+const passwordErr = async(userId, init) => {
+    await UserSchema.updateErrCount(userId, init);
 }
 
 module.exports = {

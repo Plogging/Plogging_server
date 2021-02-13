@@ -59,7 +59,11 @@ module.exports = ((sequelize,DataTypes)=>{
         active_account:{
             type: DataTypes.BOOLEAN,
             defaultValue: 1
-        }
+        },
+        err_count:{
+            type: DataTypes.INTEGER,
+            defaultValue: 0
+        },
     },{
         timestamps: true,
         // paranoid : true,

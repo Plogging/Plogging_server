@@ -89,7 +89,7 @@ UserSchema.updateSignInDate = async(userId, t = null) => await User.update({
 },{ where: { user_id: userId }
 },{ transaction: t });
 
-UserSchema.updateInactiveUser = async() => await User.update({
+UserSchema.updateInactiveUser = async(t = null) => await User.update({
     active_account: 0
 },{ where: {last_signin: {
         [Op.lt]: fn(
@@ -97,9 +97,10 @@ UserSchema.updateInactiveUser = async() => await User.update({
             literal('NOW()'),
             literal('INTERVAL 1 YEAR')
         )}
-}});
+}},{ transaction: t });
 
-UserSchema.findInactiveUser = async() => await User.findAll({ where: {
+UserSchema.findInactiveUser = async(t = null) => await User.findAll({ 
+    where: {
         last_signin: {
             [Op.lt]: 
                 fn(
@@ -116,6 +117,17 @@ UserSchema.findInactiveUser = async() => await User.findAll({ where: {
         },
         active_account: 1
     }
-});
+},{ transaction: t });
+
+UserSchema.updateErrCount = async(userId, init = null, t = null) => 
+    init?
+        User.update({
+            err_count: 0
+        },{ where: { user_id: userId }
+        },{ transaction: t }):
+        User.update({
+            err_count: literal('err_count + 1'),
+        },{ where: { user_id: userId }
+        },{ transaction: t })
 
 module.exports = UserSchema;
