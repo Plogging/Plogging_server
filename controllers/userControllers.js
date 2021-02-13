@@ -47,7 +47,7 @@ const social = async(req, res) => {
     const userName = req.body.userName;
     logger.info(`Connecting to [${userId}] from OAuth...`);
     await sequelize.transaction(async (t) => {
-        const user = await UserSchema.findOneUser(userId, null, t);
+        const user = await UserSchema.findOneUser(userId, t);
         if(!user){
             try {
                 let userImg = 'https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg';
@@ -84,7 +84,7 @@ const register = async(req, res) => {
     logger.info(`Registering [${userId}] into maria DB...`);
     
     await sequelize.transaction(async (t) => {
-        const user = await UserSchema.findOneUser(userId, null, t);
+        const user = await UserSchema.findOneUser(userId, t);
         if (user) {
             res.status(410).json({rc: 410, rcmsg: coString.EXISTED_ID});
         }

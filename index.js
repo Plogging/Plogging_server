@@ -1,4 +1,5 @@
 const express = require('express');
+const fs = require('fs');
 const { CustomError, Unauthorized } = require('throw.js')
 
 const userRoutes = require('./routers/user.js');
@@ -14,6 +15,13 @@ const checkInactiveUser=  require('./util/inactiveUserCheck');
 const session = require('express-session');
 const redisStore = require('connect-redis')(session);
 const YAML = require('yamljs');
+
+const http = require('http');
+const https = require('https');
+const sslOptions = {
+    key: fs.readFileSync('./sslFiles/privkey1.pem'),
+    cert: fs.readFileSync('./sslFiles/cert1.pem')
+};
 
 // node-swagger
 const swaggerUi = require('swagger-ui-express');
@@ -35,7 +43,15 @@ const swaggerUi = require('swagger-ui-express');
         }),
         secret: 'plogging', // sessionId를 만들때 key로 쓰이는거 같음
         resave: false,
-        saveUninitialized: false,
+        saveUninitialized: false
+        /**
+         * 쿠키값 설정 
+         *  cookie: {
+         *      httpOnly: true, -> defualt가 true임. true로하면 js코드로 cookie값 접근안되고, 클라가 header에서 쿠키 받을 수 있음. false로 주면
+         *      클라에서 쿠키에 있는 세션id를 못 받으므로 true로 줘야함
+         *      secure: false -> default가 false 임 -> true로 바꾸게되면 https에서만 쿠키값 가져올 수 있음
+         *  }
+         */
     }));
 
     // 전역 설정
@@ -86,8 +102,14 @@ const swaggerUi = require('swagger-ui-express');
         }
     })
 
-    app.listen(globalOption.PORT, function(req, res) {
-        console.log(`server on ${globalOption.PORT} !`);
-    })
+    if(process.env.NODE_ENV === 'local') {
+        http.createServer(app).listen(globalOption.PORT, function(req, res){
+            console.log(`server on ${globalOption.PORT} !`);
+        })
+    } else if(process.env.NODE_ENV === 'development') {
+        https.createServer(sslOptions, app).listen(globalOption.PORT, function(req, res){
+            console.log(`server on ${globalOption.PORT} !`);
+        })
+    }
 })();
 
