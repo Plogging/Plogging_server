@@ -1,0 +1,8 @@
+[
+    {
+        "id": "bot1@fake.com:bot",
+        "name": "나는혜리",
+        "profileImg": "https://nexters.plogging.kro.kr:20000/profile/base/profile-1.PNG",
+        "type": "normalPloggingBot"
+    }
+]

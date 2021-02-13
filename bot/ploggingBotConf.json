@@ -1,0 +1,23 @@
+{
+    "normalPloggingBot": {
+        "ploggingProbability": 0.5,
+        "earliestPloggingHour": 12,
+        "latestPloggingHour": 18,
+        "distanceParams": {
+            "mean": 1000,
+            "dev": 200
+        },
+        "calorieParams": {
+            "mean": 200,
+            "dev": 20
+        },
+        "ploggingTimeParams": {
+            "mean": 120,
+            "dev": 30
+        },
+        "trashCountParams": {
+            "mean": 100,
+            "dev": 10
+        }
+    }
+}

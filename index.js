@@ -11,9 +11,12 @@ const MongoClient = require('./config/mongoConfig.js');
 const swaggerValidation = require('./util/validator.js');
 const {sequelize} = require('./models/index');
 const logger = require("./util/logger.js")("index.js");
+const PloggingBot = require('./bot/PloggingBot')
+
 const session = require('express-session');
 const redisStore = require('connect-redis')(session);
 const YAML = require('yamljs');
+const schedule = require('node-schedule')
 
 const http = require('http');
 const https = require('https');
@@ -86,6 +89,25 @@ const swaggerUi = require('swagger-ui-express');
     app.use('/user', userRoutes);
     app.use('/rank', rankingRoutes); // 랭킹 관련 api는 ranking.js로 포워딩
     app.use('/plogging',ploggingRoutes); // 산책이력 관련 api는 plogging.js로 포워딩        
+
+    // 봇 등록
+    if (process.env.NODE_ENV != "local") {
+        const botInfos = JSON.parse(fs.readFileSync("./bot/bots.json"))
+        const ploggingBotConf = JSON.parse(fs.readFileSync("./bot/ploggingBotConf.json"))
+        const ploggingBots = []
+        botInfos.forEach(botInfo => {
+            botInfo.conf = ploggingBotConf[botInfo.type]
+            const ploggingBot = new PloggingBot(botInfo.id, botInfo.name, botInfo.profileImg,
+                botInfo.conf)
+            // 봇 생성
+            ploggingBot.initialize()
+            ploggingBots.push(ploggingBot)
+        })
+        // 매일 밤 11시에 다음날 플로깅 스케줄링
+        schedule.scheduleJob("0 23 * * *", () => {
+            ploggingBots.forEach(bot => bot.schedulePlogging())
+        })
+    }
 
     // 예외 처리
     // 반드시 라우팅 코드 이후에 위치해야 함
