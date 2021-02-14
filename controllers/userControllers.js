@@ -21,8 +21,8 @@ const signIn = async(req, res) => {
     logger.info(`Logging in with [${userId}] ...`);
     const findUserId = await UserSchema.findOneUser(userId);
     if(!findUserId){ throw new Unauthorized(coString.ERR_AUTHORIZATION) }
-    if(findUserId.err_count === 4) throw new Unauthorized(coString.ERR_PASSWORD_COUNT);
-    const digest = crypto.pbkdf2Sync(req.body.secretKey, findUserId.salt, 10000, 64, 'sha512').toString('base64')
+    if(findUserId.err_count === 4) throw new Unauthorized(coString.ERR_TOO_MANY_FAILED_ATTEMPT);
+    const digest = crypto.pbkdf2Sync(req.body.secretKey, findUserId.salt, 10000, 64, 'sha512').toString('base64');
     const user = await UserSchema.findOneUser(userId, digest);
     if(!user){
         await passwordErr(userId);
