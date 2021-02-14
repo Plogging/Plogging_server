@@ -12,7 +12,7 @@ const {sequelize} = require('../models/index');
 const RankSchema = require('../models/ranking');
 const PloggingSchema = require('../models/plogging');
 const crypto = require('crypto');
-const coString = require('../util/commonString');
+const coString = require('../util/userConstMsg');
 let timer
 
 const signIn = async(req, res) => {
@@ -114,7 +114,7 @@ const checkUserId = async(req, res) => {
     logger.info(`Checking [${req.body.userId}]...`);
     const user = await UserSchema.findOneUser(req.body.userId + ':custom');
     if(user){
-        res.json({rc: 201, rcmsg: coString.EXISTED_ID});
+        res.status(201).json({rc: 201, rcmsg: coString.EXISTED_ID});
     }else{
         res.json({rc: 200, rcmsg: coString.NOT_FOUND_USER_ID});
     }
@@ -192,7 +192,7 @@ const changePassword = async(req, res) => {
     if(updatedCnt) {
         res.json({rc: 200, rcmsg: coString.SUCCESS});
     }else{
-        res.json({rc: 402, rcmsg: coString.ERR_PASSWORD});
+        res.status(402).json({rc: 402, rcmsg: coString.ERR_PASSWORD});
     }
 }
 
