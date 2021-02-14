@@ -7,6 +7,7 @@ const UserSchema = require('../models/user.js');
 const filePath = process.env.IMG_FILE_PATH;
 const adminEmailId = process.env.ADMIN_EMAIL_ID;
 const adminEmailPassword = process.env.ADMIN_EMAIL_PASSWORD;
+const serverUrl = process.env.SERVER_REQ_INFO;
 const {sequelize} = require('../models/index');
 const RankSchema = require('../models/ranking');
 const PloggingSchema = require('../models/plogging');
@@ -299,7 +300,8 @@ const sendEmail = async(type, userEmail, tempPassword) => {
         },
         locals: {
             name: userEmail,
-            password: tempPassword
+            password: tempPassword,
+            url: serverUrl + '/user/password/temp'
         }})
         .then((logger.info(`${userEmail} email has been sent!`)))
 }
