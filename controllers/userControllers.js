@@ -4,7 +4,7 @@ const logger = require("../util/logger.js")("user.js");
 const fs = require('fs');
 const { NotFound, Unauthorized, Conflict, InternalServerError } = require('throw.js')
 const UserSchema = require('../models/user.js');
-const filePath = process.env.IMG_FILE_PATH;
+const filePath = process.env.IMG_FILE_PATH + "/profile/";
 const adminEmailId = process.env.ADMIN_EMAIL_ID;
 const adminEmailPassword = process.env.ADMIN_EMAIL_PASSWORD;
 const {sequelize} = require('../models/index');
@@ -34,7 +34,7 @@ const social = async(req, res) => {
         const user = await UserSchema.findOneUser(userId, t);
         if(!user){
             try {
-                let userImg = 'https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg';
+                let userImg = `${process.env.SERVER_REQ_INFO}/profile/base/profile-${Math.floor(( Math.random() * 3) + 1)}.PNG`;
                 const newUser = await UserSchema.createUser(userId, userName, userImg, null, t);
                 req.session.userId = newUser.user_id;
                 returnResult.rc = 201;
@@ -73,7 +73,7 @@ const register = async(req, res) => {
         }
         try {
             // set userImg
-            let userImg = 'https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg';
+            let userImg = `${process.env.SERVER_REQ_INFO}/profile/base/profile-${Math.floor(( Math.random() * 3) + 1)}.PNG`;
             const newUser = await UserSchema.createUser(userId, userName, userImg, secretKey, t);
             req.session.userId = newUser.user_id;
             returnResult.rc = 201;
@@ -144,7 +144,7 @@ const changeUserName = async(req, res) => {
 const changeUserImage = async(req, res) => {
     logger.info(`Changing user's image of [${req.session.userId}] ...`);
     let returnResult = {};
-    const profileImg = req.file.path;
+    const profileImg = process.env.SERVER_REQ_INFO + '/' + req.file.path.split(`${process.env.IMG_FILE_PATH}/`)[1];
     // TODO: sql 오류에도 파일 이미지는 정상으로 바뀜
     // TODO: 추후 서버 연결 시 경로 변경
     const [updatedCnt] = await UserSchema.updateUserImg(req.session.userId, profileImg);
@@ -206,8 +206,8 @@ const withdrawal = async(req, res) => {
     try {   
         await PloggingSchema.deletePloggingsModel(userId);
         // 탈퇴 유저의 산책이력 이미지 전체 삭제
-        if(fs.existsSync(`${filePath}/${userId}`)){
-            fs.rmdirSync(`${filePath}/${userId}`, { recursive: true });
+        if(fs.existsSync(`${filePath}${userId}`)){
+            fs.rmdirSync(`${filePath}${userId}`, { recursive: true });
         }
         // 해당 산책의 점수 랭킹점수 삭제
         await RankSchema.delete(userId);
