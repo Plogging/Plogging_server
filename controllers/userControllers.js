@@ -41,7 +41,7 @@ const social = async(req, res) => {
         const user = await UserSchema.findOneUser(userId, t);
         if(!user){
             try {
-                let userImg = 'https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg';
+                let userImg = initProfileImg();
                 const newUser = await UserSchema.createUser(userId, userName, userImg, null, null, t);
                 req.session.userId = newUser.user_id;
                 returnResult.rc = 201;
@@ -81,7 +81,7 @@ const register = async(req, res) => {
         }
         try {
             // set userImg
-            let userImg = 'https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg';
+            let userImg = initProfileImg();
             const salt = (await crypto.randomBytes(32)).toString('hex');
             const digest = crypto.pbkdf2Sync(secretKey, salt, 10000, 64, 'sha512').toString('base64');
             const newUser = await UserSchema.createUser(userId, userName, userImg, digest, salt, t);
@@ -295,6 +295,10 @@ const sendEmail = async(type, userEmail, tempPassword) => {
             url: serverUrl + '/user/password/temp'
         }})
         .then((logger.info(`${userEmail} email has been sent!`)))
+}
+
+const initProfileImg = () => {
+    return `https://nexters.plogging.kro.kr:20000/profile/base/profile-${Math.floor(( Math.random() * 3 ) + 1)}.PNG`
 }
 
 const passwordErr = async(userId, init) => {
