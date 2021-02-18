@@ -24,7 +24,7 @@ const getUserRank = async (req, res) => {
     const targetUserId = req.params.id
     logger.info(`Fetching ${rankType} rank of user ${targetUserId} from redis...`)
     const [rank, score] = await RankSchema.getUserRankAndScore(rankType, targetUserId)
-    if (!rank || !score) {
+    if (rank == null || score == null) {
         throw new NotFound("User data doesn't exist in Redis.")
     }
     const { userId, displayName, profileImg } = await getUserInfo(targetUserId)
