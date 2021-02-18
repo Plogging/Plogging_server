@@ -40,7 +40,7 @@ paths:
                 example: OK
               userImg:
                 type: string
-                example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
+                example: https://nexters.plogging.kro.kr:20000/profile/base/profile-1.PNG
               userName:
                 type: string
                 example: 쓰담이
@@ -111,7 +111,7 @@ paths:
                 example: OK
               userImg:
                 type: string
-                example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
+                example: https://nexters.plogging.kro.kr:20000/profile/base/profile-1.PNG
               userName:
                 type: string
                 example: 쓰담이
@@ -125,10 +125,10 @@ paths:
                 example: 201
               rcmsg:
                 type: string
-                example: Created
+                example: 생성되었습니다.
               userImg:
                 type: string
-                example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
+                example: https://nexters.plogging.kro.kr:20000/profile/base/profile-1.PNG
               userName:
                 type: string
                 example: 쓰담이
@@ -200,10 +200,10 @@ paths:
                 example: 201
               rcmsg:
                 type: string
-                example: Created
+                example: 생성되었습니다.
               userImg:
                 type: string
-                example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
+                example: https://nexters.plogging.kro.kr:20000/profile/base/profile-1.PNG
               userName:
                 type: string
                 example: 쓰담이
@@ -378,7 +378,7 @@ paths:
                 example: abc@naver.com:naver
               userImg:
                 type: string
-                example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
+                example: https://nexters.plogging.kro.kr:20000/profile/base/profile-1.PNG
               userName:
                 type: string
                 example: 쓰담이
@@ -540,7 +540,7 @@ paths:
                 example: OK
               userImg:
                 type: string
-                example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
+                example: https://nexters.plogging.kro.kr:20000/profile/base/profile-1.PNG
         401:
           description: Unauthorized (sessionKey 유효하지 않을 때)
           schema:
