@@ -11,7 +11,6 @@ const MongoClient = require('./config/mongoConfig.js');
 const swaggerValidation = require('./util/validator.js');
 const {sequelize} = require('./models/index');
 const logger = require("./util/logger.js")("index.js");
-const checkInactiveUser=  require('./util/inactiveUserCheck');
 const session = require('express-session');
 const redisStore = require('connect-redis')(session);
 const YAML = require('yamljs');
@@ -57,7 +56,6 @@ const swaggerUi = require('swagger-ui-express');
     // 전역 설정
     const globalOption = {};
     globalOption.PORT = process.env.PORT;
-    checkInactiveUser()
     app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument)); // node-swaggwer
     app.use("/", function(req, res, next) {
         logger.info(JSON.stringify(req.headers));

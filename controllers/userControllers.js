@@ -13,7 +13,6 @@ const RankSchema = require('../models/ranking');
 const PloggingSchema = require('../models/plogging');
 const crypto = require('crypto');
 const coString = require('../util/userConstMsg');
-let timer
 
 const signIn = async(req, res) => {
     const userId = req.body.userId + ':custom';
@@ -21,19 +20,10 @@ const signIn = async(req, res) => {
     logger.info(`Logging in with [${userId}] ...`);
     const findUserId = await UserSchema.findOneUser(userId);
     if(!findUserId){ throw new Unauthorized(coString.ERR_AUTHORIZATION) }
-    if(findUserId.err_count === 4) throw new Unauthorized(coString.ERR_TOO_MANY_FAILED_ATTEMPT);
     const digest = crypto.pbkdf2Sync(req.body.secretKey, findUserId.salt, 10000, 64, 'sha512').toString('base64');
     const user = await UserSchema.findOneUser(userId, digest);
-    if(!user){
-        await passwordErr(userId);
-        clearTimeout(timer);
-        timer = setTimeout(passwordErr, 1000 * 60 * 5, userId, 1);
-        if(findUserId.err_count === 3) throw new Unauthorized(coString.ERR_PASSWORD_ALERT);
-        else throw new Unauthorized(coString.ERR_AUTHORIZATION) 
-    }
+    if(!user) throw new Unauthorized(coString.ERR_AUTHORIZATION) 
     await UserSchema.updateSignInDate(userId);
-    await passwordErr(userId, 1);
-    clearTimeout(timer);
     req.session.userId = userId;
     returnResult.rc = 200;
     returnResult.rcmsg = coString.SUCCESS;
@@ -261,6 +251,7 @@ const withdrawal = async(req, res) => {
 }
 
 const sendEmail = async(type, userEmail, tempPassword) => {
+    console.log(serverUrl);
     let emailStringList = ['confirmPassword', '[Eco run] 임시 비밀번호 확인 메일입니다'];
     switch(type) {
         case 'confirmPassword':
