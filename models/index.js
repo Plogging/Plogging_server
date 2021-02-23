@@ -2,7 +2,6 @@ const Sequelize = require('sequelize');
 const env = process.env.NODE_ENV;
 const config = require(__dirname + '/../config/sequelizeConfig.js')[env];
 
-
 const db = {};
 const dbPool = { // default size
   max: 5,
