@@ -73,7 +73,6 @@ const writePlogging = async function (req, res) {
 
     const ploggingScoreArr = calcPloggingScore(ploggingObj);
     const ploggingTotalScore = Number(ploggingScoreArr[0] + ploggingScoreArr[1]);
-    const ploggingDistance = ploggingObj.meta.distance;
     const pickList = ploggingObj.trash_list;
     const pickCount = calPickCount(pickList);
     ploggingObj.meta.plogging_total_score = ploggingTotalScore;
@@ -83,19 +82,12 @@ const writePlogging = async function (req, res) {
     if (req.file === undefined) ploggingObj.meta.plogging_img = `${process.env.SERVER_REQ_INFO}/plogging/baseImg.PNG`;
     else ploggingObj.meta.plogging_img = process.env.SERVER_REQ_INFO + '/' + req.file.path.split(`${process.env.IMG_FILE_PATH}/`)[1];
 
-    await sequelize.transaction(async (t) => {
-        //  rds -> redis로 대체
-        // 주간 (점수, 쓰레기 주운 수, 거리)
-        // 월간 (점수, 쓰레기 주운 수, 거리)
- 
-        // mongodb update
-        await PloggingSchema.writePloggingModel(ploggingObj);
+    // mongodb update
+    await PloggingSchema.writePloggingModel(ploggingObj);
 
-        // redis update
-        await RankSchema.update(userId, ploggingTotalScore);
-
-        res.status(200).json(returnResult);
-    });
+    // redis update
+    await RankSchema.update(userId, ploggingTotalScore);
+    res.status(200).json(returnResult);
 }
 
 /*
