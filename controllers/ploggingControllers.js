@@ -84,21 +84,10 @@ const writePlogging = async function (req, res) {
     else ploggingObj.meta.plogging_img = process.env.SERVER_REQ_INFO + '/' + req.file.path.split(`${process.env.IMG_FILE_PATH}/`)[1];
 
     await sequelize.transaction(async (t) => {
-        const userData = await User.findOneUser(userId, t);
-        const updatedPloggingData = {};
-        // 주간
-        updatedPloggingData.scoreWeek = userData.score_week + ploggingTotalScore;
-        updatedPloggingData.distanceWeek = userData.distance_week + ploggingDistance;
-        updatedPloggingData.trashWeek = userData.trash_week + pickCount;
-
-        // 월간
-        updatedPloggingData.scoreMonth = userData.score_month + ploggingTotalScore;
-        updatedPloggingData.distanceMonth = userData.distance_month + ploggingDistance;
-        updatedPloggingData.trashMonth = userData.trash_month + pickCount;
-
-        // mariadb update
-        await User.updateUserPloggingData(updatedPloggingData, userId, t);
-
+        //  rds -> redis로 대체
+        // 주간 (점수, 쓰레기 주운 수, 거리)
+        // 월간 (점수, 쓰레기 주운 수, 거리)
+ 
         // mongodb update
         await PloggingSchema.writePloggingModel(ploggingObj);
 

@@ -58,14 +58,4 @@ UserSchema.deleteUser = async(userId, t = null) => await User.destroy({
     where: {user_id: userId}
 }, { transaction: t});
 
-UserSchema.updateUserPloggingData = async(updatedPloggingData, userId, t = null) => await User.update({ 
-        score_week: Number(updatedPloggingData.scoreWeek),
-        distance_week: Number(updatedPloggingData.distanceWeek),
-        trash_week: Number(updatedPloggingData.trashWeek),
-        score_month: Number(updatedPloggingData.scoreMonth),
-        distance_month: Number(updatedPloggingData.distanceMonth),
-        trash_month: Number(updatedPloggingData.trashMonth)
-    },{ where: { user_id: userId } 
-    },{ transaction: t });
-
 module.exports = UserSchema;

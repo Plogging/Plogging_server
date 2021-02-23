@@ -25,30 +25,6 @@ module.exports = ((sequelize,DataTypes)=>{
         secret_key:{
             type: DataTypes.STRING
         },
-        score_month:{
-            type: DataTypes.INTEGER,
-            defaultValue: 0
-        },
-        distance_month:{
-            type: DataTypes.INTEGER,
-            defaultValue: 0
-        },
-        trash_month:{
-            type: DataTypes.INTEGER,
-            defaultValue: 0
-        },
-        score_week:{
-            type: DataTypes.INTEGER,
-            defaultValue: 0
-        },
-        distance_week:{
-            type: DataTypes.INTEGER,
-            defaultValue: 0
-        },
-        trash_week:{
-            type: DataTypes.INTEGER,
-            defaultValue: 0
-        }
     },{
         timestamps: true,
         // paranoid : true,

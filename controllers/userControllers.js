@@ -112,12 +112,14 @@ const getUserInfo = async(req, res) => {
     returnResult.userId = user.user_id;
     returnResult.userImg = user.profile_img;
     returnResult.userName = user.display_name;
-    returnResult.scoreMonthly = user.score_month;
-    returnResult.distanceMonthly = user.distance_month;
-    returnResult.trashMonthly = user.trash_month;
-    returnResult.scoreWeekly = user.score_week;
-    returnResult.distanceWeekly = user.distance_week;
-    returnResult.trashWeekly = user.trash_week;
+
+    // 점수 임의로 0점으로 설정 (아직 레디스 연동안됨)
+    returnResult.scoreMonthly = 0;
+    returnResult.distanceMonthly = 0;
+    returnResult.trashMonthly = 0;
+    returnResult.scoreWeekly = 0;
+    returnResult.distanceWeekly = 0;
+    returnResult.trashWeekly = 0; 
     res.json(returnResult);
 }
 
