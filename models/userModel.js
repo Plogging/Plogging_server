@@ -27,39 +27,7 @@ module.exports = ((sequelize,DataTypes)=>{
         },
         salt:{
             type: DataTypes.STRING
-        },
-        score_month:{
-            type: DataTypes.INTEGER,
-            defaultValue: 0
-        },
-        distance_month:{
-            type: DataTypes.INTEGER,
-            defaultValue: 0
-        },
-        trash_month:{
-            type: DataTypes.INTEGER,
-            defaultValue: 0
-        },
-        score_week:{
-            type: DataTypes.INTEGER,
-            defaultValue: 0
-        },
-        distance_week:{
-            type: DataTypes.INTEGER,
-            defaultValue: 0
-        },
-        trash_week:{
-            type: DataTypes.INTEGER,
-            defaultValue: 0
-        },
-        last_signin:{
-            type: DataTypes.DATE,
-            defaultValue: DataTypes.NOW
-        },
-        active_account:{
-            type: DataTypes.BOOLEAN,
-            defaultValue: 1
-        },
+        }
     },{
         timestamps: true,
         // paranoid : true,

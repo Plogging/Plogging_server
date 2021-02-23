@@ -30,7 +30,13 @@ const swaggerUi = require('swagger-ui-express');
     await MongoClient.connect();
 
     const app = express();
-    sequelize.sync();
+    sequelize.sync({alter: true}).then(()=>{
+        logger.info("success create database");
+    }).catch((err) => {
+        logger.error("fail create database");
+        logger.error(err.stack);
+    });
+
 
     app.use(bodyParser.urlencoded({extended: false}));
     app.use(bodyParser.json());
