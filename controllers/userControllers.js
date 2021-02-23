@@ -42,7 +42,7 @@ const social = async(req, res) => {
         if(!user){
             try {
                 let userImg = `${process.env.SERVER_REQ_INFO}/profile/base/profile-${Math.floor(( Math.random() * 3) + 1)}.PNG`;
-                const newUser = await UserSchema.createUser(userId, userName, userImg, null, t);
+                const newUser = await UserSchema.createUser(userId, userName, userImg, null, null, t);
                 req.session.userId = newUser.user_id;
                 returnResult.rc = 201;
                 returnResult.rcmsg = coString.CREATED;
@@ -50,7 +50,8 @@ const social = async(req, res) => {
                 returnResult.userName = newUser.display_name;
                 res.status(201).json(returnResult);
             } catch (error) {
-                if(error.original.errno === 1062){
+                console.log(error)
+                if(error.original && error.original.errno === 1062){
                     throw new Conflict(coString.EXISTED_NAME);
                 }
                 throw new InternalServerError
@@ -83,7 +84,7 @@ const register = async(req, res) => {
             const salt = (await crypto.randomBytes(32)).toString('hex');
             const digest = crypto.pbkdf2Sync(secretKey, salt, 10000, 64, 'sha512').toString('base64');
             let userImg = `${process.env.SERVER_REQ_INFO}/profile/base/profile-${Math.floor(( Math.random() * 3) + 1)}.PNG`;
-            const newUser = await UserSchema.createUser(userId, userName, userImg, secretKey, t);
+            const newUser = await UserSchema.createUser(userId, userName, userImg, digest, salt, t);
             req.session.userId = newUser.user_id;
             returnResult.rc = 201;
             returnResult.rcmsg = coString.CREATED;
