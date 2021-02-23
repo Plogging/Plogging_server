@@ -56,7 +56,7 @@ paths:
                 type: string
                 example: body should have required property [userId/ secretKey]
         401:
-          description: 비밀번호 4회 오류 시 [한 번더 잘못 입력시 30분간 로그인이 제한됩니다.], 비밀번호 5회 오류 시 [로그인 오류 횟수를 초과했습니다. 잠시후 다시 로그인해주세요.]
+          description: 가입되지 않은 정보이거나 비밀번호가 다릅니다.
           schema:
             type: object
             properties:
