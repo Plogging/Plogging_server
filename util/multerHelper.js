@@ -1,6 +1,6 @@
 const fs = require('fs');
 const util = require('../util/common.js');
-const filePath = process.env.IMG_FILE_PATH;
+const userFilePath = process.env.IMG_FILE_PATH + '/profile/';
 const ploggingFilePath = process.env.IMG_FILE_PATH + '/plogging/';
 const multer = require('multer');
 
@@ -8,9 +8,9 @@ const profileUpload = multer({
     storage: multer.diskStorage({
         destination: function (req, file, cb) {
             const userId = req.userId; // 세션체크 완료하면 값 받아옴
-            const dir = `${filePath}/${userId}`;
-            if(!fs.existsSync(filePath)){
-                fs.mkdirSync(filePath);
+            const dir = `${userFilePath}/${userId}`;
+            if(!fs.existsSync(userFilePath)){
+                fs.mkdirSync(userFilePath);
             }
             if (!fs.existsSync(dir)){
                 fs.mkdirSync(dir);

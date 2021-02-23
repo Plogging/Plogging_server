@@ -5,7 +5,7 @@ const UserSchema = {};
 const now = new Date();
 
 UserSchema.findOneUser = async(userId, secretKey = null, t = null) => 
-    secretKey? 
+    secretKey?
         await User.findOne({
             where: {
                 user_id: userId,
@@ -118,16 +118,5 @@ UserSchema.findInactiveUser = async(t = null) => await User.findAll({
         active_account: 1
     }
 },{ transaction: t });
-
-UserSchema.updateErrCount = async(userId, init = null, t = null) => 
-    init?
-        User.update({
-            err_count: 0
-        },{ where: { user_id: userId }
-        },{ transaction: t }):
-        User.update({
-            err_count: literal('err_count + 1'),
-        },{ where: { user_id: userId }
-        },{ transaction: t })
 
 module.exports = UserSchema;
