@@ -11,16 +11,20 @@ module.exports = ((sequelize,DataTypes)=>{
             allowNull: false,
         },
         display_name:{
-            type: DataTypes.STRING(50)
+            type: DataTypes.STRING(50),
+            allowNull: false,
         },
         profile_img :{
-            type: DataTypes.STRING
+            type: DataTypes.STRING,
+            allowNull: false,
         },
         type:{
-            type: DataTypes.STRING(50)
+            type: DataTypes.STRING(50),
+            allowNull: false,
         },
         email:{
-            type: DataTypes.STRING(50)
+            type: DataTypes.STRING(50),
+            allowNull: false,
         },
         digest:{
             type: DataTypes.STRING
