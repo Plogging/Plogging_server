@@ -2,8 +2,12 @@ const redisClient = require('../config/redisConfig.js')
 
 const RankSchema = {}
 
-RankSchema.WEEKLY = "weekly"
-RankSchema.MONTHLY = "monthly"
+RankSchema.DISTANCE_WEEKLY = "distance_weekly"
+RankSchema.DISTANCE_MONTHLY = "distance_monthly"
+RankSchema.TRASH_WEEKLY = "trash_weekly"
+RankSchema.TRASH_MONTHLY = "trash_monthly"
+RankSchema.SCORE_WEEKLY = "score_weekly"
+RankSchema.SCORE_MONTHLY = "score_monthly"
 
 RankSchema.getCountAndRankDataWithScores = async (rankType, cntPerPage, pageNumber) => {
     // TODO: rankType이 weekly나 monthly가 아닐 경우 throw
@@ -16,8 +20,20 @@ RankSchema.getCountAndRankDataWithScores = async (rankType, cntPerPage, pageNumb
     return [count, rankDataWithScores]
 }
 
+RankSchema.getUserDistance = async (distanceType, userId) => {
+    // TODO: distanceType이 DISTANCE_WEEKLY나 DISTANCE_MONTHLY가 아닐 경우 throw
+    const userDistance = await redisClient.hget(distanceType, userId)
+    return userDistance
+}
+
+RankSchema.getUserNumTrash = async (numTrashType, userId) => {
+    // TODO: numTrashType이 TRASH_WEEKLY나 TRASH_MONTHLY가 아닐 경우 throw
+    const userNumTrash = await redisClient.hget(numTrashType, userId)
+    return userNumTrash
+}
+
 RankSchema.getUserRankAndScore = async (rankType, userId) => {
-    // TODO: rankType이 weekly나 monthly가 아닐 경우 throw
+    // TODO: rankType이 SCORE_WEEKLY나 SCORE_MONTHLY가 아닐 경우 throw
     const [zrankResult, zscoreResult] = await redisClient.multi()
     .zrevrank(rankType, userId)
     .zscore(rankType, userId)
@@ -27,17 +43,45 @@ RankSchema.getUserRankAndScore = async (rankType, userId) => {
     return [rank, score]
 }
 
-RankSchema.update = async (userId, score) => {
+RankSchema.updateDistance = async (userId, distance) => {
     await redisClient.multi()
-    .zincrby(RankSchema.WEEKLY, score, userId)
-    .zincrby(RankSchema.MONTHLY, score, userId)
+    .hincrby(RankSchema.DISTANCE_WEEKLY, userId, distance)
+    .hincrby(RankSchema.DISTANCE_MONTHLY, userId, distance)
     .exec()
 }
 
-RankSchema.delete = async (userId) => {
+RankSchema.updateTrash = async (userId, numTrash) => {
     await redisClient.multi()
-    .zrem(RankSchema.WEEKLY, userId)
-    .zrem(RankSchema.MONTHLY, userId)
+    .hincrby(RankSchema.TRASH_WEEKLY, userId, numTrash)
+    .hincrby(RankSchema.TRASH_MONTHLY, userId, numTrash)
+    .exec()
+}
+
+RankSchema.updateScore = async (userId, score) => {
+    await redisClient.multi()
+    .zincrby(RankSchema.SCORE_WEEKLY, score, userId)
+    .zincrby(RankSchema.SCORE_MONTHLY, score, userId)
+    .exec()
+}
+
+RankSchema.deleteDistance = async (userId) => {
+    await redisClient.multi()
+    .hdel(RankSchema.DISTANCE_WEEKLY, userId)
+    .hdel(RankSchema.DISTANCE_MONTHLY, userId)
+    .exec()
+}
+
+RankSchema.deleteTrash = async (userId) => {
+    await redisClient.multi()
+    .hdel(RankSchema.TRASH_WEEKLY, userId)
+    .hdel(RankSchema.TRASH_MONTHLY, userId)
+    .exec()
+}
+
+RankSchema.deleteScore = async (userId) => {
+    await redisClient.multi()
+    .zrem(RankSchema.SCORE_WEEKLY, userId)
+    .zrem(RankSchema.SCORE_MONTHLY, userId)
     .exec()
 }
 

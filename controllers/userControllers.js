@@ -210,7 +210,7 @@ const withdrawal = async(req, res) => {
         // 탈퇴 유저의 산책이력 이미지 전체 삭제
         if(fs.existsSync(`${filePath}${userId}`)){
             fs.rmdirSync(`${filePath}${userId}`, { recursive: true });
-        }
+        }deleteScore
         // 해당 산책의 점수 랭킹점수 삭제
         await RankSchema.delete(userId);
         res.json({rc: 200, rcmsg: 'OK'});
