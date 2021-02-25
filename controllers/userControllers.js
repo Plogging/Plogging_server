@@ -207,7 +207,7 @@ const temporaryPassword = async(req, res) => {
 
 const confirmPassword = async(req, res) => {
     logger.info(`Sending user's encrypt for password of [${req.body.email}] to Email...`);
-    const findUserId = await UserSchema.findOneUser(req.session.userId);
+    const findUserId = await UserSchema.findOneUser(req.body.email + ':custom');
     if(!findUserId){ throw new Unauthorized(coString.ERR_EMAIL) }
     await sendEmail('confirmPassword',req.body.email);
     res.json({rc: 200, rcmsg: coString.SUCCESS});
