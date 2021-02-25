@@ -68,7 +68,7 @@ const swaggerUi = require('swagger-ui-express');
         logger.info(`req.session.id : ${req.sessionID}`);
         // 세션 체크 공통 모듈
         if((req.path === '/user' && req.method === 'POST') ||
-            (req.path === '/user/password/temp') ||
+            (req.path === '/user/password-temp') ||
             (req.path === '/user/sign-in') ||
             (req.path === '/user/social') ||
             (req.path === '/user/check')) next();
