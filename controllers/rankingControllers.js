@@ -20,7 +20,7 @@ const getGlobalRank = async (req, res) => {
 }
 
 const getUserRank = async (req, res) => {
-    const rankType = req.query.rankType
+    const rankType = (req.query.rankType == "weekly") ? RankSchema.SCORE_WEEKLY : RankSchema.SCORE_MONTHLY
     const targetUserId = req.params.id
     logger.info(`Fetching ${rankType} rank of user ${targetUserId} from redis...`)
     const [rank, score] = await RankSchema.getUserRankAndScore(rankType, targetUserId)
