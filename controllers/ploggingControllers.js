@@ -86,7 +86,7 @@ const writePlogging = async function (req, res) {
     await PloggingSchema.writePloggingModel(ploggingObj);
 
     // redis update
-    await RankSchema.update(userId, ploggingTotalScore);
+    await RankSchema.updateScore(userId, ploggingTotalScore);
     res.status(200).json(returnResult);
 }
 
