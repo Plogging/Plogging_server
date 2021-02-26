@@ -9,7 +9,6 @@ const logger = require("../util/logger.js")("plogging.js");
 const logHelper = require("../util/logHelper.js");
 const pagingHelper = require('../util/pagingHelper');
 const { BadRequest } = require('throw.js');
-const { log } = require('console');
 
 /**
  * 산책 이력조회  (페이징 처리 필요)
