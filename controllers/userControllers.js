@@ -187,7 +187,7 @@ const changePassword = async(req, res) => {
 const temporaryPassword = async(req, res) => {
     logger.info(`Sending user's password of [${req.body.email}] to Email...`);
     const tempPassword = Math.random().toString(36).slice(2);
-    await sendEmail('tempPassword', req.body.email, tempPassword);
+    await sendEmail(req.body.email, tempPassword);
     const salt = (await crypto.randomBytes(32)).toString('hex');
     const digest = crypto.pbkdf2Sync(tempPassword, salt, 10000, 64, 'sha512').toString('base64')
     const [updatedCnt] = await UserSchema.changeUserPassword(
@@ -200,14 +200,6 @@ const temporaryPassword = async(req, res) => {
     }else{
         throw new NotFound(coString.NOT_FOUND_USER_ID);
     }
-}
-
-const confirmPassword = async(req, res) => {
-    logger.info(`Sending user's encrypt for password of [${req.body.email}] to Email...`);
-    const findUserId = await UserSchema.findOneUser(req.body.email + ':custom');
-    if(!findUserId){ throw new Unauthorized(coString.ERR_EMAIL) }
-    await sendEmail('confirmPassword',req.body.email);
-    res.json({rc: 200, rcmsg: coString.SUCCESS});
 }
 
 const signOut = async(req, res) => {
@@ -248,20 +240,8 @@ const withdrawal = async(req, res) => {
     }
 }
 
-const sendEmail = async(type, userEmail, tempPassword) => {
-    let emailStringList = ['confirmPassword', '[Eco run] 임시 비밀번호 확인 메일입니다'];
-    switch(type) {
-        case 'confirmPassword':
-            emailStringList = ['confirmPassword', '[Eco run] 임시 비밀번호 확인 메일입니다']
-            break;
-        case 'tempPassword':
-            emailStringList = ['tempPassword', '[Eco run] 임시 비밀번호 입니다'];
-            break;
-        case 'inactiveAccount':
-            emailStringList = ['inactiveAccount', '[Eco run] 휴면 계정 알림입니다.'];
-            break;
-        default:
-    }
+const sendEmail = async(userEmail, tempPassword) => {
+    let emailStringList = ['tempPassword', '[Eco run] 임시 비밀번호 입니다'];
     let transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
@@ -304,7 +284,6 @@ module.exports = {
     changeUserImage,
     changePassword,
     temporaryPassword,
-    confirmPassword,
     signOut,
     withdrawal,
     sendEmail

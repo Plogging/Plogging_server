@@ -16,7 +16,6 @@ router.put('/name', swaggerValidation.validate, errHandler(userControls.changeUs
 router.put('/image', upload.single('profileImg'), swaggerValidation.validate, errHandler(userControls.changeUserImage));
 router.put('/password', swaggerValidation.validate, errHandler(userControls.changePassword));
 router.put('/password-temp', swaggerValidation.validate, errHandler(userControls.temporaryPassword));
-router.post('/password/temp', swaggerValidation.validate, errHandler(userControls.temporaryPassword));
 router.put('/sign-out', swaggerValidation.validate, errHandler(userControls.signOut));
 router.delete('', swaggerValidation.validate, errHandler(userControls.withdrawal));
 
