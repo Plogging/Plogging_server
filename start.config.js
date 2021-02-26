@@ -18,11 +18,11 @@ module.exports = {
               "REDIS_PASSWORD":"JjaoSaoP+IRVDBkXdDR4XMgTmkMut0VM",
               "MARIADB_INFO": "127.0.0.1:3306",
               "MARIADB_PASSWORD": "JjaoSaoP+IRVDBkXdDR4XMgTmkMut0VM",
-              "IMG_FILE_PATH": "E:file_test",
+              "IMG_FILE_PATH": "/mnt/Plogging_server/images",
               "ADMIN_EMAIL_ID": "ploggingteam@gmail.com",
               "ADMIN_EMAIL_PASSWORD": "1/KvPFPwoNiXJhstP/+J7xF4Jrvh0X2t",
               "SERVER_REQ_INFO": "http:127.0.0.1:20000",
-              "LOG_PATH": "E:\winston-log"
+              "LOG_PATH": "/mnt/Plogging_server/images/log"
           },
           env_development: { // tb ( 라즈베리파이 서버 )
             "NODE_ENV": "development",
