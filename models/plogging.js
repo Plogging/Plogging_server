@@ -5,12 +5,20 @@ const PloggingSchema = {};
 const dbName = 'plogging';
 const collectionName = 'record';
 
-// 산책 조회
-PloggingSchema.readPloggingModel = async function (query, options, targetUserId) {
+// 산책 조회 (여러개)
+PloggingSchema.readPloggingsModel = async function (query, options, targetUserId) {
     const mongoConnection = await MongoPool.db(dbName);
     const allPloggingCount = await mongoConnection.collection(collectionName).find({ "meta.user_id": targetUserId }).count();
     const plogginList = await mongoConnection.collection(collectionName).find(query, options).toArray();
     return [allPloggingCount, plogginList];
+};
+
+// 산책 조회(1개 - 삭제 목적)
+PloggingSchema.readPloggingModel = async function (ploggingId) {
+    const mongoConnection = await MongoPool.db(dbName);
+    const query = { _id: ObjectId(ploggingId) };
+    const ploggingObj = await mongoConnection.collection(collectionName).findOne(query);
+    return ploggingObj;
 };
 
 // 산책 등록
@@ -22,7 +30,7 @@ PloggingSchema.writePloggingModel = async function (ploggingObj) {
 // 산책 삭제
 PloggingSchema.deletePloggingModel = async function (ploggingId) {
     const mongoConnection = await MongoPool.db(dbName);
-    const query = { "_id": ObjectId(ploggingId) };
+    const query = { _id: ObjectId(ploggingId) };
     await mongoConnection.collection(collectionName).deleteOne(query);
 };
 

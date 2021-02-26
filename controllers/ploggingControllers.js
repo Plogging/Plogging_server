@@ -9,6 +9,7 @@ const logger = require("../util/logger.js")("plogging.js");
 const logHelper = require("../util/logHelper.js");
 const pagingHelper = require('../util/pagingHelper');
 const { BadRequest } = require('throw.js');
+const { log } = require('console');
 
 /**
  * 산책 이력조회  (페이징 처리 필요)
@@ -40,7 +41,7 @@ const readPlogging = async function (req, res) {
         limit: ploggingCntPerPage
     }
 
-    const [allPloggingCount, plogging_list] = await PloggingSchema.readPloggingModel(query, options, targetUserId);
+    const [allPloggingCount, plogging_list] = await PloggingSchema.readPloggingsModel(query, options, targetUserId);
 
     const meta = {};
     meta.startPageNumber = 1;
@@ -73,6 +74,7 @@ const writePlogging = async function (req, res) {
 
     const ploggingScoreArr = calcPloggingScore(ploggingObj);
     const ploggingTotalScore = Number(ploggingScoreArr[0] + ploggingScoreArr[1]);
+    const ploggingDistance = ploggingObj.meta.distance;
     const pickList = ploggingObj.trash_list;
     const pickCount = calPickCount(pickList);
     ploggingObj.meta.plogging_total_score = ploggingTotalScore;
@@ -87,6 +89,8 @@ const writePlogging = async function (req, res) {
 
     // redis update
     await RankSchema.updateScore(userId, ploggingTotalScore);
+    await RankSchema.updateDistance(userId, ploggingDistance);
+    await RankSchema.updateTrash(userId, pickCount);
     res.status(200).json(returnResult);
 }
 
@@ -104,9 +108,21 @@ const deletePlogging = async function (req, res) {
     let ploggingId = req.query.ploggingId;
     let ploggingImgName = req.query.ploggingImgName; // plogging_20210106132743.PNG
     let ploggingImgPath = `${ploggingFilePath}${userId}/${ploggingImgName}`;
+    
+    // 지울 산책이력 조회
+    const ploggingObj = await PloggingSchema.readPloggingModel(ploggingId);
+
+    const ploggingTotalScore = ploggingObj.meta.plogging_total_score;
+    const ploggingDistance = ploggingObj.meta.distance;
+    const pickCount = ploggingObj.meta.plogging_trash_count;
 
     // 산책이력 삭제
-    PloggingSchema.deletePloggingModel(ploggingId);
+    await PloggingSchema.deletePloggingModel(ploggingId);
+
+    // redis update
+    await RankSchema.updateScore(userId, ploggingTotalScore*(-1));
+    await RankSchema.updateDistance(userId, ploggingDistance*(-1));
+    await RankSchema.updateTrash(userId, pickCount*(-1));
 
     // 산책이력 이미지 삭제
     if (fs.existsSync(ploggingImgPath)) fs.unlinkSync(ploggingImgPath);
