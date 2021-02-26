@@ -121,12 +121,12 @@ const getUserInfo = async(req, res) => {
     returnResult.userId = user.user_id;
     returnResult.userImg = user.profile_img;
     returnResult.userName = user.display_name;
-    returnResult.scoreMonthly = await RankSchema.getUserDistance(RankSchema.SCORE_MONTHLY, req.params.id);
+    returnResult.scoreMonthly = await RankSchema.getUserRankAndScore(RankSchema.SCORE_MONTHLY, req.params.id);
     returnResult.distanceMonthly = await RankSchema.getUserDistance(RankSchema.DISTANCE_MONTHLY, req.params.id);
-    returnResult.trashMonthly = await RankSchema.getUserDistance(RankSchema.TRASH_MONTHLY, req.params.id);
-    returnResult.scoreWeekly = await RankSchema.getUserDistance(RankSchema.SCORE_WEEKLY, req.params.id);
+    returnResult.trashMonthly = await RankSchema.getUserNumTrash(RankSchema.TRASH_MONTHLY, req.params.id);
+    returnResult.scoreWeekly = await RankSchema.getUserRankAndScore(RankSchema.SCORE_WEEKLY, req.params.id);
     returnResult.distanceWeekly = await RankSchema.getUserDistance(RankSchema.DISTANCE_WEEKLY, req.params.id);
-    returnResult.trashWeekly = await RankSchema.getUserDistance(RankSchema.TRASH_WEEKLY, req.params.id);
+    returnResult.trashWeekly = await RankSchema.getUserNumTrash(RankSchema.TRASH_WEEKLY, req.params.id);
     res.json(returnResult);
 }
 
