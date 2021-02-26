@@ -18,16 +18,16 @@ const signIn = async(req, res) => {
     const userId = req.body.userId + ':custom';
     let returnResult = {};
     logger.info(`Logging in with [${userId}] ...`);
-    const findUserId = await UserSchema.findOneUser(userId);
-    if(!findUserId){ throw new Unauthorized(coString.ERR_AUTHORIZATION) }
-    const userDigest = findUserId.digest;
-    const digest = crypto.pbkdf2Sync(req.body.secretKey, findUserId.salt, 10000, 64, 'sha512').toString('base64');
+    const userData = await UserSchema.findOneUser(userId);
+    if(!userData){ throw new Unauthorized(coString.ERR_AUTHORIZATION) }
+    const userDigest = userData.digest;
+    const digest = crypto.pbkdf2Sync(req.body.secretKey, userData.salt, 10000, 64, 'sha512').toString('base64');
     if(userDigest != digest) { throw new Unauthorized(coString.ERR_AUTHORIZATION) }
     req.session.userId = userId;
     returnResult.rc = 200;
     returnResult.rcmsg = coString.SUCCESS;
-    returnResult.userImg = findUserId.profile_img;
-    returnResult.userName = findUserId.display_name;
+    returnResult.userImg = userData.profile_img;
+    returnResult.userName = userData.display_name;
     res.json(returnResult);
 }
 
