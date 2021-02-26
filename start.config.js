@@ -20,7 +20,7 @@ module.exports = {
               "MARIADB_PASSWORD": "JjaoSaoP+IRVDBkXdDR4XMgTmkMut0VM",
               "IMG_FILE_PATH": "/mnt/Plogging_server/images",
               "ADMIN_EMAIL_ID": "ploggingteam@gmail.com",
-              "ADMIN_EMAIL_PASSWORD": "HulEQY7ww8ZiPdYsOvisCHaWH+Bk52Gp",
+              "ADMIN_EMAIL_PASSWORD": "IVUVhpHmNGoYLZpy4Ate5OKNH/6hlziQ",
               "SERVER_REQ_INFO": "http:127.0.0.1:20000",
               "LOG_PATH": "/mnt/Plogging_server/images/log"
           },
@@ -36,7 +36,7 @@ module.exports = {
             "IMG_FILE_PATH": "/mnt/Plogging_server/images",
             "SERVER_REQ_INFO": "https:nexters.plogging.kro.kr:20000",
             "ADMIN_EMAIL_ID": "ploggingteam@gmail.com",
-            "ADMIN_EMAIL_PASSWORD": "HulEQY7ww8ZiPdYsOvisCHaWH+Bk52Gp",
+            "ADMIN_EMAIL_PASSWORD": "IVUVhpHmNGoYLZpy4Ate5OKNH/6hlziQ",
             "LOG_PATH": "/mnt/Plogging_server/images/log"
           },
           env_production: { // 상용 ( 클라우드 서버 )

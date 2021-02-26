@@ -3,6 +3,7 @@ const Email = require('email-templates');
 const logger = require("../util/logger.js")("user.js");
 const fs = require('fs');
 const { NotFound, Unauthorized, Conflict, InternalServerError } = require('throw.js')
+const jasypt = require('../util/common_jasypt.js');
 const UserSchema = require('../models/user.js');
 const filePath = process.env.IMG_FILE_PATH + "/profile/";
 const adminEmailId = process.env.ADMIN_EMAIL_ID;
