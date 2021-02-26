@@ -16,11 +16,11 @@ module.exports = {
               "MONGODB_PASSWORD": "JjaoSaoP+IRVDBkXdDR4XMgTmkMut0VM",
               "REDIS_INFO": "127.0.0.1:6379", 
               "REDIS_PASSWORD":"JjaoSaoP+IRVDBkXdDR4XMgTmkMut0VM",
-              "MARIADB_INFO": "127.0.0.1:3306", 
+              "MARIADB_INFO": "127.0.0.1:3306",
               "MARIADB_PASSWORD": "JjaoSaoP+IRVDBkXdDR4XMgTmkMut0VM",
               "IMG_FILE_PATH": "/mnt/Plogging_server/images",
               "ADMIN_EMAIL_ID": "ploggingteam@gmail.com",
-              "ADMIN_EMAIL_PASSWORD": "murder^^6",
+              "ADMIN_EMAIL_PASSWORD": "IOSdXR5H8y3LTG4pdMZ8eB6MPzcztmZO",
               "SERVER_REQ_INFO": "http:127.0.0.1:20000",
               "LOG_PATH": "/mnt/Plogging_server/images/log"
           },
@@ -35,8 +35,8 @@ module.exports = {
             "MARIADB_PASSWORD": "JjaoSaoP+IRVDBkXdDR4XMgTmkMut0VM",
             "IMG_FILE_PATH": "/mnt/Plogging_server/images",
             "SERVER_REQ_INFO": "https:nexters.plogging.kro.kr:20000",
-            "ADMIN_EMAIL_ID": "ploggingteam@gamil.com",
-            "ADMIN_EMAIL_PASSWORD": "murder^^6",
+            "ADMIN_EMAIL_ID": "ploggingteam@gmail.com",
+            "ADMIN_EMAIL_PASSWORD": "IOSdXR5H8y3LTG4pdMZ8eB6MPzcztmZO",
             "LOG_PATH": "/mnt/Plogging_server/images/log"
           },
           env_production: { // 상용 ( 클라우드 서버 )

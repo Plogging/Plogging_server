@@ -11,7 +11,6 @@ const MongoClient = require('./config/mongoConfig.js');
 const swaggerValidation = require('./util/validator.js');
 const {sequelize} = require('./models/index');
 const logger = require("./util/logger.js")("index.js");
-
 const session = require('express-session');
 const redisStore = require('connect-redis')(session);
 const YAML = require('yamljs');
@@ -42,11 +41,10 @@ const swaggerUi = require('swagger-ui-express');
     app.use(bodyParser.urlencoded({extended: false}));
     app.use(bodyParser.json());
     app.use(express.static(process.env.IMG_FILE_PATH)); // 정적파일 제공
-
     // redis sessionStorage 설정
     app.use(session({
         store : new redisStore({ // default는 메모리에 저장
-            client: redisClient,
+            client: redisClient
         }),
         secret: 'plogging', // sessionId를 만들때 key로 쓰이는거 같음
         resave: false,
@@ -65,22 +63,12 @@ const swaggerUi = require('swagger-ui-express');
     const globalOption = {};
     globalOption.PORT = process.env.PORT;
     app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument)); // node-swaggwer
-
-    /**
-    * step 1. userId가 파라미터로 들어왔는지 확인 ( req.query
-    * .userId )
-    * step 2. 
-    *    2-1. 파라미터로 안들어왔다면 redis에서 조회한 값으로 userId 세팅 ( 산책이력 조회, 산책이력 등록, 산책이력 삭제 )
-    *    2-2. 파라미터로 들어왔다면 파리미터로 들어온 값으로 userId 세팅 ( 산책이력 조회 ) 
-    * 
-    */
     app.use("/", function(req, res, next) {
-
         logger.info(JSON.stringify(req.headers));
         logger.info(`req.session.id : ${req.sessionID}`);
         // 세션 체크 공통 모듈
-        if((req.path === '/user' && req.method === 'POST') || 
-            (req.path === '/user/password-temp') || 
+        if((req.path === '/user' && req.method === 'POST') ||
+            (req.path === '/user/password-temp') ||
             (req.path === '/user/sign-in') ||
             (req.path === '/user/social') ||
             (req.path === '/user/check')) next();
@@ -89,7 +77,7 @@ const swaggerUi = require('swagger-ui-express');
                 req.userId = req.session.userId;
                 next();
             } else { // 세션 값이 없는 경우 ( 로그인이 안되어 있는 경우 )
-                throw new Unauthorized( "로그인 후 서비스를 이용해 주세요");
+                throw new Unauthorized("로그인 후 서비스를 이용해 주세요");
             }
         }
     });
