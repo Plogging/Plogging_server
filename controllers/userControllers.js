@@ -49,7 +49,6 @@ const social = async(req, res) => {
                 returnResult.userName = newUser.display_name;
                 res.status(201).json(returnResult);
             } catch (error) {
-                console.log(error)
                 if(error.original && error.original.errno === 1062){
                     throw new Conflict(coString.EXISTED_NAME);
                 }
@@ -250,7 +249,6 @@ const withdrawal = async(req, res) => {
 }
 
 const sendEmail = async(type, userEmail, tempPassword) => {
-    console.log(serverUrl);
     let emailStringList = ['confirmPassword', '[Eco run] 임시 비밀번호 확인 메일입니다'];
     switch(type) {
         case 'confirmPassword':
