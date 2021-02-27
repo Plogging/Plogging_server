@@ -40,6 +40,15 @@ RankSchema.getUserNumTrash = async (numTrashType, userId) => {
     }
 }
 
+RankSchema.getUserScore = async (rankType, userId) => {
+    const userScore = await redisClient.zscore(rankType, userId)
+    if (userScore == null) {
+        return 0
+    } else {
+        return userScore
+    }
+}
+
 RankSchema.getUserRankAndScore = async (rankType, userId) => {
     // TODO: rankType이 SCORE_WEEKLY나 SCORE_MONTHLY가 아닐 경우 throw
     const [zrankResult, zscoreResult] = await redisClient.multi()
