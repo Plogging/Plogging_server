@@ -13,18 +13,18 @@ chai.use(chaiAsPromised)
 describe("rankingController test", () => {
     before(() => {
         const getCountAndRankDataWithScores = sinon.stub(RankSchema, "getCountAndRankDataWithScores")
-        getCountAndRankDataWithScores.withArgs("weekly", 3, 16).returns(
+        getCountAndRankDataWithScores.withArgs(RankSchema.SCORE_WEEKLY, 3, 16).returns(
             [97, [
                 "mimi@naver.com:kakao", 1560,
                 "happy@gmail.com:custom", 1380,
                 "coco@naver.com:naver", 1200
             ]]
         )
-        getCountAndRankDataWithScores.withArgs("weekly", 3, 0).returns([null, null])
+        getCountAndRankDataWithScores.withArgs(RankSchema.SCORE_WEEKLY, 3, 0).returns([null, null])
 
         const getUserRankAndScore = sinon.stub(RankSchema, "getUserRankAndScore")
-        getUserRankAndScore.withArgs("weekly", "mimi@naver.com:kakao").returns([45, 1560])
-        getUserRankAndScore.withArgs("weekly", "nothing@gmail.com:custom").returns([null, null])
+        getUserRankAndScore.withArgs(RankSchema.SCORE_WEEKLY, "mimi@naver.com:kakao").returns([45, 1560])
+        getUserRankAndScore.withArgs(RankSchema.SCORE_WEEKLY, "nothing@gmail.com:custom").returns([null, null])
 
         const findUsers = sinon.stub(UserSchema, "findUsers")
         findUsers.withArgs(

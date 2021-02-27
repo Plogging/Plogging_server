@@ -6,7 +6,7 @@ const UserSchema = require('../models/user')
 const pagingHelper = require('../util/pagingHelper')
 
 const getGlobalRank = async (req, res) => {
-    const rankType = req.query.rankType
+    const rankType = (req.query.rankType == "weekly") ? RankSchema.SCORE_WEEKLY : RankSchema.SCORE_MONTHLY
     const rankCntPerPage = (req.query.rankCntPerPage == null) ? 10 : req.query.rankCntPerPage
     const pageNumber = (req.query.pageNumber == null) ? 1 : req.query.pageNumber
     const [count, rawRankData] = await RankSchema.getCountAndRankDataWithScores(rankType, rankCntPerPage, pageNumber)

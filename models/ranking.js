@@ -10,7 +10,7 @@ RankSchema.SCORE_WEEKLY = "score_weekly"
 RankSchema.SCORE_MONTHLY = "score_monthly"
 
 RankSchema.getCountAndRankDataWithScores = async (rankType, cntPerPage, pageNumber) => {
-    // TODO: rankType이 weekly나 monthly가 아닐 경우 throw
+    // TODO: rankType이 SCORE_WEEKLY나 SCORE_MONTHLY가 아닐 경우 throw
     const [zcountResult, zrevrangeResult] = await redisClient.multi()
     .zcount(rankType, "-inf", "+inf")
     .zrevrange(rankType, cntPerPage * (pageNumber - 1), cntPerPage * pageNumber - 1, "withscores")
@@ -41,6 +41,7 @@ RankSchema.getUserNumTrash = async (numTrashType, userId) => {
 }
 
 RankSchema.getUserScore = async (rankType, userId) => {
+    // TODO: rankType이 SCORE_WEEKLY나 SCORE_MONTHLY가 아닐 경우 throw
     const userScore = await redisClient.zscore(rankType, userId)
     if (userScore == null) {
         return 0
