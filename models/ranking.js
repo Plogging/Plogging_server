@@ -23,13 +23,21 @@ RankSchema.getCountAndRankDataWithScores = async (rankType, cntPerPage, pageNumb
 RankSchema.getUserDistance = async (distanceType, userId) => {
     // TODO: distanceType이 DISTANCE_WEEKLY나 DISTANCE_MONTHLY가 아닐 경우 throw
     const userDistance = await redisClient.hget(distanceType, userId)
-    return userDistance
+    if (userDistance == null) {
+        return 0
+    } else {
+        return userDistance
+    }
 }
 
 RankSchema.getUserNumTrash = async (numTrashType, userId) => {
     // TODO: numTrashType이 TRASH_WEEKLY나 TRASH_MONTHLY가 아닐 경우 throw
     const userNumTrash = await redisClient.hget(numTrashType, userId)
-    return userNumTrash
+    if (userNumTrash == null) {
+        return 0
+    } else {
+        return userNumTrash
+    }
 }
 
 RankSchema.getUserRankAndScore = async (rankType, userId) => {
