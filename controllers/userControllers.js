@@ -230,11 +230,13 @@ const withdrawal = async(req, res) => {
             fs.rmdirSync(`${filePath}${userId}`, { recursive: true });
         }
         // 해당 산책의 점수 랭킹점수 삭제
-        await RankSchema.delete(userId);
-        res.json({rc: 200, rcmsg: coString.SUCCESS});
-        res.clearCookie('connect.sid');
+        await RankSchema.deleteDistance(userId);
+        await RankSchema.deleteTrash(userId);
+        await RankSchema.deleteScore(userId);
         req.session.destroy();
+        res.clearCookie('connect.sid');
         await t.commit();
+        res.json({rc: 200, rcmsg: coString.SUCCESS});
     }catch(err) {
         await t.rollback();
         throw new InternalServerError;
