@@ -6,7 +6,7 @@ const { NotFound } = require('throw.js')
 const { getGlobalRank, getUserRank } = require('../../controllers/rankingControllers')
 const RankSchema = require('../../models/ranking')
 const UserSchema = require('../../models/user')
-const { expect } = require('chai')
+const { expect } = chai
 
 chai.use(chaiAsPromised)
 
@@ -57,8 +57,6 @@ describe("rankingController test", () => {
                 profile_img: "some/path/to/img"
             }}
         )
-
-        const expect = chai.expect
     })
 
     it("getGlobalRank should create response in expected way", async () => {
