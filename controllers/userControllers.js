@@ -121,10 +121,10 @@ const getUserInfo = async(req, res) => {
     returnResult.userId = user.user_id;
     returnResult.userImg = user.profile_img;
     returnResult.userName = user.display_name;
-    returnResult.scoreMonthly = await RankSchema.getUserRankAndScore(RankSchema.SCORE_MONTHLY, req.params.id);
+    returnResult.scoreMonthly = await RankSchema.getUserScore(RankSchema.SCORE_MONTHLY, req.params.id);
     returnResult.distanceMonthly = await RankSchema.getUserDistance(RankSchema.DISTANCE_MONTHLY, req.params.id);
     returnResult.trashMonthly = await RankSchema.getUserNumTrash(RankSchema.TRASH_MONTHLY, req.params.id);
-    returnResult.scoreWeekly = await RankSchema.getUserRankAndScore(RankSchema.SCORE_WEEKLY, req.params.id);
+    returnResult.scoreWeekly = await RankSchema.getUserScore(RankSchema.SCORE_WEEKLY, req.params.id);
     returnResult.distanceWeekly = await RankSchema.getUserDistance(RankSchema.DISTANCE_WEEKLY, req.params.id);
     returnResult.trashWeekly = await RankSchema.getUserNumTrash(RankSchema.TRASH_WEEKLY, req.params.id);
     res.json(returnResult);
@@ -230,11 +230,13 @@ const withdrawal = async(req, res) => {
             fs.rmdirSync(`${filePath}${userId}`, { recursive: true });
         }
         // 해당 산책의 점수 랭킹점수 삭제
-        await RankSchema.delete(userId);
-        res.json({rc: 200, rcmsg: coString.SUCCESS});
-        res.clearCookie('connect.sid');
+        await RankSchema.deleteDistance(userId);
+        await RankSchema.deleteTrash(userId);
+        await RankSchema.deleteScore(userId);
         req.session.destroy();
+        res.clearCookie('connect.sid');
         await t.commit();
+        res.json({rc: 200, rcmsg: coString.SUCCESS});
     }catch(err) {
         await t.rollback();
         throw new InternalServerError;

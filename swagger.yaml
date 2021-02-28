@@ -639,7 +639,7 @@ paths:
               rcmsg:
                 type: string
                 example: 서버에 오류가 발생했습니다. 잠시 후 다시 시도해주세요.
-  /user/password/confirm:
+  /user/password-temp:
     put:
       summary: 임시 비밀번호 발급
       tags: [User]
@@ -1169,7 +1169,7 @@ paths:
                     displayName: 보리
                     profileImg: 'https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg'
                     score: 16500
-                  - userid: ttori@gamil.com:kakao
+                  - userId: ttori@gamil.com:kakao
                     displayName: 또리
                     profileImg: 'https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg'
                     score: 16000
@@ -1177,7 +1177,7 @@ paths:
                     displayName: 모모
                     profileImg: 'https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg'
                     score: 15500
-                  - userid: congi@gamil.com:kakao
+                  - userId: congi@gamil.com:kakao
                     displayName: 콩이
                     profileImg: 'https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg'
                     score: 14500

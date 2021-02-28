@@ -1,12 +1,14 @@
 const { NotFound } = require('throw.js')
 const logger = require("../util/logger.js")("ranking.js")
+const logHelper = require("../util/logHelper.js");
 
 const RankSchema = require('../models/ranking')
 const UserSchema = require('../models/user')
 const pagingHelper = require('../util/pagingHelper')
 
 const getGlobalRank = async (req, res) => {
-    const rankType = req.query.rankType
+    logger.info("getGlobalRank called with req: " + logHelper.reqWrapper(req, "rank"))
+    const rankType = (req.query.rankType == "weekly") ? RankSchema.SCORE_WEEKLY : RankSchema.SCORE_MONTHLY
     const rankCntPerPage = (req.query.rankCntPerPage == null) ? 10 : req.query.rankCntPerPage
     const pageNumber = (req.query.pageNumber == null) ? 1 : req.query.pageNumber
     const [count, rawRankData] = await RankSchema.getCountAndRankDataWithScores(rankType, rankCntPerPage, pageNumber)
@@ -20,6 +22,7 @@ const getGlobalRank = async (req, res) => {
 }
 
 const getUserRank = async (req, res) => {
+    logger.info("getUserRank called with req: " + logHelper.reqWrapper(req, "rank"))
     const rankType = (req.query.rankType == "weekly") ? RankSchema.SCORE_WEEKLY : RankSchema.SCORE_MONTHLY
     const targetUserId = req.params.id
     logger.info(`Fetching ${rankType} rank of user ${targetUserId} from redis...`)

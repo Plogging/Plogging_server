@@ -44,7 +44,8 @@ const swaggerUi = require('swagger-ui-express');
     // redis sessionStorage 설정
     app.use(session({
         store : new redisStore({ // default는 메모리에 저장
-            client: redisClient
+            client: redisClient,
+            ttl: 60*60*24*30 // 30일
         }),
         secret: 'plogging', // sessionId를 만들때 key로 쓰이는거 같음
         resave: false,

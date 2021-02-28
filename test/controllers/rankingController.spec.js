@@ -4,7 +4,9 @@ const sinon = require('sinon')
 const httpMocks = require('node-mocks-http')
 const proxyquire = require('proxyquire')
 const { NotFound } = require('throw.js')
-const { expect } = require('chai')
+const RankSchema = require('../../models/ranking')
+const UserSchema = require('../../models/user')
+const { expect } = chai
 
 chai.use(chaiAsPromised)
 
@@ -13,18 +15,18 @@ let getGlobalRank, getUserRank
 describe("rankingController test", () => {
     before(() => {
         const getCountAndRankDataWithScores = sinon.stub()
-        getCountAndRankDataWithScores.withArgs("weekly", 3, 16).returns(
+        getCountAndRankDataWithScores.withArgs(RankSchema.SCORE_WEEKLY, 3, 16).returns(
             [97, [
                 "mimi@naver.com:kakao", 1560,
                 "happy@gmail.com:custom", 1380,
                 "coco@naver.com:naver", 1200
             ]]
         )
-        getCountAndRankDataWithScores.withArgs("weekly", 3, 0).returns([null, null])
+        getCountAndRankDataWithScores.withArgs(RankSchema.SCORE_WEEKLY, 3, 0).returns([null, null])
 
         const getUserRankAndScore = sinon.stub()
-        getUserRankAndScore.withArgs("weekly", "mimi@naver.com:kakao").returns([45, 1560])
-        getUserRankAndScore.withArgs("weekly", "nothing@gmail.com:custom").returns([null, null])
+        getUserRankAndScore.withArgs(RankSchema.SCORE_WEEKLY, "mimi@naver.com:kakao").returns([45, 1560])
+        getUserRankAndScore.withArgs(RankSchema.SCORE_WEEKLY, "nothing@gmail.com:custom").returns([null, null])
 
         const findUsers = sinon.stub()
         findUsers.withArgs(
@@ -68,8 +70,6 @@ describe("rankingController test", () => {
                 findOneUser: findOneUser
             }
         }))
-
-        const expect = chai.expect
     })
 
     it("getGlobalRank should create response in expected way", async () => {

@@ -1,4 +1,5 @@
 const redisClient = require('../config/redisConfig.js')
+const logger = require("../util/logger.js")("ranking.js")
 
 const RankSchema = {}
 
@@ -10,7 +11,8 @@ RankSchema.SCORE_WEEKLY = "score_weekly"
 RankSchema.SCORE_MONTHLY = "score_monthly"
 
 RankSchema.getCountAndRankDataWithScores = async (rankType, cntPerPage, pageNumber) => {
-    // TODO: rankType이 weekly나 monthly가 아닐 경우 throw
+    // TODO: rankType이 SCORE_WEEKLY나 SCORE_MONTHLY가 아닐 경우 throw
+    logger.info(`Trying to get ${rankType} global rank data from Redis.`)
     const [zcountResult, zrevrangeResult] = await redisClient.multi()
     .zcount(rankType, "-inf", "+inf")
     .zrevrange(rankType, cntPerPage * (pageNumber - 1), cntPerPage * pageNumber - 1, "withscores")
@@ -23,17 +25,36 @@ RankSchema.getCountAndRankDataWithScores = async (rankType, cntPerPage, pageNumb
 RankSchema.getUserDistance = async (distanceType, userId) => {
     // TODO: distanceType이 DISTANCE_WEEKLY나 DISTANCE_MONTHLY가 아닐 경우 throw
     const userDistance = await redisClient.hget(distanceType, userId)
-    return userDistance
+    if (userDistance == null) {
+        return 0
+    } else {
+        return userDistance
+    }
 }
 
 RankSchema.getUserNumTrash = async (numTrashType, userId) => {
     // TODO: numTrashType이 TRASH_WEEKLY나 TRASH_MONTHLY가 아닐 경우 throw
     const userNumTrash = await redisClient.hget(numTrashType, userId)
-    return userNumTrash
+    if (userNumTrash == null) {
+        return 0
+    } else {
+        return userNumTrash
+    }
+}
+
+RankSchema.getUserScore = async (rankType, userId) => {
+    // TODO: rankType이 SCORE_WEEKLY나 SCORE_MONTHLY가 아닐 경우 throw
+    const userScore = await redisClient.zscore(rankType, userId)
+    if (userScore == null) {
+        return 0
+    } else {
+        return userScore
+    }
 }
 
 RankSchema.getUserRankAndScore = async (rankType, userId) => {
     // TODO: rankType이 SCORE_WEEKLY나 SCORE_MONTHLY가 아닐 경우 throw
+    logger.info(`Trying to get ${rankType} user rank data of ${userId} from Redis.`)
     const [zrankResult, zscoreResult] = await redisClient.multi()
     .zrevrank(rankType, userId)
     .zscore(rankType, userId)
