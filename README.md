@@ -13,7 +13,8 @@
  - Docker, Jenkins
 
 ## [ 프로젝트 구조 ]
-![플로깅 폴더구조](https://user-images.githubusercontent.com/21052356/109422746-42038080-7a20-11eb-94a4-71b58b78680a.png)
+<img src = "https://user-images.githubusercontent.com/21052356/109422746-42038080-7a20-11eb-94a4-71b58b78680a.png" width="30%" height="30%">
+
  - config : 설정 파일 ( 디비..기타 등등 )
  - public : 정적 파일 저장 위치
  - router : api 선언부
