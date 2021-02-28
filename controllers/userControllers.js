@@ -121,12 +121,12 @@ const getUserInfo = async(req, res) => {
     returnResult.userId = user.user_id;
     returnResult.userImg = user.profile_img;
     returnResult.userName = user.display_name;
-    returnResult.scoreMonthly = await RankSchema.getUserScore(RankSchema.SCORE_MONTHLY, req.params.id);
-    returnResult.distanceMonthly = await RankSchema.getUserDistance(RankSchema.DISTANCE_MONTHLY, req.params.id);
-    returnResult.trashMonthly = await RankSchema.getUserNumTrash(RankSchema.TRASH_MONTHLY, req.params.id);
-    returnResult.scoreWeekly = await RankSchema.getUserScore(RankSchema.SCORE_WEEKLY, req.params.id);
-    returnResult.distanceWeekly = await RankSchema.getUserDistance(RankSchema.DISTANCE_WEEKLY, req.params.id);
-    returnResult.trashWeekly = await RankSchema.getUserNumTrash(RankSchema.TRASH_WEEKLY, req.params.id);
+    returnResult.scoreMonthly = Number(await RankSchema.getUserScore(RankSchema.SCORE_MONTHLY, req.params.id));
+    returnResult.distanceMonthly = Number(await RankSchema.getUserDistance(RankSchema.DISTANCE_MONTHLY, req.params.id));
+    returnResult.trashMonthly = Number(await RankSchema.getUserNumTrash(RankSchema.TRASH_MONTHLY, req.params.id));
+    returnResult.scoreWeekly = Number(await RankSchema.getUserScore(RankSchema.SCORE_WEEKLY, req.params.id));
+    returnResult.distanceWeekly = Number(await RankSchema.getUserDistance(RankSchema.DISTANCE_WEEKLY, req.params.id));
+    returnResult.trashWeekly = Number(await RankSchema.getUserNumTrash(RankSchema.TRASH_WEEKLY, req.params.id));
     res.json(returnResult);
 }
 
