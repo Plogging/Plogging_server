@@ -1,8 +1,7 @@
 # Plogging_server
-
  
 ## [사용언어/프레임워크]
- - nodejs, express, sequelize
+ - nodejs, express, sequelize(orm), spring boot, apache, nginx
 
 ## [사용 데이터베이스]
  - mariadb, mongodb, redis
@@ -10,9 +9,11 @@
 ## [ 서비스 Flow ]
 ![image](https://user-images.githubusercontent.com/21052356/109422538-4c714a80-7a1f-11eb-86f6-18051eea5ad9.png)
 
+## [배포]
+ - Docker, Jenkins
 
 ## [ 프로젝트 구조 ]
-![폴더 구조](https://user-images.githubusercontent.com/21052356/109422575-7c205280-7a1f-11eb-9447-ecab64b999ef.png)
+![플로깅 폴더구조](https://user-images.githubusercontent.com/21052356/109422746-42038080-7a20-11eb-94a4-71b58b78680a.png)
  - config : 설정 파일 ( 디비..기타 등등 )
  - public : 정적 파일 저장 위치
  - router : api 선언부
@@ -95,3 +96,9 @@ package-lock.json
    ```
    ![pm2 cluster mode](https://user-images.githubusercontent.com/21052356/104002938-18c73080-51e5-11eb-9181-1f2dbb707038.PNG)
    
+
+## [Redis Sentinel 구성]
+![image](https://user-images.githubusercontent.com/21052356/109422851-90b11a80-7a20-11eb-9f46-54b45e4fbc18.png)
+
+## [Mongodb ReplicaSet 구성]
+![image](https://user-images.githubusercontent.com/21052356/109422872-a1619080-7a20-11eb-86a0-56b996026e5d.png)
