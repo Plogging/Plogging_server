@@ -8,6 +8,6 @@ RUN npm install --production
 
 RUN npm install pm2 -g
 
-EXPOSE 443
+EXPOSE 80
 
 CMD ["pm2-runtime", "start", "start.config.js", "--env", "development"]
