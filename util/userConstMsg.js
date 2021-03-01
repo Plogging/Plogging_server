@@ -5,6 +5,8 @@ module.exports = {
     ERR_EMAIL: '유효하지 않은 이메일입니다.',
     ERR_SERVER: '서버에 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
     ERR_PASSWORD: '현재 비밀번호가 일치하지 않습니다.',
+    ERR_RANK: '랭킹 데이터가 존재하지 않습니다.',
+    ERR_USER: '유저 데이터가 존재하지 않습니다.',
     NOT_FOUND_USER_ID: '아이디를 찾지 못했습니다.',
     SUCCESS: 'OK',
     CREATED: '생성되었습니다.',

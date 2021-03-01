@@ -1,6 +1,7 @@
 const { NotFound } = require('throw.js')
 const logger = require("../util/logger.js")("ranking.js")
 const logHelper = require("../util/logHelper.js");
+const coString = require('../util/userConstMsg');
 
 const RankSchema = require('../models/ranking')
 const UserSchema = require('../models/user')
@@ -13,7 +14,7 @@ const getGlobalRank = async (req, res) => {
     const pageNumber = (req.query.pageNumber == null) ? 1 : req.query.pageNumber
     const [count, rawRankData] = await RankSchema.getCountAndRankDataWithScores(rankType, rankCntPerPage, pageNumber)
     if (!count || !rawRankData) {
-        throw new NotFound("Rank data doesn't exist in Redis.")
+        throw new NotFound(coString.ERR_RANK)
     }
     const rankData = await buildRankData(rawRankData)
     const meta = {startPageNumber: 1, endPageNumber: pagingHelper.calcLastPage(count, rankCntPerPage), currentPageNumber: pageNumber}
@@ -28,7 +29,7 @@ const getUserRank = async (req, res) => {
     logger.info(`Fetching ${rankType} rank of user ${targetUserId} from redis...`)
     const [rank, score] = await RankSchema.getUserRankAndScore(rankType, targetUserId)
     if (rank == null || score == null) {
-        throw new NotFound("User data doesn't exist in Redis.")
+        throw new NotFound(coString.ERR_USER)
     }
     const { userId, displayName, profileImg } = await getUserInfo(targetUserId)
     const userRankData = {userId: userId, displayName: displayName, profileImg: profileImg,
@@ -63,7 +64,7 @@ const buildRankData = async rawRankData => {
 const getUserInfo = async userId => {
     const fetched = await UserSchema.findOneUser(userId)
     if (!fetched) {
-        throw new NotFound("User data doesn't exist in DB.")
+        throw new NotFound(coString.ERR_USER)
     }
     const { user_id, display_name, profile_img } = fetched.dataValues
     const userInfo = { userId: user_id, displayName: display_name, profileImg: profile_img }
@@ -75,7 +76,7 @@ const getUserInfos = async userIds => {
     const userInfos = {}
     const fetched = await UserSchema.findUsers(userIds)
     if (!fetched) {
-        throw new NotFound("User data not found in DB.")
+        throw new NotFound(coString.ERR_USER)
     }
     fetched.forEach(row => {
         const { user_id, display_name, profile_img } = row.dataValues
