@@ -4,7 +4,7 @@ WORKDIR /mnt/Plogging_server
 
 COPY . .
 
-RUN npm install
+RUN npm install --production
 
 RUN npm install pm2 -g
 
