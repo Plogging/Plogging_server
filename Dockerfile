@@ -8,6 +8,10 @@ RUN npm install
 
 RUN npm install pm2 -g
 
+ENV TZ=Asia/Seoul
+
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
+
 EXPOSE 443
 
 CMD ["pm2-runtime", "start", "start.config.js", "--env", "development"]
