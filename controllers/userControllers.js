@@ -168,21 +168,18 @@ const changeUserImage = async(req, res) => {
 
 const changePassword = async(req, res) => {
     logger.info(`Changing user's password of [${req.session.userId}] ...`);
-    const findUserId = await UserSchema.findOneUser(req.session.userId);
-    if(!findUserId){ throw new Unauthorized(coString.ERR_EMAIL) }
-    const existedDigest = crypto.pbkdf2Sync(req.body.existedSecretKey, findUserId.salt, 10000, 64, 'sha512').toString('base64')
-    const salt = (await crypto.randomBytes(32)).toString('hex');
+    const userData = await UserSchema.findOneUser(req.session.userId);
+    if(!userData){ throw new Unauthorized(coString.NOT_FOUND_USER_ID) }
+    const userDigest = userData.digest;
     const digest = crypto.pbkdf2Sync(req.body.newSecretKey, salt, 10000, 64, 'sha512').toString('base64')
-    const [updatedCnt] = await UserSchema.changeUserPassword(
+    if(userDigest != digest) { throw new Unauthorized(coString.ERR_PASSWORD) }
+    const salt = (await crypto.randomBytes(32)).toString('hex');
+    await UserSchema.changeUserPassword(
         req.session.userId,
         digest,
-        salt,
-        existedDigest);
-    if(updatedCnt) {
-        res.json({rc: 200, rcmsg: coString.SUCCESS});
-    }else{
-        res.status(402).json({rc: 402, rcmsg: coString.ERR_PASSWORD});
-    }
+        salt
+    );
+    res.json({rc: 200, rcmsg: coString.SUCCESS});
 }
 
 const temporaryPassword = async(req, res) => {
@@ -195,7 +192,7 @@ const temporaryPassword = async(req, res) => {
         req.body.email + ':custom',
         digest,
         salt
-        );
+    );
     if(updatedCnt) {
         res.json({rc: 200, rcmsg: coString.SUCCESS});
     }else{
