@@ -23,7 +23,10 @@ const signIn = async(req, res) => {
     if(!userData){ throw new Unauthorized(coString.ERR_EMAIL) }
     const userDigest = userData.digest;
     const digest = crypto.pbkdf2Sync(req.body.secretKey, userData.salt, 10000, 64, 'sha512').toString('base64');
-    if(userDigest != digest) { throw new Unauthorized(coString.ERR_PASSWORD) }
+    if(userDigest != digest) { 
+        res.status(402).json({rc: 402, rcmsg: coString.ERR_PASSWORD}); 
+        return;
+    }
     req.session.userId = userId;
     returnResult.rc = 200;
     returnResult.rcmsg = coString.SUCCESS;
@@ -78,6 +81,7 @@ const register = async(req, res) => {
         const user = await UserSchema.findOneUser(userId, null, t);
         if (user) {
             res.status(410).json({rc: 410, rcmsg: coString.EXISTED_ID});
+            return;
         }
         try {
             const salt = (await crypto.randomBytes(32)).toString('hex');
@@ -171,12 +175,16 @@ const changePassword = async(req, res) => {
     const userData = await UserSchema.findOneUser(req.session.userId);
     if(!userData){ throw new Unauthorized(coString.NOT_FOUND_USER_ID) }
     const userDigest = userData.digest;
-    const digest = crypto.pbkdf2Sync(req.body.newSecretKey, salt, 10000, 64, 'sha512').toString('base64')
-    if(userDigest != digest) { throw new Unauthorized(coString.ERR_PASSWORD) }
+    const digest = crypto.pbkdf2Sync(req.body.existedSecretKey, userData.salt, 10000, 64, 'sha512').toString('base64')
+    if(userDigest != digest) { 
+        res.status(402).json({rc: 402, rcmsg: coString.ERR_PASSWORD});
+        return;
+    }
     const salt = (await crypto.randomBytes(32)).toString('hex');
+    const newDigest = crypto.pbkdf2Sync(req.body.newSecretKey, salt, 10000, 64, 'sha512').toString('base64')
     await UserSchema.changeUserPassword(
         req.session.userId,
-        digest,
+        newDigest,
         salt
     );
     res.json({rc: 200, rcmsg: coString.SUCCESS});
