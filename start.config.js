@@ -27,11 +27,11 @@ module.exports = {
           env_development: { // tb ( 라즈베리파이 서버 )
             "NODE_ENV": "development",
             "PORT": 443, // https
-            "MONGODB_INFO": "172.17.0.1:27017",
+            "MONGODB_INFO": "192.168.0.9:27017",
             "MONGODB_PASSWORD": "JjaoSaoP+IRVDBkXdDR4XMgTmkMut0VM",
-            "REDIS_INFO": "172.17.0.1:6379",
+            "REDIS_INFO": "192.168.0.9:6379",
             "REDIS_PASSWORD":"JjaoSaoP+IRVDBkXdDR4XMgTmkMut0VM",
-            "MARIADB_INFO": "172.17.0.1:3306",
+            "MARIADB_INFO": "192.168.0.9:3306",
             "MARIADB_PASSWORD": "JjaoSaoP+IRVDBkXdDR4XMgTmkMut0VM",
             "IMG_FILE_PATH": "/mnt/Plogging_server/images",
             "SERVER_REQ_INFO": "https:nexters.plogging.kro.kr:20000",
