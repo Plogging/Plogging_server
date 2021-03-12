@@ -55,7 +55,7 @@ paths:
                 type: string
                 example: body should have required property [userId/ secretKey]
         401:
-          description: 유효하지 않은 이메일입니다.
+          description: 가입되지 않은 정보이거나 비밀번호가 다릅니다.
           schema:
             type: object
             properties:
@@ -64,18 +64,7 @@ paths:
                 example: 401
               rcmsg:
                 type: string
-                example: 유효하지 않은 이메일입니다.
-        402:
-          description: No userId or No secretKey from DB
-          schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 402
-              rcmsg:
-                type: string
-                example: 현재 비밀번호가 일치하지 않습니다.
+                example: 가입되지 않은 정보이거나 비밀번호가 다릅니다.
         500:
           description: Internal Server Error
           schema:
