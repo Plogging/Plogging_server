@@ -12,8 +12,8 @@ const serverUrl = process.env.SERVER_REQ_INFO;
 const {sequelize} = require('../models/index');
 const RankSchema = require('../models/ranking');
 const PloggingSchema = require('../models/plogging');
-const crypto = require('crypto');
 const coString = require('../util/resConstMsg');
+const crypto = require('../util/cryptoHelper');
 
 const signIn = async(req, res) => {
     const userId = req.body.userId + ':custom';
@@ -22,7 +22,7 @@ const signIn = async(req, res) => {
     const userData = await UserSchema.findOneUser(userId);
     if(!userData){ throw new Unauthorized(coString.ERR_AUTHORIZATION) }
     const userDigest = userData.digest;
-    const digest = crypto.pbkdf2Sync(req.body.secretKey, userData.salt, 10000, 64, 'sha512').toString('base64');
+    const digest = crypto.digest(req.body.secretKey, userData.salt);
     if(userDigest != digest) { throw new Unauthorized(coString.ERR_AUTHORIZATION) }
     req.session.userId = userId;
     returnResult.rc = 200;
@@ -81,8 +81,8 @@ const register = async(req, res) => {
             return;
         }
         try {
-            const salt = (await crypto.randomBytes(32)).toString('hex');
-            const digest = crypto.pbkdf2Sync(secretKey, salt, 10000, 64, 'sha512').toString('base64');
+            const salt = crypto.salt();
+            const digest = crypto.digest(secretKey, salt);
             let userImg = `${process.env.SERVER_REQ_INFO}/profile/base/profile-${Math.floor(( Math.random() * 3) + 1)}.PNG`;
             const newUser = await UserSchema.createUser(userId, userName, userImg, digest, salt, t);
             req.session.userId = newUser.user_id;
@@ -172,13 +172,13 @@ const changePassword = async(req, res) => {
     const userData = await UserSchema.findOneUser(req.session.userId);
     if(!userData){ throw new Unauthorized(coString.NOT_FOUND_USER_ID) }
     const userDigest = userData.digest;
-    const digest = crypto.pbkdf2Sync(req.body.existedSecretKey, userData.salt, 10000, 64, 'sha512').toString('base64')
+    const digest = crypto.digest(req.body.existedSecretKey, userData.salt);
     if(userDigest != digest) { 
         res.status(402).json({rc: 402, rcmsg: coString.ERR_PASSWORD});
         return;
     }
-    const salt = (await crypto.randomBytes(32)).toString('hex');
-    const newDigest = crypto.pbkdf2Sync(req.body.newSecretKey, salt, 10000, 64, 'sha512').toString('base64')
+    const salt = crypto.salt();
+    const newDigest = crypto.digest(req.body.newSecretKey, salt);
     await UserSchema.changeUserPassword(
         req.session.userId,
         newDigest,
@@ -191,8 +191,8 @@ const temporaryPassword = async(req, res) => {
     logger.info(`Sending user's password of [${req.body.email}] to Email...`);
     const tempPassword = Math.random().toString(36).slice(2);
     await sendEmail(req.body.email, tempPassword);
-    const salt = (await crypto.randomBytes(32)).toString('hex');
-    const digest = crypto.pbkdf2Sync(tempPassword, salt, 10000, 64, 'sha512').toString('base64')
+    const salt = crypto.salt();
+    const digest = crypto.digest(tempPassword, salt);
     const [updatedCnt] = await UserSchema.changeUserPassword(
         req.body.email + ':custom',
         digest,
