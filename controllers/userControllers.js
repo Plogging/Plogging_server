@@ -13,7 +13,7 @@ const {sequelize} = require('../models/index');
 const RankSchema = require('../models/ranking');
 const PloggingSchema = require('../models/plogging');
 const crypto = require('crypto');
-const coString = require('../util/userConstMsg');
+const coString = require('../util/resConstMsg');
 
 const signIn = async(req, res) => {
     const userId = req.body.userId + ':custom';
