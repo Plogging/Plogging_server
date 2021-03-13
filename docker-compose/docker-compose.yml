@@ -1,0 +1,45 @@
+version: "3.0"
+services:
+        #plogging-web:
+        #build: .
+        #ports:
+        #  - "20000:20000"
+        #networks:
+        #  - compose-networks
+    plogging-redis:
+        image: "redis"
+        command: redis-server --requirepass dkwmfrjdns1!
+        ports:
+          - "6379:6379"
+        environment:
+          - REDIS_PASSWORD=dkwmfrjdns1!
+        networks:
+          - compose-networks
+    plogging-mongo:
+        image: "mongo"
+        volumes:
+         - /mnt/db_data:/data/db
+        ports:
+          - "27017:27017"
+        environment:
+          - MONGO_INITDB_ROOT_USERNAME=root
+          - MONGO_INITDB_ROOT_PASSWORD=dkwmfrjdns1!
+        networks:
+          - compose-networks
+    plogging-mariadb:
+        build: 
+          context: .
+          dockerfile: ./mariadb.Dockerfile
+        #image: "mariadb"
+        volumes:
+          - /mnt/db_data:/var/lib/mysql
+        ports: 
+          - "3306:3306"
+        environment:
+          - MYSQL_ROOT_USER=root
+          - MYSQL_ROOT_PASSWORD=dkwmfrjdns1!
+        networks:
+          - compose-networks
+
+networks:
+  compose-networks:
