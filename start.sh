@@ -1,7 +1,7 @@
 #!/bin/bash
 echo 'plogging-server start'
 
-git pull origin master
+git pull origin develop
 
 docker stop plogging-app || true
 docker rm plogging-app || true
