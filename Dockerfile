@@ -14,4 +14,4 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
 
 EXPOSE 443
 
-CMD ["pm2-runtime", "start", "start.config.js", "--env", "development"]
+CMD ["pm2-runtime", "start", "start.config.js", "--env", "production"]
