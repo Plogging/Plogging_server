@@ -7,7 +7,7 @@
  - mariadb, mongodb, redis
 
 ## [ 서비스 Flow ]
-![image](https://user-images.githubusercontent.com/21052356/109422538-4c714a80-7a1f-11eb-86f6-18051eea5ad9.png)
+![플로깅 아키택처](https://user-images.githubusercontent.com/21052356/110501578-a966b200-813d-11eb-9759-68cf366f4019.PNG)
 
 ## [배포]
  - Docker, Jenkins
