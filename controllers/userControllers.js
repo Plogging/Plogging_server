@@ -20,10 +20,10 @@ const signIn = async(req, res) => {
     let returnResult = {};
     logger.info(`Logging in with [${userId}] ...`);
     const userData = await UserSchema.findOneUser(userId);
-    if(!userData){ throw new Unauthorized(coString.ERR_AUTHORIZATION) }
+    if(!userData){ throw new Unauthorized(coString.ERR_EMAIL) }
     const userDigest = userData.digest;
     const digest = crypto.digest(req.body.secretKey, userData.salt);
-    if(userDigest != digest) { throw new Unauthorized(coString.ERR_AUTHORIZATION) }
+    if(userDigest != digest) { throw new Unauthorized(coString.ERR_PASSWORD) }
     req.session.userId = userId;
     returnResult.rc = 200;
     returnResult.rcmsg = coString.SUCCESS;
