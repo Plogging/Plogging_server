@@ -40,10 +40,7 @@ module.exports = {
     dialect: 'mysql',
     timezone: '+09:00',
     dialectOptions: {
-      bigNumberStrings: true,
-      ssl: {
-        // ca: fs.readFileSync(__dirname + '/mysql-ca-master.crt')
-      }
+      bigNumberStrings: true
     }
   }
 };
