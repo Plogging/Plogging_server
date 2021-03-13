@@ -12,7 +12,7 @@ const serverUrl = process.env.SERVER_REQ_INFO;
 const {sequelize} = require('../models/index');
 const RankSchema = require('../models/ranking');
 const PloggingSchema = require('../models/plogging');
-const coString = require('../util/resConstMsg');
+const resString = require('../util/resConstMsg');
 const crypto = require('../util/cryptoHelper');
 
 const signIn = async(req, res) => {
@@ -20,13 +20,13 @@ const signIn = async(req, res) => {
     let returnResult = {};
     logger.info(`Logging in with [${userId}] ...`);
     const userData = await UserSchema.findOneUser(userId);
-    if(!userData){ throw new Unauthorized(coString.ERR_EMAIL) }
+    if(!userData){ throw new Unauthorized(resString.ERR_EMAIL) }
     const userDigest = userData.digest;
     const digest = crypto.digest(req.body.secretKey, userData.salt);
-    if(userDigest != digest) { throw new Unauthorized(coString.ERR_PASSWORD) }
+    if(userDigest != digest) { throw new Unauthorized(resString.ERR_PASSWORD) }
     req.session.userId = userId;
     returnResult.rc = 200;
-    returnResult.rcmsg = coString.SUCCESS;
+    returnResult.rcmsg = resString.SUCCESS;
     returnResult.userImg = userData.profile_img;
     returnResult.userName = userData.display_name;
     res.json(returnResult);
@@ -45,20 +45,20 @@ const social = async(req, res) => {
                 const newUser = await UserSchema.createUser(userId, userName, userImg, null, null, t);
                 req.session.userId = newUser.user_id;
                 returnResult.rc = 201;
-                returnResult.rcmsg = coString.CREATED;
+                returnResult.rcmsg = resString.CREATED;
                 returnResult.userImg = newUser.profile_img;
                 returnResult.userName = newUser.display_name;
                 res.status(201).json(returnResult);
             } catch (error) {
                 if(error.original && error.original.errno === 1062){
-                    throw new Conflict(coString.EXISTED_NAME);
+                    throw new Conflict(resString.EXISTED_NAME);
                 }
                 throw new InternalServerError
             }
         }else{
             req.session.userId = user.user_id;
             returnResult.rc = 200;
-            returnResult.rcmsg = coString.SUCCESS;
+            returnResult.rcmsg = resString.SUCCESS;
             returnResult.userImg = user.profile_img;
             returnResult.userName = user.display_name;
             res.json(returnResult);
@@ -77,7 +77,7 @@ const register = async(req, res) => {
     await sequelize.transaction(async (t) => {
         const user = await UserSchema.findOneUser(userId, null, t);
         if (user) {
-            res.status(410).json({rc: 410, rcmsg: coString.EXISTED_ID});
+            res.status(410).json({rc: 410, rcmsg: resString.EXISTED_ID});
             return;
         }
         try {
@@ -87,13 +87,13 @@ const register = async(req, res) => {
             const newUser = await UserSchema.createUser(userId, userName, userImg, digest, salt, t);
             req.session.userId = newUser.user_id;
             returnResult.rc = 201;
-            returnResult.rcmsg = coString.CREATED;
+            returnResult.rcmsg = resString.CREATED;
             returnResult.userImg = newUser.profile_img;
             returnResult.userName = newUser.display_name;
             res.status(201).json(returnResult);
         } catch (error) {
             if(error.original && error.original.errno === 1062){
-                throw new Conflict(coString.EXISTED_NAME);
+                throw new Conflict(resString.EXISTED_NAME);
             }
             throw new InternalServerError
         }
@@ -104,9 +104,9 @@ const checkUserId = async(req, res) => {
     logger.info(`Checking [${req.body.userId}]...`);
     const user = await UserSchema.findOneUser(req.body.userId + ':custom');
     if(user){
-        res.status(201).json({rc: 201, rcmsg: coString.EXISTED_ID});
+        res.status(201).json({rc: 201, rcmsg: resString.EXISTED_ID});
     }else{
-        res.json({rc: 200, rcmsg: coString.NOT_FOUND_USER_ID});
+        res.json({rc: 200, rcmsg: resString.NOT_FOUND_USER_ID});
     }
 }
 
@@ -115,10 +115,10 @@ const getUserInfo = async(req, res) => {
     let returnResult = {};
     const user = await UserSchema.findOneUser(req.params.id);
     if(!user){
-        throw new NotFound(coString.NOT_FOUND_USER_ID);
+        throw new NotFound(resString.NOT_FOUND_USER_ID);
     }
     returnResult.rc = 200;
-    returnResult.rcmsg = coString.SUCCESS;
+    returnResult.rcmsg = resString.SUCCESS;
     returnResult.userId = user.user_id;
     returnResult.userImg = user.profile_img;
     returnResult.userName = user.display_name;
@@ -140,12 +140,12 @@ const changeUserName = async(req, res) => {
             throw new InternalServerError
         }
         returnResult.rc = 200;
-        returnResult.rcmsg = coString.SUCCESS;
+        returnResult.rcmsg = resString.SUCCESS;
         returnResult.userName = req.body.userName;
         res.send(returnResult);
     } catch (error) {
         if(error.original.errno === 1062){
-            throw new Conflict(coString.EXISTED_NAME);
+            throw new Conflict(resString.EXISTED_NAME);
         }
         throw new InternalServerError
     }
@@ -162,7 +162,7 @@ const changeUserImage = async(req, res) => {
         throw new InternalServerError
     }
     returnResult.rc = 200;
-    returnResult.rcmsg = coString.SUCCESS;
+    returnResult.rcmsg = resString.SUCCESS;
     returnResult.profileImg = profileImg;
     res.send(returnResult);
 }
@@ -170,11 +170,11 @@ const changeUserImage = async(req, res) => {
 const changePassword = async(req, res) => {
     logger.info(`Changing user's password of [${req.session.userId}] ...`);
     const userData = await UserSchema.findOneUser(req.session.userId);
-    if(!userData){ throw new Unauthorized(coString.NOT_FOUND_USER_ID) }
+    if(!userData){ throw new Unauthorized(resString.NOT_FOUND_USER_ID) }
     const userDigest = userData.digest;
     const digest = crypto.digest(req.body.existedSecretKey, userData.salt);
     if(userDigest != digest) { 
-        res.status(402).json({rc: 402, rcmsg: coString.ERR_PASSWORD});
+        res.status(402).json({rc: 402, rcmsg: resString.ERR_PASSWORD});
         return;
     }
     const salt = crypto.salt();
@@ -184,7 +184,7 @@ const changePassword = async(req, res) => {
         newDigest,
         salt
     );
-    res.json({rc: 200, rcmsg: coString.SUCCESS});
+    res.json({rc: 200, rcmsg: resString.SUCCESS});
 }
 
 const temporaryPassword = async(req, res) => {
@@ -199,9 +199,9 @@ const temporaryPassword = async(req, res) => {
         salt
     );
     if(updatedCnt) {
-        res.json({rc: 200, rcmsg: coString.SUCCESS});
+        res.json({rc: 200, rcmsg: resString.SUCCESS});
     }else{
-        throw new NotFound(coString.NOT_FOUND_USER_ID);
+        throw new NotFound(resString.NOT_FOUND_USER_ID);
     }
 }
 
@@ -212,7 +212,7 @@ const signOut = async(req, res) => {
             throw new InternalServerError;
         }else{
             res.clearCookie('connect.sid');
-            res.json({rc: 200, rcmsg: coString.SUCCESS});
+            res.json({rc: 200, rcmsg: resString.SUCCESS});
         }
     })
 }
@@ -238,7 +238,7 @@ const withdrawal = async(req, res) => {
         req.session.destroy();
         res.clearCookie('connect.sid');
         await t.commit();
-        res.json({rc: 200, rcmsg: coString.SUCCESS});
+        res.json({rc: 200, rcmsg: resString.SUCCESS});
     }catch(err) {
         await t.rollback();
         throw new InternalServerError;
