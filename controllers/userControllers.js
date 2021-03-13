@@ -5,7 +5,8 @@ const fs = require('fs');
 const { NotFound, Unauthorized, Conflict, InternalServerError } = require('throw.js')
 const jasypt = require('../util/common_jasypt.js');
 const UserSchema = require('../models/user.js');
-const filePath = process.env.IMG_FILE_PATH + "/profile/";
+const ploggingFilePath = process.env.IMG_FILE_PATH + "/plogging/";
+const profileFilePath = process.env.IMG_FILE_PATH + "/profile/";
 const adminEmailId = process.env.ADMIN_EMAIL_ID;
 const adminEmailPassword = jasypt.decrypt(process.env.ADMIN_EMAIL_PASSWORD);
 const serverUrl = process.env.SERVER_REQ_INFO;
@@ -156,7 +157,6 @@ const changeUserImage = async(req, res) => {
     let returnResult = {};
     const profileImg = process.env.SERVER_REQ_INFO + '/' + req.file.path.split(`${process.env.IMG_FILE_PATH}/`)[1];
     // TODO: sql 오류에도 파일 이미지는 정상으로 바뀜
-    // TODO: 추후 서버 연결 시 경로 변경
     const [updatedCnt] = await UserSchema.updateUserImg(req.session.userId, profileImg);
     if(!updatedCnt){
         throw new InternalServerError
@@ -221,22 +221,19 @@ const withdrawal = async(req, res) => {
     logger.info(`Withdrawing [${req.session.userId}] ...`);
     const userId = req.session.userId;
     const t = await sequelize.transaction(); 
-    const deletedCnt = await UserSchema.deleteUser(userId, t);
-    if(!deletedCnt){
-        throw new InternalServerError
-    }
     try {   
         await PloggingSchema.deletePloggingsModel(userId);
-        // 탈퇴 유저의 산책이력 이미지 전체 삭제
-        if(fs.existsSync(`${filePath}${userId}`)){
-            fs.rmdirSync(`${filePath}${userId}`, { recursive: true });
-        }
-        // 해당 산책의 점수 랭킹점수 삭제
+        const profileImgPath = `${profileFilePath}${userId}`;
+        if(fs.existsSync(profileImgPath)) fs.rmdirSync(profileImgPath, { recursive: true });
+        const ploggingImgPath = `${ploggingFilePath}${userId}`;
+        if (fs.existsSync(ploggingImgPath)) fs.rmdirSync(ploggingImgPath, { recursive: true });
         await RankSchema.deleteDistance(userId);
         await RankSchema.deleteTrash(userId);
         await RankSchema.deleteScore(userId);
         req.session.destroy();
         res.clearCookie('connect.sid');
+        const deletedCnt = await UserSchema.deleteUser(userId, t);
+        if(!deletedCnt){ throw new InternalServerError }
         await t.commit();
         res.json({rc: 200, rcmsg: resString.SUCCESS});
     }catch(err) {
