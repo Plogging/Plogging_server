@@ -1,11 +1,5 @@
 version: "3.0"
 services:
-        #plogging-web:
-        #build: .
-        #ports:
-        #  - "20000:20000"
-        #networks:
-        #  - compose-networks
     plogging-redis:
         image: "redis"
         command: redis-server --requirepass dkwmfrjdns1!
