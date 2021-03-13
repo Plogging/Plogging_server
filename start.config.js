@@ -26,6 +26,21 @@ module.exports = {
           },
           env_development: { // tb ( 라즈베리파이 서버 )
             "NODE_ENV": "development",
+            "PORT": 8000, 
+            "MONGODB_INFO": "192.168.0.25:27017",
+            "MONGODB_PASSWORD": "JjaoSaoP+IRVDBkXdDR4XMgTmkMut0VM",
+            "REDIS_INFO": "192.168.0.25:6379",
+            "REDIS_PASSWORD":"JjaoSaoP+IRVDBkXdDR4XMgTmkMut0VM",
+            "MARIADB_INFO": "192.168.0.25:3306",
+            "MARIADB_PASSWORD": "JjaoSaoP+IRVDBkXdDR4XMgTmkMut0VM",
+            "IMG_FILE_PATH": "/mnt/Plogging_server/images",
+            "SERVER_REQ_INFO": "https://nexters.plogging.kro.kr:20000",
+            "ADMIN_EMAIL_ID": "ploggingteam@gmail.com",
+            "ADMIN_EMAIL_PASSWORD": "IVUVhpHmNGoYLZpy4Ate5OKNH/6hlziQ",
+            "LOG_PATH": "/mnt/Plogging_server/images/log"
+          },
+          env_production: { // 상용 ( 클라우드 서버 )
+            "NODE_ENV": "production",
             "PORT": 443, // https
             "MONGODB_INFO": "192.168.0.9:27017",
             "MONGODB_PASSWORD": "JjaoSaoP+IRVDBkXdDR4XMgTmkMut0VM",
@@ -34,13 +49,10 @@ module.exports = {
             "MARIADB_INFO": "192.168.0.9:3306",
             "MARIADB_PASSWORD": "JjaoSaoP+IRVDBkXdDR4XMgTmkMut0VM",
             "IMG_FILE_PATH": "/mnt/Plogging_server/images",
-            "SERVER_REQ_INFO": "https:nexters.plogging.kro.kr:20000",
+            "SERVER_REQ_INFO": "https://nexters.plogging.kro.kr:20000",
             "ADMIN_EMAIL_ID": "ploggingteam@gmail.com",
             "ADMIN_EMAIL_PASSWORD": "IVUVhpHmNGoYLZpy4Ate5OKNH/6hlziQ",
             "LOG_PATH": "/mnt/Plogging_server/images/log"
-          },
-          env_production: { // 상용 ( 클라우드 서버 )
-            "NODE_ENV": "production",
           }
         }
     ]

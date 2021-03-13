@@ -32,9 +32,9 @@ module.exports = {
     }
   },
   production: {
-    username: process.env.PROD_DB_USERNAME,
-    password: 'root',
-    database: process.env.PROD_DB_NAME,
+    username: 'root',
+    password: dbPassword,
+    database: 'plogging',
     host: ip,
     port: port,
     dialect: 'mysql',
