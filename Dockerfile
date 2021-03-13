@@ -12,6 +12,6 @@ ENV TZ=Asia/Seoul
 
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
 
-EXPOSE 443
+EXPOSE 8000
 
 CMD ["pm2-runtime", "start", "start.config.js", "--env", "production"]

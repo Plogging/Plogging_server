@@ -115,9 +115,14 @@ const swaggerUi = require('swagger-ui-express');
             console.log(`server on ${globalOption.PORT} !`);
         })
     } else if(process.env.NODE_ENV === 'production') {
+        http.createServer(app).listen(globalOption.PORT, function(req, res){
+            console.log(`server on ${globalOption.PORT} !`);
+        })
+        /*
         https.createServer(sslOptions, app).listen(globalOption.PORT, function(req, res){
             console.log(`server on ${globalOption.PORT} !`);
         })
+        */
     }
 })();
 
