@@ -4,14 +4,8 @@ node_modules
 ## exclude img files
 images/
 
-## Dockerfile
-Dockerfile
-
-## start.sh
-start.sh
-
-## docker-compose
-docker-compose/
+## testCode
+test/
 
 ## 기타 파일 제외
 .vscode
