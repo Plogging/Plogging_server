@@ -40,7 +40,7 @@ module.exports = {
             "LOG_PATH": "/mnt/Plogging_server/images/log"
           },
           env_production: { // 상용
-            "NODE_ENV": "development",
+            "NODE_ENV": "production",
             "PORT": 8000, 
             "MONGODB_INFO": "192.168.0.9:27017",
             "MONGODB_PASSWORD": "JjaoSaoP+IRVDBkXdDR4XMgTmkMut0VM",
