@@ -18,7 +18,7 @@ services:
     plogging-mongo:
         image: "mongo"
         volumes:
-         - /mnt/db_data:/data/db
+         - /home/ubuntu/exhard/mongodb:/data/db
         ports:
           - "27017:27017"
         environment:
@@ -32,7 +32,7 @@ services:
           dockerfile: ./mariadb.Dockerfile
         #image: "mariadb"
         volumes:
-          - /mnt/db_data:/var/lib/mysql
+          - /home/ubuntu/exhard/mysql:/var/lib/mysql
         ports: 
           - "3306:3306"
         environment:
