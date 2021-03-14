@@ -1,12 +1,6 @@
 ## 라이브러리 파일 제외
 node_modules
 
-## exclude img files
-images/
-
-## testCode
-test/
-
 ## 기타 파일 제외
 .vscode
 package-lock.json
