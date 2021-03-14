@@ -6,7 +6,7 @@ module.exports = {
           watch: false,
           out_file: "/dev/null",
           error_file: "/dev/null",
-	  instances: 2,
+	        instances: 2,
           exec_mode: "cluster",
           env: { // 로컬
               "NODE_ENV": "local",
@@ -34,12 +34,12 @@ module.exports = {
             "MARIADB_INFO": "192.168.0.25:3306",
             "MARIADB_PASSWORD": "JjaoSaoP+IRVDBkXdDR4XMgTmkMut0VM",
             "IMG_FILE_PATH": "/mnt/Plogging_server/images",
-            "SERVER_REQ_INFO": "https://nexters.plogging.kro.kr:30000",
+            "SERVER_REQ_INFO": "http://121.130.220.217:30000",
             "ADMIN_EMAIL_ID": "ploggingteam@gmail.com",
             "ADMIN_EMAIL_PASSWORD": "IVUVhpHmNGoYLZpy4Ate5OKNH/6hlziQ",
             "LOG_PATH": "/mnt/Plogging_server/images/log"
           },
-          env_production: { // 상용 ( 클라우드 서버 )
+          env_production: { // 상용
             "NODE_ENV": "production",
             "PORT": 8000, 
             "MONGODB_INFO": "192.168.0.17:27017",

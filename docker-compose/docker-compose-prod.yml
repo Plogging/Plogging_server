@@ -12,7 +12,7 @@ services:
     plogging-mongo:
         image: "mongo"
         volumes:
-         - /data/mongodb_data:/data/db
+         - /data_1/mongodb_data:/data/db
         ports:
           - "27017:27017"
         environment:
@@ -25,7 +25,7 @@ services:
           context: .
           dockerfile: ./mariadb.Dockerfile
         volumes:
-          - /data/mysql_data:/var/lib/mysql
+          - /data_1/mysql_data:/var/lib/mysql
         ports: 
           - "3306:3306"
         environment:
