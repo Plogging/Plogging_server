@@ -107,7 +107,7 @@ const checkUserId = async(req, res) => {
     if(user){
         res.status(201).json({rc: 201, rcmsg: resString.EXISTED_ID});
     }else{
-        res.json({rc: 200, rcmsg: resString.NOT_FOUND_USER_ID});
+        res.json({rc: 200, rcmsg: resString.ERR_EMAIL});
     }
 }
 
@@ -116,7 +116,7 @@ const getUserInfo = async(req, res) => {
     let returnResult = {};
     const user = await UserSchema.findOneUser(req.params.id);
     if(!user){
-        throw new NotFound(resString.NOT_FOUND_USER_ID);
+        throw new NotFound(resString.ERR_EMAIL);
     }
     returnResult.rc = 200;
     returnResult.rcmsg = resString.SUCCESS;
@@ -170,7 +170,7 @@ const changeUserImage = async(req, res) => {
 const changePassword = async(req, res) => {
     logger.info(`Changing user's password of [${req.session.userId}] ...`);
     const userData = await UserSchema.findOneUser(req.session.userId);
-    if(!userData){ throw new Unauthorized(resString.NOT_FOUND_USER_ID) }
+    if(!userData){ throw new Unauthorized(resString.ERR_EMAIL) }
     const userDigest = userData.digest;
     const digest = cryptoHelper.digest(req.body.existedSecretKey, userData.salt);
     if(userDigest != digest) { 
@@ -201,7 +201,7 @@ const temporaryPassword = async(req, res) => {
     if(updatedCnt) {
         res.json({rc: 200, rcmsg: resString.SUCCESS});
     }else{
-        throw new NotFound(resString.NOT_FOUND_USER_ID);
+        throw new NotFound(resString.ERR_EMAIL);
     }
 }
 
