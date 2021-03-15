@@ -2,6 +2,8 @@ FROM node:12
 
 WORKDIR /mnt/Plogging_server
 
+ENV APP_ENCRYPTION_PASSWORD plogging-pw 
+
 COPY . .
 
 RUN npm install --production
