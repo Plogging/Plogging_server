@@ -16,4 +16,4 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
 
 EXPOSE 8000
 
-CMD ["pm2-runtime", "start", "start.config.js", "--env", "production"]
+CMD ["pm2-runtime", "start", "start.config.js", "--env", "development"]
