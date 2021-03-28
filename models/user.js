@@ -42,35 +42,24 @@ UserSchema.createUser = async(
 
 UserSchema.updateUserName = async(userId, userName) => await User.update({
     display_name: userName
-}, { where: { user_id: userId}});
+}, {where: {user_id: userId}});
 
 UserSchema.updateUserImg = async(userId, profileImg) => await User.update({
     profile_img: profileImg
-}, { where: { user_id: userId}});
+}, {where: {user_id: userId}});
 
 UserSchema.changeUserPassword = async(
     userId, 
     newDigest,
-    salt,
-    existedDigest = null) =>  
-        existedDigest? 
+    salt) =>
         await User.update({
             digest: newDigest,
             salt: salt
-        }, { where: {
-                user_id: userId,
-                digest: existedDigest
-            }}): 
-        await User.update({
-            digest: newDigest,
-            salt: salt
-        }, { where: {
-                user_id: userId
-            }}
+        }, {where: {user_id: userId}}
     );
 
 UserSchema.deleteUser = async(userId, t = null) => await User.destroy({
     where: {user_id: userId}
-}, { transaction: t});
+}, {transaction: t});
 
 module.exports = UserSchema;

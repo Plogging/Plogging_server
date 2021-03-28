@@ -2,11 +2,11 @@ version: "3.0"
 services:
     plogging-redis:
         image: "redis"
-        command: redis-server --requirepass *******
+        volumes:
+         - /data_1/redis_data:/data
+        command: redis-server --requirepass ******* --appendonly yes
         ports:
           - "6379:6379"
-        environment:
-          - REDIS_PASSWORD=*******
         networks:
           - compose-networks
     plogging-mongo:
