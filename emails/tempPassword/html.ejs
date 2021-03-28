@@ -1,10 +1,33 @@
 
 <html>
+    <head>
+        <style>
+        .password {
+            border: 1px rgb(240, 240, 240) solid;
+            color: black;
+            padding: 15px 60px;
+            margin-top: 40px;
+            margin-bottom: 60px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            background-color: rgb(250, 250, 250);
+            border-radius: 8px;
+            align-self: center;
+        }
+        </style>
+        </head>
     <body>
-        <div>
-            <p>임시 비밀번호 입니다.</p>
-            <p>아래의 비밀번호를 입력하여 로그인을 완료해주세요.</p>
-            <h2><%= password %></h2>
+        <div class="form">
+            <center>
+            <b> 🔑 임시 비밀번호 입니다.</b>
+            <p>아래의 비밀번호를 입력하여 로그인을 완료해주세요!</p>
+            <h1 class="password"><%= password %></h1>
+            <div>
+            <img src="https://user-images.githubusercontent.com/35513039/112752318-76f9f780-900d-11eb-9f77-854647d4a78b.png" alt="My Image" width="330" height="253">
+            </div>
+            </center>
         </div>
     </body>
 </html>
