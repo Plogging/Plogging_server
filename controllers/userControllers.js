@@ -271,7 +271,8 @@ const sendEmail = async(userEmail, tempPassword) => {
         locals: {
             name: userEmail,
             password: tempPassword,
-            url: serverUrl + '/user/password/temp'
+            url: serverUrl + '/user/password/temp',
+            imageUrl: 'https://nexters.plogging.kro.kr:20000/profile/base/plogging-email-logo.png'
         }})
         .then((logger.info(`${userEmail} email has been sent!`)))
 }
