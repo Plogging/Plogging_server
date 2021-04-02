@@ -114,11 +114,13 @@ const deletePlogging = async function (req, res) {
     const ploggingTotalScore = ploggingObj.meta.plogging_total_score;
     const ploggingDistance = ploggingObj.meta.distance;
     const pickCount = ploggingObj.meta.plogging_trash_count;
+    const createdTime = ploggingObj.meta.created_time;
 
     // 산책이력 삭제
     await PloggingSchema.deletePloggingModel(ploggingId);
 
     // redis update
+    // 
     await RankSchema.updateScore(userId, ploggingTotalScore*(-1));
     await RankSchema.updateDistance(userId, ploggingDistance*(-1));
     await RankSchema.updateTrash(userId, pickCount*(-1));
