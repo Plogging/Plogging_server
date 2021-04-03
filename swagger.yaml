@@ -19,7 +19,6 @@ paths:
               - userId
               - secretKey
             properties:
-              
               userId:
                 type: string
                 example: ganghee@nate.com
@@ -40,7 +39,7 @@ paths:
                 example: OK
               userImg:
                 type: string
-                example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
+                example: https://nexters.plogging.kro.kr:20000/profile/base/profile-1.PNG
               userName:
                 type: string
                 example: 쓰담이
@@ -56,7 +55,7 @@ paths:
                 type: string
                 example: body should have required property [userId/ secretKey]
         401:
-          description: No userId or No secretKey from DB
+          description: 가입되지 않은 아이디 입니다. 혹은 현재 비밀번호가 일치하지 않습니다.
           schema:
             type: object
             properties:
@@ -65,7 +64,7 @@ paths:
                 example: 401
               rcmsg:
                 type: string
-                example: No userId or No secretKey from DB
+                example: 가입되지 않은 아이디 입니다. 혹은 현재 비밀번호가 일치하지 않습니다.
         500:
           description: Internal Server Error
           schema:
@@ -76,7 +75,7 @@ paths:
                 example: 500
               rcmsg:
                 type: string
-                example: Internal Server Error
+                example: 서버에 오류가 발생했습니다. 잠시 후 다시 시도해주세요.
   /user/social:
     post:
       summary: OAuth login
@@ -111,7 +110,7 @@ paths:
                 example: OK
               userImg:
                 type: string
-                example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
+                example: https://nexters.plogging.kro.kr:20000/profile/base/profile-1.PNG
               userName:
                 type: string
                 example: 쓰담이
@@ -125,10 +124,10 @@ paths:
                 example: 201
               rcmsg:
                 type: string
-                example: Created
+                example: 생성되었습니다.
               userImg:
                 type: string
-                example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
+                example: https://nexters.plogging.kro.kr:20000/profile/base/profile-1.PNG
               userName:
                 type: string
                 example: 쓰담이
@@ -153,7 +152,7 @@ paths:
                 example: 409
               rcmsg:
                 type: string
-                example: Conflict
+                example: 이미 사용중인 닉네임입니다.
         500:
           description: Internal Server Error
           schema:
@@ -164,7 +163,7 @@ paths:
                 example: 500
               rcmsg:
                 type: string
-                example: Internal Server Error
+                example: 서버에 오류가 발생했습니다. 잠시 후 다시 시도해주세요.
   /user:
     post:
       summary: 회원가입하기
@@ -200,10 +199,10 @@ paths:
                 example: 201
               rcmsg:
                 type: string
-                example: Created
+                example: 생성되었습니다.
               userImg:
                 type: string
-                example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
+                example: https://nexters.plogging.kro.kr:20000/profile/base/profile-1.PNG
               userName:
                 type: string
                 example: 쓰담이
@@ -228,7 +227,7 @@ paths:
                 example: 409
               rcmsg:
                 type: string
-                example: Username Conflict
+                example: 이미 사용중인 닉네임입니다.
         410:
           description: Gone ('UserId Conflict')
           schema:
@@ -239,7 +238,7 @@ paths:
                 example: 410
               rcmsg:
                 type: string
-                example: UserId Conflict
+                example: 이미 사용중인 아이디입니다.
         
         500:
           description: Internal Server Error
@@ -251,7 +250,7 @@ paths:
                 example: 500
               rcmsg:
                 type: string
-                example: Internal Server Error
+                example: 서버에 오류가 발생했습니다. 잠시 후 다시 시도해주세요.
     delete:
       summary: 회원탈퇴
       tags: [User]
@@ -288,7 +287,7 @@ paths:
                 example: 500
               rcmsg:
                 type: string
-                example: Internal Server Error
+                example: 서버에 오류가 발생했습니다. 잠시 후 다시 시도해주세요.
   /user/check:
     post:
       summary: 사용자 아이디 가입 확인
@@ -316,7 +315,7 @@ paths:
                 example: 200
               rcmsg:
                 type: string
-                example: userId which is not existed
+                example: 가입되지 않은 아이디 입니다.
         201:
           description: userId which is existed
           schema:
@@ -327,7 +326,7 @@ paths:
                 example: 201
               rcmsg:
                 type: string
-                example: userId which is existed
+                example: 이미 사용중인 아이디입니다.
         400:
           description: Bad Request (body should have required property userId)
           schema:
@@ -349,7 +348,7 @@ paths:
                 example: 500
               rcmsg:
                 type: string
-                example: Internal Server error
+                example: 서버에 오류가 발생했습니다. 잠시 후 다시 시도해주세요.
   /user/{id}:
     get:
       summary: 사용자 정보 가져오기
@@ -378,7 +377,7 @@ paths:
                 example: abc@naver.com:naver
               userImg:
                 type: string
-                example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
+                example: https://nexters.plogging.kro.kr:20000/profile/base/profile-1.PNG
               userName:
                 type: string
                 example: 쓰담이
@@ -421,7 +420,7 @@ paths:
                 example: 404
               rcmsg:
                 type: string
-                example: userId which was not existed
+                example: 아이디를 찾지 못했습니다.
         500:
           description: Internal Server Error
           schema:
@@ -432,7 +431,7 @@ paths:
                 example: 500
               rcmsg:
                 type: string
-                example: Internal Server Error
+                example: 서버에 오류가 발생했습니다. 잠시 후 다시 시도해주세요.
   /user/name:
     put:
       summary: 사용자 프로필 이름 변경
@@ -499,7 +498,7 @@ paths:
                 example: 409
               rcmsg:
                 type: string
-                example: userName Conflict
+                example: 이미 사용중인 닉네임입니다.
         500:
           description: Internal Server Error
           schema:
@@ -510,7 +509,7 @@ paths:
                 example: 500
               rcmsg:
                 type: string
-                example: Internal Server Error
+                example: 서버에 오류가 발생했습니다. 잠시 후 다시 시도해주세요.
   /user/image:
     put:
       summary: 사용자 프로필 이미지 변경
@@ -540,7 +539,7 @@ paths:
                 example: OK
               userImg:
                 type: string
-                example: https://i.pinimg.com/564x/d0/be/47/d0be4741e1679a119cb5f92e2bcdc27d.jpg
+                example: https://nexters.plogging.kro.kr:20000/profile/base/profile-1.PNG
         401:
           description: Unauthorized (sessionKey 유효하지 않을 때)
           schema:
@@ -562,7 +561,7 @@ paths:
                 example: 500
               rcmsg:
                 type: string
-                example: Internal Server Error
+                example: 서버에 오류가 발생했습니다. 잠시 후 다시 시도해주세요.
   /user/password:
     put:
       summary: 비밀번호 변경
@@ -627,7 +626,7 @@ paths:
                 example: 402
               rcmsg:
                 type: string
-                example: No userId or No secretKey from DB
+                example: 현재 비밀번호가 일치하지 않습니다.
         500:
           description: Internal Server Error
           schema:
@@ -638,7 +637,7 @@ paths:
                 example: 500
               rcmsg:
                 type: string
-                example: Internal Server Error
+                example: 서버에 오류가 발생했습니다. 잠시 후 다시 시도해주세요.
   /user/password-temp:
     put:
       summary: 임시 비밀번호 발급
@@ -699,7 +698,7 @@ paths:
                 example: 500
               rcmsg:
                 type: string
-                example: Internal Server Error
+                example: 서버에 오류가 발생했습니다. 잠시 후 다시 시도해주세요.
   /user/sign-out:
     put:
       summary: 사용자 로그아웃
@@ -726,7 +725,7 @@ paths:
                 example: 401
               rcmsg:
                 type: string
-                example: 로그인 후 서비스를 이용해 주세요
+                example: 로그인 후 서비스를 이용해 주세요.
         500:
           description: Internal Server Error
           schema:
@@ -737,7 +736,7 @@ paths:
                 example: 500
               rcmsg:
                 type: string
-                example: Internal Server Error
+                example: 서버에 오류가 발생했습니다. 잠시 후 다시 시도해주세요.
   
   /plogging/{targetUserId}:
     get:
@@ -837,7 +836,7 @@ paths:
                 example: 400
               rcmsg:
                 type: string
-                example: body should have required property 'ploggingData'
+                example: 요청 파라미터를 확인해주세요.
         401:
           description: Unauthorized
           schema:
@@ -884,7 +883,7 @@ paths:
           name: ploggingImg
           type: file
           description: 산책 인증샷
-          required: false
+          required: true
         - in: formData
           name: ploggingData
           type: string
@@ -904,7 +903,7 @@ paths:
                 type: string
                 example: 산책이력 등록 성공
         400:
-          description: parameter error
+          description: Bad Request(parameter error)
           schema:
             type: object
             properties:
@@ -975,6 +974,17 @@ paths:
               rcmsg:
                 type: string
                 example: 산책이력 삭제 성공
+        400:
+          description: Bad Request(parameter error)
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 400
+              rcmsg:
+                type: string
+                example: 파라미터를 확인해주세요.
         401:
           description: Unauthorized
           schema:
@@ -1044,7 +1054,7 @@ paths:
                     type: number
                     example: 200
         400:
-          description: parameter error
+          description: Bad Request(parameter error)
           schema:
             type: object
             properties:

@@ -32,18 +32,15 @@ module.exports = {
     }
   },
   production: {
-    username: process.env.PROD_DB_USERNAME,
-    password: 'root',
-    database: process.env.PROD_DB_NAME,
+    username: 'root',
+    password: dbPassword,
+    database: 'plogging',
     host: ip,
     port: port,
     dialect: 'mysql',
     timezone: '+09:00',
     dialectOptions: {
-      bigNumberStrings: true,
-      ssl: {
-        // ca: fs.readFileSync(__dirname + '/mysql-ca-master.crt')
-      }
+      bigNumberStrings: true
     }
   }
 };

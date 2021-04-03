@@ -10,4 +10,11 @@ const decryptMsg = jasypt.decrypt(encryptMsg);
 console.log(decryptMsg);
 */
 
+/*
+const encryptMsg = jasypt.encrypt('murder^^6');  // JjaoSaoP+IRVDBkXdDR4XMgTmkMut0VM
+console.log(encryptMsg);
+const decryptMsg = jasypt.decrypt('IVUVhpHmNGoYLZpy4Ate5OKNH/6hlziQ');
+console.log(decryptMsg);
+*/
+
 module.exports = jasypt;

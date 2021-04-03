@@ -40,7 +40,7 @@ const readPlogging = async function (req, res) {
         limit: ploggingCntPerPage
     }
 
-    const [allPloggingCount, plogging_list] = await PloggingSchema.readPloggingModel(query, options, targetUserId);
+    const [allPloggingCount, plogging_list] = await PloggingSchema.readPloggingsModel(query, options, targetUserId);
 
     const meta = {};
     meta.startPageNumber = 1;
@@ -83,30 +83,14 @@ const writePlogging = async function (req, res) {
     if (req.file === undefined) ploggingObj.meta.plogging_img = `${process.env.SERVER_REQ_INFO}/plogging/baseImg.PNG`;
     else ploggingObj.meta.plogging_img = process.env.SERVER_REQ_INFO + '/' + req.file.path.split(`${process.env.IMG_FILE_PATH}/`)[1];
 
-    await sequelize.transaction(async (t) => {
-        const userData = await User.findOneUser(userId, t);
-        const updatedPloggingData = {};
-        // 주간
-        updatedPloggingData.scoreWeek = userData.score_week + ploggingTotalScore;
-        updatedPloggingData.distanceWeek = userData.distance_week + ploggingDistance;
-        updatedPloggingData.trashWeek = userData.trash_week + pickCount;
+    // mongodb update
+    await PloggingSchema.writePloggingModel(ploggingObj);
 
-        // 월간
-        updatedPloggingData.scoreMonth = userData.score_month + ploggingTotalScore;
-        updatedPloggingData.distanceMonth = userData.distance_month + ploggingDistance;
-        updatedPloggingData.trashMonth = userData.trash_month + pickCount;
-
-        // mariadb update
-        await User.updateUserPloggingData(updatedPloggingData, userId, t);
-
-        // mongodb update
-        await PloggingSchema.writePloggingModel(ploggingObj);
-
-        // redis update
-        await RankSchema.update(userId, ploggingTotalScore);
-
-        res.status(200).json(returnResult);
-    });
+    // redis update
+    await RankSchema.updateScore(userId, ploggingTotalScore);
+    await RankSchema.updateDistance(userId, ploggingDistance);
+    await RankSchema.updateTrash(userId, pickCount);
+    res.status(200).json(returnResult);
 }
 
 /*
@@ -123,9 +107,21 @@ const deletePlogging = async function (req, res) {
     let ploggingId = req.query.ploggingId;
     let ploggingImgName = req.query.ploggingImgName; // plogging_20210106132743.PNG
     let ploggingImgPath = `${ploggingFilePath}${userId}/${ploggingImgName}`;
+    
+    // 지울 산책이력 조회
+    const ploggingObj = await PloggingSchema.readPloggingModel(ploggingId);
+
+    const ploggingTotalScore = ploggingObj.meta.plogging_total_score;
+    const ploggingDistance = ploggingObj.meta.distance;
+    const pickCount = ploggingObj.meta.plogging_trash_count;
 
     // 산책이력 삭제
-    PloggingSchema.deletePloggingModel(ploggingId);
+    await PloggingSchema.deletePloggingModel(ploggingId);
+
+    // redis update
+    await RankSchema.updateScore(userId, ploggingTotalScore*(-1));
+    await RankSchema.updateDistance(userId, ploggingDistance*(-1));
+    await RankSchema.updateTrash(userId, pickCount*(-1));
 
     // 산책이력 이미지 삭제
     if (fs.existsSync(ploggingImgPath)) fs.unlinkSync(ploggingImgPath);
