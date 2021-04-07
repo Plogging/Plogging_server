@@ -15,7 +15,7 @@ const { BadRequest } = require('throw.js');
  *  case 1. 최신순
  *  case 2 .플로깅 점수순
  *  case 2. 플로깅 거리순
- */
+*/
 const readPlogging = async function (req, res) {
     logger.info("plogging read api !");
     logger.info(logHelper.reqWrapper(req, "plogging"));
@@ -23,6 +23,34 @@ const readPlogging = async function (req, res) {
     let returnResult = { rc: 200, rcmsg: "success" };
     const userId = req.userId; // api를 call한 userId
     const targetUserId = req.params.targetUserId; // 산책이력을 조회를 할 userId
+
+    /**
+     *  mongodb, redis 싱크 처리
+     *  1. redis에 싱크관련 key 있는지 확인 ( key : userId:sync, expiretime 3시간)
+     *    1-1. 키가 있으면 sync 안맞춤
+     *    1-2. 키가 없으면 2번로직 수행
+     *  2. 1의 key를 redis에 insert
+     *  3. 조회날짜를 기준으로 주, 월의 시작, 종료 일자 구함
+     *  4. 3에서 구한 일자통해 몽고디비에서 주간, 월간의 점수, 거리, 쓰레기 주운수 합산 계산
+     *  5. 4에서 구한 데이터를 redis에 밀어넣음 (주간, 월간)  
+     * 
+     */ 
+    /*
+    const now = new Date();
+    const [startThisWeekDate, endThisWeekDate] = util.calStartEndPloggingWeekDate(now);
+    const [startThisMonthDate, endThisMonthDate] = util.calStartEndPloggingMonthDate(now);
+
+    // 이번주 산책 데이터 합산 조회
+    const [thisWeekTotalScore, thisWeekTotalDistance, thisWeekTotalTrash] = await PloggingSchema.sumPloggingData(targetUserId, startThisWeekDate, endThisWeekDate);
+    // 이번달 산책 데이터 합산 조회
+    const [thisMonthTotalScore, thisMonthTotalDistance, thisMonthTotalTrash] = await PloggingSchema.sumPloggingData(targetUserId, startThisMonthDate, endThisMonthDate);
+
+    // redis로 값 밀어넣음 -> 랭킹 함수 수정 필요
+    await RankSchema.updateScore(userId, ploggingTotalScore);
+    await RankSchema.updateDistance(userId, ploggingDistance);
+    await RankSchema.updateTrash(userId, pickCount);
+   */
+  
     let ploggingCntPerPage = req.query.ploggingCntPerPage; // 한 페이지에 보여줄 산책이력 수
     let currentPageNumber = req.query.pageNumber; // 조회할 페이지 Number
     // default -> 각 페이지에 4개씩, 1번 페이지 조회
@@ -127,8 +155,9 @@ const deletePlogging = async function (req, res) {
      *    Case 3. 지우려는 산책날짜가 이번달이 아닌 경우 -> 점수 차감 안함
      */
 
-     const isThisWeek = util.checkPloggingWeek(createdTime);
-     const isThiwMonth = util.checkPloggingMonth(createdTime);
+     const now = new Date();
+     const isThisWeek = util.checkPloggingWeek(createdTime, now);
+     const isThiwMonth = util.checkPloggingMonth(createdTime, now);
     
     if(isThisWeek) {
         await RankSchema.updateScore(userId, ploggingTotalScore*(-1));

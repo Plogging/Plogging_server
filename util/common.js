@@ -7,39 +7,37 @@ module.exports = {
         const now = moment().format('YYYYMMDDHHmmss');
         return now;
     },
-    checkPloggingWeek: function (ploggingCreatedTimestamp) {
+    checkPloggingWeek: function (ploggingCreatedTimestamp, now) { // ploggingCreatedTimestamp의 날짜가 이번주인지 체크
         const ploggingCreatedDate = Number(ploggingCreatedTimestamp.slice(0, 8)); // 20210407112345
-
-        const now = new Date();
-        const nowDayOfWeek = now.getDay(); // 요일
-        let nowDay = now.getDate(); // 날짜
-        const nowMonth = now.getMonth() + 1;
-        const nowYear = now.getFullYear();
-
-        const [startThisWeekDate, endThisWeekDate] = calThisWeek(nowDayOfWeek, nowYear, nowMonth, nowDay);
-    
-        /**
-         * 지우려는 산책날짜가 이번주일 경우 true -> 점수 차감 O
-         * 지울려는 산책날짜가 이번주가 아닐경우 false -> 점수 차감 
-         */
+        const [startThisWeekDate, endThisWeekDate] = calStartEndPloggingWeekDate(now);
+     
         if (startThisWeekDate <= ploggingCreatedDate && ploggingCreatedDate <= endThisWeekDate) return true;
         else return false;
     },
-    checkPloggingMonth: function (ploggingCreatedTimestamp) {
+    checkPloggingMonth: function (ploggingCreatedTimestamp, now) { // ploggingCreatedTimestamp의 날짜가 이번달인지 체크
         const ploggingCreatedDate = ploggingCreatedTimestamp.slice(0, 6); // 20210407112345
-        const now = new Date();
         let nowYear = now.getFullYear();
         let nowMonth = now.getMonth() + 1;
 
         if (nowMonth < 10) nowMonth = '0' + nowMonth;
         else nowMonth = nowMonth + "";
 
-        /**
-        * 지우려는 산책날짜가 이번달일 경우 true -> 점수 차감됨
-        * 지울려는 산책날짜가 이번달이 아닐경우 false -> 점수 차감 안됨 
-        */
         if (ploggingCreatedDate === (nowYear + nowMonth)) return true;
         else return false;
+    },
+    calStartEndPloggingWeekDate : function(now) { // 이번주 시작, 마지막일 구하기
+        const nowDayOfWeek = now.getDay(); // 요일
+        let nowDay = now.getDate(); // 날짜
+        const nowMonth = now.getMonth() + 1;
+        const nowYear = now.getFullYear();
+        return calThisWeek(nowDayOfWeek, nowYear, nowMonth, nowDay);
+    },
+    calStartEndPloggingMonthDate : function(now) { // 이번달 시작, 마지막 일 구하기
+        const year = now.getFullYear();
+        const month = now.getMonth() + 1;
+        const thisMonthFirstDate = 1;
+        const thisMonthLastDate = new Date(year, month, 0).getDate(); // 이번달 마지막일
+        return [thisMonthFirstDate, thisMonthLastDate];
     }
 };
 
