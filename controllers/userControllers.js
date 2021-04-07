@@ -133,6 +133,28 @@ const getUserInfo = async(req, res) => {
     res.json(returnResult);
 }
 
+const appleSignIn = async(req, res) => {
+    logger.info(`appleSignIn [${req.session.userId}] ...`);
+    let returnResult = {};
+    const appleIdentifier = req.body.appleIdentifier;
+    const user = await UserSchema.findAppleUser(appleIdentifier);
+    if(!user){
+        throw new NotFound(resString.ERR_EMAIL);
+    }
+    returnResult.rc = 200;
+    returnResult.rcmsg = resString.SUCCESS;
+    returnResult.userId = user.user_id;
+    returnResult.userImg = user.profile_img;
+    returnResult.userName = user.display_name;
+    returnResult.scoreMonthly = Number(await RankSchema.getUserScore(RankSchema.SCORE_MONTHLY, user.user_id));
+    returnResult.distanceMonthly = Number(await RankSchema.getUserDistance(RankSchema.DISTANCE_MONTHLY, user.user_id));
+    returnResult.trashMonthly = Number(await RankSchema.getUserNumTrash(RankSchema.TRASH_MONTHLY, user.user_id));
+    returnResult.scoreWeekly = Number(await RankSchema.getUserScore(RankSchema.SCORE_WEEKLY, user.user_id));
+    returnResult.distanceWeekly = Number(await RankSchema.getUserDistance(RankSchema.DISTANCE_WEEKLY, user.user_id));
+    returnResult.trashWeekly = Number(await RankSchema.getUserNumTrash(RankSchema.TRASH_WEEKLY, user.user_id));
+    res.json(returnResult);
+}
+
 const changeUserName = async(req, res) => {
     logger.info(`Changing user's name of [${req.session.userId}] ...`);
     let returnResult = {};
@@ -243,28 +265,6 @@ const withdrawal = async(req, res) => {
     }
 }
 
-const appleSignIn = async(req, res) => {
-    logger.info(`appleSignIn [${req.session.userId}] ...`);
-    let returnResult = {};
-    const appleIdentifier = req.body.appleIdentifier;
-    const user = await UserSchema.findAppleUser(appleIdentifier);
-    if(!user){
-        throw new NotFound(resString.ERR_EMAIL);
-    }
-    returnResult.rc = 200;
-    returnResult.rcmsg = resString.SUCCESS;
-    returnResult.userId = user.user_id;
-    returnResult.userImg = user.profile_img;
-    returnResult.userName = user.display_name;
-    returnResult.scoreMonthly = Number(await RankSchema.getUserScore(RankSchema.SCORE_MONTHLY, user.user_id));
-    returnResult.distanceMonthly = Number(await RankSchema.getUserDistance(RankSchema.DISTANCE_MONTHLY, user.user_id));
-    returnResult.trashMonthly = Number(await RankSchema.getUserNumTrash(RankSchema.TRASH_MONTHLY, user.user_id));
-    returnResult.scoreWeekly = Number(await RankSchema.getUserScore(RankSchema.SCORE_WEEKLY, user.user_id));
-    returnResult.distanceWeekly = Number(await RankSchema.getUserDistance(RankSchema.DISTANCE_WEEKLY, user.user_id));
-    returnResult.trashWeekly = Number(await RankSchema.getUserNumTrash(RankSchema.TRASH_WEEKLY, user.user_id));
-    res.json(returnResult);
-}
-
 const sendEmail = async(userEmail, tempPassword) => {
     let emailStringList = ['tempPassword', '[Eco run] 임시 비밀번호 입니다'];
     let transporter = nodemailer.createTransport({
@@ -306,6 +306,7 @@ module.exports = {
     register,
     checkUserId,
     getUserInfo,
+    appleSignIn,
     changeUserName,
     changeUserImage,
     changePassword,
@@ -313,5 +314,4 @@ module.exports = {
     signOut,
     withdrawal,
     sendEmail,
-    appleSignIn
 }
