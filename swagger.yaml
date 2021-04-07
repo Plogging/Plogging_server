@@ -423,7 +423,7 @@ paths:
                 example: 404
               rcmsg:
                 type: string
-                example: 아이디를 찾지 못했습니다.
+                example: 가입되지 않은 아이디 입니다.
         500:
           description: Internal Server Error
           schema:
@@ -512,7 +512,7 @@ paths:
                 example: 404
               rcmsg:
                 type: string
-                example: 아이디를 찾지 못했습니다.
+                example: 가입되지 않은 아이디 입니다.
         500:
           description: Internal Server Error
           schema:
