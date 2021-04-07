@@ -129,8 +129,6 @@ const deletePlogging = async function (req, res) {
 
      const isThisWeek = util.checkPloggingWeek(createdTime);
      const isThiwMonth = util.checkPloggingMonth(createdTime);
-     logger.info("isThisWeek : " + isThisWeek);
-     logger.info("isThisMonth : " + isThiwMonth);
     
     if(isThisWeek) {
         await RankSchema.updateScore(userId, ploggingTotalScore*(-1));

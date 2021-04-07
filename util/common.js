@@ -17,9 +17,6 @@ module.exports = {
         const nowYear = now.getFullYear();
 
         const [startThisWeekDate, endThisWeekDate] = calThisWeek(nowDayOfWeek, nowYear, nowMonth, nowDay);
-
-        console.log("startThisWeekDate : " + startThisWeekDate);
-        console.log("endThisWeekDate : " + endThisWeekDate);
     
         /**
          * 지우려는 산책날짜가 이번주일 경우 true -> 점수 차감 O
