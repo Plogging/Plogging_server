@@ -41,7 +41,7 @@ const readPlogging = async function (req, res) {
     }
 
     const [allPloggingCount, plogging_list] = await PloggingSchema.readPloggingsModel(query, options, targetUserId);
-
+  
     const meta = {};
     meta.startPageNumber = 1;
     meta.endPageNumber = pagingHelper.calcLastPage(allPloggingCount, ploggingCntPerPage);
@@ -127,17 +127,21 @@ const deletePlogging = async function (req, res) {
      *    Case 3. 지우려는 산책날짜가 이번달이 아닌 경우 -> 점수 차감 안함
      */
 
-     const isThisWeek = util.checkPloggingWeek();
-     const isThiwMonth = util.checkPloggingMonth();
-
+     const isThisWeek = util.checkPloggingWeek(createdTime);
+     const isThiwMonth = util.checkPloggingMonth(createdTime);
+     logger.info("isThisWeek : " + isThisWeek);
+     logger.info("isThisMonth : " + isThiwMonth);
+    
     if(isThisWeek) {
         await RankSchema.updateScore(userId, ploggingTotalScore*(-1));
         await RankSchema.updateDistance(userId, ploggingDistance*(-1));
         await RankSchema.updateTrash(userId, pickCount*(-1));    
-    } else if(!isThisWeek && isThiwMonth) {
-
-    } else if(!isThiwMonth) {
-
+    } else if(!isThisWeek && isThiwMonth) { // 월간만 차감
+        await RankSchema.updateScore(userId, ploggingTotalScore*(-1), RankSchema.SCORE_MONTHLY);
+        await RankSchema.updateDistance(userId, ploggingDistance*(-1), RankSchema.DISTANCE_MONTHLY);
+        await RankSchema.updateTrash(userId, pickCount*(-1), RankSchema.TRASH_MONTHLY);    
+    } else if(!isThiwMonth) { // 차감 안함
+            
     }
    
     // 산책이력 이미지 삭제

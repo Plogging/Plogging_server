@@ -14,7 +14,7 @@ module.exports = {
         const nowDayOfWeek = now.getDay(); // 요일
         let nowDay = now.getDate(); // 날짜
         const nowMonth = now.getMonth() + 1;
-        const nowYear = now.getYear();
+        const nowYear = now.getFullYear();
 
         const [startThisWeekDate, endThisWeekDate] = calThisWeek(nowDayOfWeek, nowYear, nowMonth, nowDay);
 
@@ -28,7 +28,7 @@ module.exports = {
         if (startThisWeekDate <= ploggingCreatedDate && ploggingCreatedDate <= endThisWeekDate) return true;
         else return false;
     },
-    checkPloggingMonth: function () {
+    checkPloggingMonth: function (ploggingCreatedTimestamp) {
         const ploggingCreatedDate = ploggingCreatedTimestamp.slice(0, 6); // 20210407112345
         const now = new Date();
         let nowYear = now.getFullYear();
@@ -88,7 +88,7 @@ function calThisWeek(dayOfWeek, year, month, date) {
     }
 
     // 첫주 예외처리
-    if (starDate <= 0) {
+    if (startDate <= 0) {
         // 1월에서 -하면 전년도 12월 (년, 월 동시에 바뀜)
         if (month === 1) {
             startYear -= 1;
