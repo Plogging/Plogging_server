@@ -119,12 +119,27 @@ const deletePlogging = async function (req, res) {
     // 산책이력 삭제
     await PloggingSchema.deletePloggingModel(ploggingId);
 
-    // redis update
-    // 
-    await RankSchema.updateScore(userId, ploggingTotalScore*(-1));
-    await RankSchema.updateDistance(userId, ploggingDistance*(-1));
-    await RankSchema.updateTrash(userId, pickCount*(-1));
+    // redis update (점수 차감)
+    /**
+     *  지우려는 산책날짜에 따른 Case 정리
+     *    Case 1. 지우려는 산책날짜가 이번주인 경우 -> 주간, 월간 점수 차감
+     *    Case 2. 지우려는 산책날짜가 이번주가 아니고 이번달인 경우 -> 월간만 차감
+     *    Case 3. 지우려는 산책날짜가 이번달이 아닌 경우 -> 점수 차감 안함
+     */
 
+     const isThisWeek = util.checkPloggingWeek();
+     const isThiwMonth = util.checkPloggingMonth();
+
+    if(isThisWeek) {
+        await RankSchema.updateScore(userId, ploggingTotalScore*(-1));
+        await RankSchema.updateDistance(userId, ploggingDistance*(-1));
+        await RankSchema.updateTrash(userId, pickCount*(-1));    
+    } else if(!isThisWeek && isThiwMonth) {
+
+    } else if(!isThiwMonth) {
+
+    }
+   
     // 산책이력 이미지 삭제
     if (fs.existsSync(ploggingImgPath)) fs.unlinkSync(ploggingImgPath);
     res.status(200).json(returnResult);
