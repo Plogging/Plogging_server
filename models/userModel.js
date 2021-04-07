@@ -31,6 +31,9 @@ module.exports = ((sequelize,DataTypes)=>{
         },
         salt:{
             type: DataTypes.STRING
+        },
+        appleIdentifier:{
+            type: DataTypes.STRING
         }
     },{
         timestamps: true,

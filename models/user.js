@@ -24,6 +24,7 @@ UserSchema.findUsers = async(userIds, t = null) => await User.findAll({
 UserSchema.createUser = async(
     userId,
     userName,
+    appleIdentifier = null,
     userImg,
     secretKey = null,
     salt = null,
@@ -36,7 +37,8 @@ UserSchema.createUser = async(
         type: userType,
         email: userEmail,
         digest: secretKey,
-        salt: salt
+        salt: salt,
+        appleIdentifier: appleIdentifier,
         }, {transaction: t});
     };
 
@@ -61,5 +63,9 @@ UserSchema.changeUserPassword = async(
 UserSchema.deleteUser = async(userId, t = null) => await User.destroy({
     where: {user_id: userId}
 }, {transaction: t});
+
+UserSchema.findAppleUser = async(appleIdentifier) => await User.findOne({
+    where: {appleIdentifier: appleIdentifier}
+})
 
 module.exports = UserSchema;
