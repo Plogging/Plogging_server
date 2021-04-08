@@ -127,8 +127,9 @@ const deletePlogging = async function (req, res) {
      *    Case 3. 지우려는 산책날짜가 이번달이 아닌 경우 -> 점수 차감 안함
      */
 
-     const isThisWeek = util.checkPloggingWeek(createdTime);
-     const isThiwMonth = util.checkPloggingMonth(createdTime);
+     const now = new Date();
+     const isThisWeek = util.checkPloggingWeek(createdTime, now);
+     const isThiwMonth = util.checkPloggingMonth(createdTime, now);
     
     if(isThisWeek) {
         await RankSchema.updateScore(userId, ploggingTotalScore*(-1));
