@@ -9,7 +9,7 @@ module.exports = {
     },
     checkPloggingWeek: function (ploggingCreatedTimestamp, now) { // ploggingCreatedTimestamp의 날짜가 이번주인지 체크
         const ploggingCreatedDate = Number(ploggingCreatedTimestamp.slice(0, 8)); // 20210407112345
-        const [startThisWeekDate, endThisWeekDate] = calStartEndPloggingWeekDate(now);
+        const [startThisWeekDate, endThisWeekDate] = Number(calStartEndPloggingWeekDate(now));
      
         if (startThisWeekDate <= ploggingCreatedDate && ploggingCreatedDate <= endThisWeekDate) return true;
         else return false;
