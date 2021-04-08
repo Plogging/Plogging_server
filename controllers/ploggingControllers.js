@@ -41,7 +41,7 @@ const readPlogging = async function (req, res) {
     }
 
     const [allPloggingCount, plogging_list] = await PloggingSchema.readPloggingsModel(query, options, targetUserId);
-
+  
     const meta = {};
     meta.startPageNumber = 1;
     meta.endPageNumber = pagingHelper.calcLastPage(allPloggingCount, ploggingCntPerPage);
@@ -114,15 +114,35 @@ const deletePlogging = async function (req, res) {
     const ploggingTotalScore = ploggingObj.meta.plogging_total_score;
     const ploggingDistance = ploggingObj.meta.distance;
     const pickCount = ploggingObj.meta.plogging_trash_count;
+    const createdTime = ploggingObj.meta.created_time;
 
     // 산책이력 삭제
     await PloggingSchema.deletePloggingModel(ploggingId);
 
-    // redis update
-    await RankSchema.updateScore(userId, ploggingTotalScore*(-1));
-    await RankSchema.updateDistance(userId, ploggingDistance*(-1));
-    await RankSchema.updateTrash(userId, pickCount*(-1));
+    // redis update (점수 차감)
+    /**
+     *  지우려는 산책날짜에 따른 Case 정리
+     *    Case 1. 지우려는 산책날짜가 이번주인 경우 -> 주간, 월간 점수 차감
+     *    Case 2. 지우려는 산책날짜가 이번주가 아니고 이번달인 경우 -> 월간만 차감
+     *    Case 3. 지우려는 산책날짜가 이번달이 아닌 경우 -> 점수 차감 안함
+     */
 
+     const now = new Date();
+     const isThisWeek = util.checkPloggingWeek(createdTime, now);
+     const isThiwMonth = util.checkPloggingMonth(createdTime, now);
+    
+    if(isThisWeek) {
+        await RankSchema.updateScore(userId, ploggingTotalScore*(-1));
+        await RankSchema.updateDistance(userId, ploggingDistance*(-1));
+        await RankSchema.updateTrash(userId, pickCount*(-1));    
+    } else if(!isThisWeek && isThiwMonth) { // 월간만 차감
+        await RankSchema.updateScore(userId, ploggingTotalScore*(-1), RankSchema.SCORE_MONTHLY);
+        await RankSchema.updateDistance(userId, ploggingDistance*(-1), RankSchema.DISTANCE_MONTHLY);
+        await RankSchema.updateTrash(userId, pickCount*(-1), RankSchema.TRASH_MONTHLY);    
+    } else if(!isThiwMonth) { // 차감 안함
+            
+    }
+   
     // 산책이력 이미지 삭제
     if (fs.existsSync(ploggingImgPath)) fs.unlinkSync(ploggingImgPath);
     res.status(200).json(returnResult);
