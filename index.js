@@ -71,7 +71,8 @@ const swaggerUi = require('swagger-ui-express');
             (req.path === '/user/password-temp') ||
             (req.path === '/user/sign-in') ||
             (req.path === '/user/social') ||
-            (req.path === '/user/check')) next();
+            (req.path === '/user/check') ||
+            (req.path === '/user/apple')) next();
         else {
             if(req.session.userId) {  // 세션 값이 있는 경우 ( 로그인이 되어있는 경우 )
                 req.userId = req.session.userId;
