@@ -141,6 +141,7 @@ const appleSignIn = async(req, res) => {
     if(!user){
         throw new NotFound(resString.ERR_EMAIL);
     }
+    req.session.userId = user.user_id;
     returnResult.rc = 200;
     returnResult.rcmsg = resString.SUCCESS;
     returnResult.userId = user.user_id;
