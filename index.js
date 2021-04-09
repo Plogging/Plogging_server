@@ -5,7 +5,6 @@ const { CustomError, Unauthorized } = require('throw.js')
 const userRoutes = require('./routers/user.js');
 const rankingRoutes = require('./routers/ranking')
 const ploggingRoutes = require('./routers/plogging');
-const bodyParser = require('body-parser');
 const redisClient = require('./config/redisConfig.js');
 const MongoClient = require('./config/mongoConfig.js');
 const swaggerValidation = require('./util/validator.js');
@@ -16,7 +15,6 @@ const redisStore = require('connect-redis')(session);
 const YAML = require('yamljs');
 
 const http = require('http');
-const https = require('https');
 const sslOptions = {
     key: fs.readFileSync('./sslFiles/privkey1.pem'),
     cert: fs.readFileSync('./sslFiles/cert1.pem')
