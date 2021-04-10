@@ -9,7 +9,7 @@ module.exports = {
     },
     checkPloggingWeek: function (ploggingCreatedTimestamp, now) { // ploggingCreatedTimestamp의 날짜가 이번주인지 체크
         const ploggingCreatedDate = Number(ploggingCreatedTimestamp.slice(0, 8)); // 20210407112345
-        const [startThisWeekDate, endThisWeekDate] = Number(calStartEndPloggingWeekDate(now));
+        const [startThisWeekDate, endThisWeekDate] = calStartEndPloggingWeekDate(now);
      
         if (startThisWeekDate <= ploggingCreatedDate && ploggingCreatedDate <= endThisWeekDate) return true;
         else return false;
@@ -25,22 +25,24 @@ module.exports = {
         if (ploggingCreatedDate === (nowYear + nowMonth)) return true;
         else return false;
     },
-    calStartEndPloggingWeekDate : function(now) { // 이번주 시작, 마지막일 구하기
-        const nowDayOfWeek = now.getDay(); // 요일
-        let nowDay = now.getDate(); // 날짜
-        const nowMonth = now.getMonth() + 1;
-        const nowYear = now.getFullYear();
-        return calThisWeek(nowDayOfWeek, nowYear, nowMonth, nowDay);
-    },
-    calStartEndPloggingMonthDate : function(now) { // 이번달 시작, 마지막 일 구하기
-        const year = now.getFullYear();
-        const month = now.getMonth() + 1;
-        const thisMonthFirstDate = 1;
-        const thisMonthLastDate = new Date(year, month, 0).getDate(); // 이번달 마지막일
-        return [thisMonthFirstDate, thisMonthLastDate];
-    }
+  
 };
 
+function calStartEndPloggingWeekDate(now) { // 이번주 시작, 마지막일 구하기
+    const nowDayOfWeek = now.getDay(); // 요일
+    let nowDay = now.getDate(); // 날짜
+    const nowMonth = now.getMonth() + 1;
+    const nowYear = now.getFullYear();
+    return calThisWeek(nowDayOfWeek, nowYear, nowMonth, nowDay);
+};
+
+function calStartEndPloggingMonthDate(now) { // 이번달 시작, 마지막 일 구하기
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+    const thisMonthFirstDate = 1;
+    const thisMonthLastDate = new Date(year, month, 0).getDate(); // 이번달 마지막일
+    return [thisMonthFirstDate, thisMonthLastDate];
+}
 function calThisWeek(dayOfWeek, year, month, date) {
 
     let startYear = year
@@ -118,5 +120,5 @@ function calThisWeek(dayOfWeek, year, month, date) {
     if(endMonth < 10) endMonth = '0' + endMonth;
     if(endDate < 10 ) endDate = '0' + endDate;
 
-    return [startYear+startMonth+startDate, endYear+endMonth+endDate];
+    return [Number(startYear+startMonth+startDate), Number(endYear+endMonth+endDate)];
 };
