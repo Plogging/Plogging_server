@@ -12,6 +12,7 @@ router.post('/social', swaggerValidation.validate, errHandler(userControls.socia
 router.post('', swaggerValidation.validate, errHandler(userControls.register));
 router.post('/check', swaggerValidation.validate, errHandler(userControls.checkUserId));
 router.get('/:id', swaggerValidation.validate, errHandler(userControls.getUserInfo));
+router.post('/apple', swaggerValidation.validate, errHandler(userControls.appleSignIn));
 router.put('/name', swaggerValidation.validate, errHandler(userControls.changeUserName));
 router.put('/image', upload.single('profileImg'), swaggerValidation.validate, errHandler(userControls.changeUserImage));
 router.put('/password', swaggerValidation.validate, errHandler(userControls.changePassword));

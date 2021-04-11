@@ -37,13 +37,14 @@ const social = async(req, res) => {
     let returnResult = {};
     const userId = req.body.userId;
     const userName = req.body.userName;
+    const appleIdentifier = req.body.appleIdentifier;
     logger.info(`Connecting to [${userId}] from OAuth...`);
     await sequelize.transaction(async (t) => {
         const user = await UserSchema.findOneUser(userId, null, t);
         if(!user){
             try {
                 let userImg = `${process.env.SERVER_REQ_INFO}/profile/base/profile-${Math.floor(( Math.random() * 3) + 1)}.PNG`;
-                const newUser = await UserSchema.createUser(userId, userName, userImg, null, null, t);
+                const newUser = await UserSchema.createUser(userId, userName, appleIdentifier, userImg, null, null, t);
                 req.session.userId = newUser.user_id;
                 returnResult.rc = 201;
                 returnResult.rcmsg = resString.CREATED;
@@ -85,7 +86,7 @@ const register = async(req, res) => {
             const salt = cryptoHelper.salt();
             const digest = cryptoHelper.digest(secretKey, salt);
             let userImg = `${process.env.SERVER_REQ_INFO}/profile/base/profile-${Math.floor(( Math.random() * 3) + 1)}.PNG`;
-            const newUser = await UserSchema.createUser(userId, userName, userImg, digest, salt, t);
+            const newUser = await UserSchema.createUser(userId, userName, null, userImg, digest, salt, t);
             req.session.userId = newUser.user_id;
             returnResult.rc = 201;
             returnResult.rcmsg = resString.CREATED;
@@ -129,6 +130,29 @@ const getUserInfo = async(req, res) => {
     returnResult.scoreWeekly = Number(await RankSchema.getUserScore(RankSchema.SCORE_WEEKLY, req.params.id));
     returnResult.distanceWeekly = Number(await RankSchema.getUserDistance(RankSchema.DISTANCE_WEEKLY, req.params.id));
     returnResult.trashWeekly = Number(await RankSchema.getUserNumTrash(RankSchema.TRASH_WEEKLY, req.params.id));
+    res.json(returnResult);
+}
+
+const appleSignIn = async(req, res) => {
+    logger.info(`appleSignIn [${req.session.userId}] ...`);
+    let returnResult = {};
+    const appleIdentifier = req.body.appleIdentifier;
+    const user = await UserSchema.findAppleUser(appleIdentifier);
+    if(!user){
+        throw new NotFound(resString.ERR_EMAIL);
+    }
+    req.session.userId = user.user_id;
+    returnResult.rc = 200;
+    returnResult.rcmsg = resString.SUCCESS;
+    returnResult.userId = user.user_id;
+    returnResult.userImg = user.profile_img;
+    returnResult.userName = user.display_name;
+    returnResult.scoreMonthly = Number(await RankSchema.getUserScore(RankSchema.SCORE_MONTHLY, user.user_id));
+    returnResult.distanceMonthly = Number(await RankSchema.getUserDistance(RankSchema.DISTANCE_MONTHLY, user.user_id));
+    returnResult.trashMonthly = Number(await RankSchema.getUserNumTrash(RankSchema.TRASH_MONTHLY, user.user_id));
+    returnResult.scoreWeekly = Number(await RankSchema.getUserScore(RankSchema.SCORE_WEEKLY, user.user_id));
+    returnResult.distanceWeekly = Number(await RankSchema.getUserDistance(RankSchema.DISTANCE_WEEKLY, user.user_id));
+    returnResult.trashWeekly = Number(await RankSchema.getUserNumTrash(RankSchema.TRASH_WEEKLY, user.user_id));
     res.json(returnResult);
 }
 
@@ -283,11 +307,12 @@ module.exports = {
     register,
     checkUserId,
     getUserInfo,
+    appleSignIn,
     changeUserName,
     changeUserImage,
     changePassword,
     temporaryPassword,
     signOut,
     withdrawal,
-    sendEmail
+    sendEmail,
 }

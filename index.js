@@ -5,7 +5,6 @@ const { CustomError, Unauthorized } = require('throw.js')
 const userRoutes = require('./routers/user.js');
 const rankingRoutes = require('./routers/ranking')
 const ploggingRoutes = require('./routers/plogging');
-const bodyParser = require('body-parser');
 const redisClient = require('./config/redisConfig.js');
 const MongoClient = require('./config/mongoConfig.js');
 const swaggerValidation = require('./util/validator.js');
@@ -16,7 +15,6 @@ const redisStore = require('connect-redis')(session);
 const YAML = require('yamljs');
 
 const http = require('http');
-const https = require('https');
 const sslOptions = {
     key: fs.readFileSync('./sslFiles/privkey1.pem'),
     cert: fs.readFileSync('./sslFiles/cert1.pem')
@@ -37,8 +35,8 @@ const swaggerUi = require('swagger-ui-express');
         logger.error(err.stack);
     });
 
-    app.use(bodyParser.urlencoded({extended: false}));
-    app.use(bodyParser.json());
+    app.use(express.urlencoded({extended: false}));
+    app.use(express.json());
     app.use(express.static(process.env.IMG_FILE_PATH)); // 정적파일 제공
     // redis sessionStorage 설정
     app.use(session({
@@ -71,7 +69,8 @@ const swaggerUi = require('swagger-ui-express');
             (req.path === '/user/password-temp') ||
             (req.path === '/user/sign-in') ||
             (req.path === '/user/social') ||
-            (req.path === '/user/check')) next();
+            (req.path === '/user/check') ||
+            (req.path === '/user/apple')) next();
         else {
             if(req.session.userId) {  // 세션 값이 있는 경우 ( 로그인이 되어있는 경우 )
                 req.userId = req.session.userId;
