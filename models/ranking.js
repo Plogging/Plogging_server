@@ -1,4 +1,5 @@
 const redisClient = require('../config/redisConfig.js')
+const rankingControllers = require('../controllers/rankingControllers.js')
 const logger = require("../util/logger.js")("ranking.js")
 
 const RankSchema = {}
@@ -62,6 +63,39 @@ RankSchema.getUserRankAndScore = async (rankType, userId) => {
     const rank = zrankResult[1]
     const score = zscoreResult[1]
     return [rank, score]
+}
+
+RankSchema.setDistance = async (userId, distance, distanceType) => {
+    if (distanceType == undefined) {
+        await redisClient.multi()
+        .hset(RankSchema.DISTANCE_WEEKLY, userId, distance)
+        .hset(RankSchema.DISTANCE_MONTHLY, userId, distance)
+        .exec()
+    } else {
+        await redisClient.hset(distanceType, userId, distance)
+    }
+}
+
+RankSchema.setTrash = async (userId, numTrash, trashType) => {
+    if (trashType == undefined) {
+        await redisClient.multi()
+        .hset(RankSchema.TRASH_WEEKLY, userId, numTrash)
+        .hset(RankSchema.TRASH_MONTHLY, userId, numTrash)
+        .exec()
+    } else {
+        await redisClient.hset(trashType, userId, numTrash)
+    }
+}
+
+RankSchema.setScore = async (userId, score, rankType) => {
+    if (rankType == undefined) {
+        await redisClient.multi()
+        .zadd(RankSchema.SCORE_WEEKLY, score, userId)
+        .zadd(RankSchema.SCORE_MONTHLY, score, userId)
+        .exec()
+    } else {
+        await redisClient.zadd(rankType, score, userId)
+    }
 }
 
 RankSchema.updateDistance = async (userId, distance, distanceType) => {
