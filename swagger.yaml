@@ -101,7 +101,7 @@ paths:
                 example: asdf
       responses:
         200:
-          description: 기존 회원 로그인 성공
+          description: 기존 회원 로그인 성공 또는 애플로그인 identifier 변경 성공
           schema:
             type: object
             properties:
@@ -145,17 +145,6 @@ paths:
               rcmsg:
                 type: string
                 example: body should have required property userId
-        404:
-          description: Bad Request(no appleIdentifier)
-          schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 404
-              rcmsg:
-                type: string
-                example: appleIdentifier값이 없습니다.
         409:
           description: Conflict (user name conflict)
           schema:

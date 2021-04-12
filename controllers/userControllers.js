@@ -58,11 +58,11 @@ const social = async(req, res) => {
                 throw new InternalServerError
             }
         }else{
-            if(user.type == 'apple' && !user.appleIdentifier){
-                returnResult.rc = 404;
-                returnResult.message = resString.ERR_APPLE_LOGIN;
+            if(user.type == 'apple' && !user.appleIdentifier && appleIdentifier){
+                UserSchema.updateUserAppleIdentifier(userId, appleIdentifier);
+                returnResult.rc = 200;
+                returnResult.message = resString.UPDATE_APPLE_IDENTIFIER;
             }else{
-                console.log(user)
                 req.session.userId = user.user_id;
                 returnResult.rc = 200;
                 returnResult.rcmsg = resString.SUCCESS;
