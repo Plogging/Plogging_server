@@ -145,6 +145,17 @@ paths:
               rcmsg:
                 type: string
                 example: body should have required property userId
+        404:
+          description: Bad Request(no appleIdentifier)
+          schema:
+            type: object
+            properties:
+              rc:
+                type: number
+                example: 404
+              rcmsg:
+                type: string
+                example: appleIdentifier값이 없습니다.
         409:
           description: Conflict (user name conflict)
           schema:
