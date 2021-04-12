@@ -58,11 +58,17 @@ const social = async(req, res) => {
                 throw new InternalServerError
             }
         }else{
-            req.session.userId = user.user_id;
-            returnResult.rc = 200;
-            returnResult.rcmsg = resString.SUCCESS;
-            returnResult.userImg = user.profile_img;
-            returnResult.userName = user.display_name;
+            if(user.type == 'apple' && !user.appleIdentifier){
+                returnResult.rc = 404;
+                returnResult.message = resString.ERR_APPLE_LOGIN;
+            }else{
+                console.log(user)
+                req.session.userId = user.user_id;
+                returnResult.rc = 200;
+                returnResult.rcmsg = resString.SUCCESS;
+                returnResult.userImg = user.profile_img;
+                returnResult.userName = user.display_name;
+            }
             res.json(returnResult);
         }
     })
