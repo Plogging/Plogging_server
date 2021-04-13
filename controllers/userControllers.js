@@ -60,15 +60,12 @@ const social = async(req, res) => {
         }else{
             if(user.type == 'apple' && !user.appleIdentifier && appleIdentifier){
                 UserSchema.updateUserAppleIdentifier(userId, appleIdentifier);
-                returnResult.rc = 200;
-                returnResult.message = resString.UPDATE_APPLE_IDENTIFIER;
-            }else{
-                req.session.userId = user.user_id;
-                returnResult.rc = 200;
-                returnResult.rcmsg = resString.SUCCESS;
-                returnResult.userImg = user.profile_img;
-                returnResult.userName = user.display_name;
+                returnResult.rcmsg = resString.UPDATE_APPLE_IDENTIFIER;
             }
+            req.session.userId = user.user_id;
+            returnResult.rc = 200;
+            returnResult.userImg = user.profile_img;
+            returnResult.userName = user.display_name;
             res.json(returnResult);
         }
     })
