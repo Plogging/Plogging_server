@@ -50,6 +50,10 @@ UserSchema.updateUserImg = async(userId, profileImg) => await User.update({
     profile_img: profileImg
 }, {where: {user_id: userId}});
 
+UserSchema.updateUserAppleIdentifier = async(userId, appleIdentifier) => await User.update({
+    appleIdentifier: appleIdentifier
+}, {where: {user_id: userId}});
+
 UserSchema.changeUserPassword = async(
     userId, 
     newDigest,

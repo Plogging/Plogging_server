@@ -58,6 +58,9 @@ const social = async(req, res) => {
                 throw new InternalServerError
             }
         }else{
+            if(user.type == 'apple' && !user.appleIdentifier && appleIdentifier){
+                UserSchema.updateUserAppleIdentifier(userId, appleIdentifier);
+            }
             req.session.userId = user.user_id;
             returnResult.rc = 200;
             returnResult.rcmsg = resString.SUCCESS;

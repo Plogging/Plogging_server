@@ -12,6 +12,7 @@ module.exports = ((sequelize,DataTypes)=>{
         },
         display_name:{
             type: DataTypes.STRING(50),
+            unique: true,
             allowNull: false,
         },
         profile_img :{
@@ -38,6 +39,6 @@ module.exports = ((sequelize,DataTypes)=>{
     },{
         timestamps: true,
         // paranoid : true,
-        indexes: [{ unique: true, fields: ['id', 'user_id', 'display_name'] }]
+        indexes: [{ unique: true, fields: ['user_id', 'appleIdentifier'] }]
     })
 })
