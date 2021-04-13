@@ -12,6 +12,7 @@ module.exports = ((sequelize,DataTypes)=>{
         },
         display_name:{
             type: DataTypes.STRING(50),
+            unique: true,
             allowNull: false,
         },
         profile_img :{
