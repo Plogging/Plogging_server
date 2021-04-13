@@ -38,6 +38,6 @@ module.exports = ((sequelize,DataTypes)=>{
     },{
         timestamps: true,
         // paranoid : true,
-        indexes: [{ unique: true, fields: ['id', 'user_id', 'display_name'] }]
+        indexes: [{ unique: true, fields: ['user_id', 'appleIdentifier'] }]
     })
 })
