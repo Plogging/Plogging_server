@@ -101,7 +101,7 @@ paths:
                 example: asdf
       responses:
         200:
-          description: 기존 회원 로그인 성공 또는 애플로그인 identifier 변경 성공
+          description: 기존 회원 로그인 성공
           schema:
             type: object
             properties:
