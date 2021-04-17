@@ -1,5 +1,4 @@
 const redisClient = require('../config/redisConfig.js')
-const rankingControllers = require('../controllers/rankingControllers.js')
 const logger = require("../util/logger.js")("ranking.js")
 
 const RankSchema = {}
