@@ -34,9 +34,9 @@ RankSchema.getUserDistance = async (distanceType, userId) => {
     }
 }
 
-RankSchema.getUserNumTrash = async (numTrashType, userId) => {
-    // TODO: numTrashType이 TRASH_WEEKLY나 TRASH_MONTHLY가 아닐 경우 throw
-    const userNumTrash = await redisClient.hget(numTrashType, userId)
+RankSchema.getUserNumTrash = async (trashType, userId) => {
+    // TODO: trashType이 TRASH_WEEKLY나 TRASH_MONTHLY가 아닐 경우 throw
+    const userNumTrash = await redisClient.hget(trashType, userId)
     if (userNumTrash == null) {
         return 0
     } else {
