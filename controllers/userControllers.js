@@ -217,7 +217,6 @@ const changePassword = async(req, res) => {
 const temporaryPassword = async(req, res) => {
     logger.info(`Sending user's password of [${req.body.email}] to Email...`);
     const tempPassword = Math.random().toString(36).slice(2);
-    await sendEmail(req.body.email, tempPassword);
     const salt = cryptoHelper.salt();
     const digest = cryptoHelper.digest(tempPassword, salt);
     const [updatedCnt] = await UserSchema.changeUserPassword(
@@ -226,6 +225,7 @@ const temporaryPassword = async(req, res) => {
         salt
     );
     if(updatedCnt) {
+        await sendEmail(req.body.email, tempPassword);
         res.json({rc: 200, rcmsg: resString.SUCCESS});
     }else{
         throw new NotFound(resString.ERR_EMAIL);
