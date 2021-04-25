@@ -25,6 +25,17 @@ module.exports = {
         if (ploggingCreatedDate === (nowYear + nowMonth)) return true;
         else return false;
     },
+    getNextWeeklyExpirationDate: function() {
+        const today = new Date();
+        const nextMondayDate = today.getDate() + (1 + 7 - today.getDay()) % 7
+        const nextMonday = new Date(today.getFullYear(), today.getMonth(), nextMondayDate);
+        return nextMonday;
+    },
+    getNextMonthlyExpirationDate: function() {
+        const today = new Date();
+        const firstDayOfNextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+        return firstDayOfNextMonth;
+    }
   
 };
 

@@ -1,5 +1,7 @@
 const redisClient = require('../config/redisConfig.js')
 const logger = require("../util/logger.js")("ranking.js")
+const { getNextWeeklyExpirationDate, getNextMonthlyExpirationDate } 
+    = require('../util/common.js')
 
 const RankSchema = {}
 
@@ -32,9 +34,9 @@ RankSchema.getUserDistance = async (distanceType, userId) => {
     }
 }
 
-RankSchema.getUserNumTrash = async (numTrashType, userId) => {
-    // TODO: numTrashType이 TRASH_WEEKLY나 TRASH_MONTHLY가 아닐 경우 throw
-    const userNumTrash = await redisClient.hget(numTrashType, userId)
+RankSchema.getUserNumTrash = async (trashType, userId) => {
+    // TODO: trashType이 TRASH_WEEKLY나 TRASH_MONTHLY가 아닐 경우 throw
+    const userNumTrash = await redisClient.hget(trashType, userId)
     if (userNumTrash == null) {
         return 0
     } else {
@@ -66,67 +68,109 @@ RankSchema.getUserRankAndScore = async (rankType, userId) => {
 
 RankSchema.setDistance = async (userId, distance, distanceType) => {
     if (distanceType == undefined) {
-        await redisClient.multi()
+        const result = await redisClient.multi()
+        .ttl(RankSchema.DISTANCE_WEEKLY)
+        .ttl(RankSchema.DISTANCE_MONTHLY)
         .hset(RankSchema.DISTANCE_WEEKLY, userId, distance)
         .hset(RankSchema.DISTANCE_MONTHLY, userId, distance)
         .exec()
+        afterUpdate(result, [RankSchema.DISTANCE_WEEKLY, RankSchema.DISTANCE_MONTHLY])
     } else {
-        await redisClient.hset(distanceType, userId, distance)
+        const result = await redisClient.pipeline()
+        .ttl(distanceType)
+        .hset(distanceType, userId, distance)
+        .exec()
+        afterUpdate(result, [distanceType])
     }
 }
 
 RankSchema.setTrash = async (userId, numTrash, trashType) => {
     if (trashType == undefined) {
-        await redisClient.multi()
+        const result = await redisClient.multi()
+        .ttl(RankSchema.TRASH_WEEKLY)
+        .ttl(RankSchema.TRASH_MONTHLY)
         .hset(RankSchema.TRASH_WEEKLY, userId, numTrash)
         .hset(RankSchema.TRASH_MONTHLY, userId, numTrash)
         .exec()
+        afterUpdate(result, [RankSchema.TRASH_WEEKLY, RankSchema.TRASH_MONTHLY])
     } else {
-        await redisClient.hset(trashType, userId, numTrash)
+        const result = await redisClient.pipeline()
+        .ttl(trashType)
+        .hset(trashType, userId, numTrash)
+        .exec()
+        afterUpdate(result, [trashType])
     }
 }
 
 RankSchema.setScore = async (userId, score, rankType) => {
     if (rankType == undefined) {
-        await redisClient.multi()
+        const result = await redisClient.multi()
+        .ttl(RankSchema.SCORE_WEEKLY)
+        .ttl(RankSchema.SCORE_MONTHLY)
         .zadd(RankSchema.SCORE_WEEKLY, score, userId)
         .zadd(RankSchema.SCORE_MONTHLY, score, userId)
         .exec()
+        afterUpdate(result, [RankSchema.SCORE_WEEKLY, RankSchema.SCORE_MONTHLY])
     } else {
-        await redisClient.zadd(rankType, score, userId)
+        const result = await redisClient.pipeline()
+        .ttl(rankType)
+        .zadd(rankType, score, userId)
+        .exec()
+        afterUpdate(result, [rankType])
     }
 }
 
 RankSchema.updateDistance = async (userId, distance, distanceType) => {
     if (distanceType == undefined) {
-        await redisClient.multi()
+        const result = await redisClient.multi()
+        .ttl(RankSchema.DISTANCE_WEEKLY)
+        .ttl(RankSchema.DISTANCE_MONTHLY)
         .hincrby(RankSchema.DISTANCE_WEEKLY, userId, distance)
         .hincrby(RankSchema.DISTANCE_MONTHLY, userId, distance)
         .exec()
+        afterUpdate(result, [RankSchema.DISTANCE_WEEKLY, RankSchema.DISTANCE_MONTHLY])
     } else {
-        await redisClient.hincrby(distanceType, userId, distance)
+        const result = await redisClient.pipeline()
+        .ttl(distanceType)
+        .hincrby(distanceType, userId, distance)
+        .exec()
+        afterUpdate(result, [distanceType])
     }
 }
 
 RankSchema.updateTrash = async (userId, numTrash, trashType) => {
     if (trashType == undefined) {
-        await redisClient.multi()
+        const result = await redisClient.multi()
+        .ttl(RankSchema.TRASH_WEEKLY)
+        .ttl(RankSchema.TRASH_MONTHLY)
         .hincrby(RankSchema.TRASH_WEEKLY, userId, numTrash)
         .hincrby(RankSchema.TRASH_MONTHLY, userId, numTrash)
         .exec()
+        afterUpdate(result, [RankSchema.TRASH_WEEKLY, RankSchema.TRASH_MONTHLY])
     } else {
-        await redisClient.hincrby(trashType, userId, numTrash)
+        const result = await redisClient.pipeline()
+        .ttl(trashType)
+        .hincrby(trashType, userId, numTrash)
+        .exec()
+        afterUpdate(result, [trashType])
     }
 }
 
 RankSchema.updateScore = async (userId, score, rankType) => {
     if (rankType == undefined) {
-        await redisClient.multi()
+        const result = await redisClient.multi()
+        .ttl(RankSchema.SCORE_WEEKLY)
+        .ttl(RankSchema.SCORE_MONTHLY)
         .zincrby(RankSchema.SCORE_WEEKLY, score, userId)
         .zincrby(RankSchema.SCORE_MONTHLY, score, userId)
         .exec()
+        afterUpdate(result, [RankSchema.SCORE_WEEKLY, RankSchema.SCORE_MONTHLY])
     } else {
-        await redisClient.zincrby(rankType, score, userId)
+        const result = await redisClient.pipeline()
+        .ttl(rankType)
+        .zincrby(rankType, score, userId)
+        .exec()
+        afterUpdate(result, [rankType])
     }
 }
 
@@ -161,6 +205,30 @@ RankSchema.deleteScore = async (userId, rankType) => {
     } else {
         await redisClient.zrem(rankType, userId)
     }
+}
+
+const afterUpdate = async (result, keys) => {
+    try {
+        for (let i=0; i < keys.length; i++) {
+            const key = keys[i]
+            const ttlResult = result[i][1]
+            handleExpiration(key, ttlResult)
+        }
+    } catch(e) {
+        logger.info(`Unexpected exception occured during checking expiration of redis data: ${e}`)
+    }
+}
+
+const handleExpiration = async (key, ttlResult) => {
+    if (ttlResult >= 0) return
+    const isWeekly = (key == RankSchema.DISTANCE_WEEKLY) ||
+        (key == RankSchema.TRASH_WEEKLY) ||
+        (key == RankSchema.SCORE_WEEKLY)
+    const expirationDate = isWeekly ? 
+        getNextWeeklyExpirationDate() :
+        getNextMonthlyExpirationDate()
+    await redisClient.pexpireat(key, expirationDate.getTime())
+    logger.info(`Set expiration date of ${key} to ${expirationDate.toString()}.`)
 }
 
 module.exports = RankSchema
