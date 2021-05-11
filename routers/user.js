@@ -2,11 +2,13 @@ const router = require('express').Router();
 const cors=require('cors');
 const swaggerValidation = require('../util/validator');
 const userControls = require('../controllers/userControllers.js')
+const userControlsV2 = require('../controllers_v2/userControllers.js');
 const upload = require('../util/multerHelper').profileUpload;
 const errHandler = require('../util/errHandler')
 
 router.all('*',cors());
 
+// v1 api
 router.post('/sign-in', swaggerValidation.validate, errHandler(userControls.signIn));
 router.post('/social', swaggerValidation.validate, errHandler(userControls.social));
 router.post('', swaggerValidation.validate, errHandler(userControls.register));
@@ -19,5 +21,7 @@ router.put('/password', swaggerValidation.validate, errHandler(userControls.chan
 router.put('/password-temp', swaggerValidation.validate, errHandler(userControls.temporaryPassword));
 router.put('/sign-out', swaggerValidation.validate, errHandler(userControls.signOut));
 router.delete('', swaggerValidation.validate, errHandler(userControls.withdrawal));
+
+// v2 api
 
 module.exports = router;
