@@ -17,7 +17,7 @@ if [ "${branch}" = "develop" ]; then
 	echo "asus server !"
 	docker build -t plogging-app-img -f ./Dockerfile/dev.Dockerfile .
 	docker run -it -d -p 8000:8000 --name plogging-app -v /data/ploggingImgs:/mnt/Plogging_server/images plogging-app-img
-elif [ "${branch}" = "master" ]; then
+elif [ "${branch}" = "master" ] || [ "${branch}" = "hotfix"]; then
 	docker build -t plogging-app-img -f ./Dockerfile/prod.Dockerfile .
 	if [ "${ip}" = "192.168.0.17" ]; then
     	echo "intel nuc Server !"

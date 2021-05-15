@@ -882,7 +882,7 @@ paths:
                         user_id:
                           type: string
                           example: xowns4817@naver.com-naver
-                        create_time:
+                        created_time:
                           type: string
                           format: date-time
                           example: 20210106132743

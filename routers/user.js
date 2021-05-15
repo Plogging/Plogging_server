@@ -7,6 +7,7 @@ const errHandler = require('../util/errHandler')
 
 router.all('*',cors());
 
+// v1 api
 router.post('/sign-in', swaggerValidation.validate, errHandler(userControls.signIn));
 router.post('/social', swaggerValidation.validate, errHandler(userControls.social));
 router.post('', swaggerValidation.validate, errHandler(userControls.register));

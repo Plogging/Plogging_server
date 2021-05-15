@@ -5,6 +5,12 @@ const { CustomError, Unauthorized } = require('throw.js')
 const userRoutes = require('./routers/user.js');
 const rankingRoutes = require('./routers/ranking')
 const ploggingRoutes = require('./routers/plogging');
+
+const authRoutersV2 = require('./routers/auth.js');
+const userRoutesV2 = require('./routers_v2/user.js');
+const rankingRoutesV2 = require('./routers_v2/ranking')
+const ploggingRoutesV2 = require('./routers_v2/plogging');
+
 const redisClient = require('./config/redisConfig.js');
 const MongoClient = require('./config/mongoConfig.js');
 const swaggerValidation = require('./util/validator.js');
@@ -81,9 +87,16 @@ const swaggerUi = require('swagger-ui-express');
         }
     });
     
+    // v1 api
     app.use('/user', userRoutes);
     app.use('/rank', rankingRoutes); // 랭킹 관련 api는 ranking.js로 포워딩
-    app.use('/plogging',ploggingRoutes); // 산책이력 관련 api는 plogging.js로 포워딩        
+    app.use('/plogging', ploggingRoutes); // 산책이력 관련 api는 plogging.js로 포워딩        
+
+    // v2 api
+    app.use('/auths', authRoutersV2);
+    app.use('/users', userRoutesV2);
+    app.use('/ranks', rankingRoutesV2);
+    app.use('/ploggings', ploggingRoutesV2)
 
     // 예외 처리
     // 반드시 라우팅 코드 이후에 위치해야 함
