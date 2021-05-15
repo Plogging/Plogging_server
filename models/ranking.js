@@ -64,46 +64,70 @@ RankSchema.getUserRankAndScore = async (rankType, userId) => {
     return [rank, score]
 }
 
-RankSchema.updateDistance = async (userId, distance) => {
-    await redisClient.multi()
-    .hincrby(RankSchema.DISTANCE_WEEKLY, userId, distance)
-    .hincrby(RankSchema.DISTANCE_MONTHLY, userId, distance)
-    .exec()
+RankSchema.updateDistance = async (userId, distance, distanceType) => {
+    if (distanceType == undefined) {
+        await redisClient.multi()
+        .hincrby(RankSchema.DISTANCE_WEEKLY, userId, distance)
+        .hincrby(RankSchema.DISTANCE_MONTHLY, userId, distance)
+        .exec()
+    } else {
+        await redisClient.hincrby(distanceType, userId, distance)
+    }
 }
 
-RankSchema.updateTrash = async (userId, numTrash) => {
-    await redisClient.multi()
-    .hincrby(RankSchema.TRASH_WEEKLY, userId, numTrash)
-    .hincrby(RankSchema.TRASH_MONTHLY, userId, numTrash)
-    .exec()
+RankSchema.updateTrash = async (userId, numTrash, trashType) => {
+    if (trashType == undefined) {
+        await redisClient.multi()
+        .hincrby(RankSchema.TRASH_WEEKLY, userId, numTrash)
+        .hincrby(RankSchema.TRASH_MONTHLY, userId, numTrash)
+        .exec()
+    } else {
+        await redisClient.hincrby(trashType, userId, numTrash)
+    }
 }
 
-RankSchema.updateScore = async (userId, score) => {
-    await redisClient.multi()
-    .zincrby(RankSchema.SCORE_WEEKLY, score, userId)
-    .zincrby(RankSchema.SCORE_MONTHLY, score, userId)
-    .exec()
+RankSchema.updateScore = async (userId, score, rankType) => {
+    if (rankType == undefined) {
+        await redisClient.multi()
+        .zincrby(RankSchema.SCORE_WEEKLY, score, userId)
+        .zincrby(RankSchema.SCORE_MONTHLY, score, userId)
+        .exec()
+    } else {
+        await redisClient.zincrby(rankType, score, userId)
+    }
 }
 
-RankSchema.deleteDistance = async (userId) => {
-    await redisClient.multi()
-    .hdel(RankSchema.DISTANCE_WEEKLY, userId)
-    .hdel(RankSchema.DISTANCE_MONTHLY, userId)
-    .exec()
+RankSchema.deleteDistance = async (userId, distanceType) => {
+    if (distanceType == undefined) {
+        await redisClient.multi()
+        .hdel(RankSchema.DISTANCE_WEEKLY, userId)
+        .hdel(RankSchema.DISTANCE_MONTHLY, userId)
+        .exec()
+    } else {
+        await redisClient.hdel(distanceType, userId)
+    }
 }
 
-RankSchema.deleteTrash = async (userId) => {
-    await redisClient.multi()
-    .hdel(RankSchema.TRASH_WEEKLY, userId)
-    .hdel(RankSchema.TRASH_MONTHLY, userId)
-    .exec()
+RankSchema.deleteTrash = async (userId, trashType) => {
+    if (trashType == undefined) {
+        await redisClient.multi()
+        .hdel(RankSchema.TRASH_WEEKLY, userId)
+        .hdel(RankSchema.TRASH_MONTHLY, userId)
+        .exec()
+    } else {
+        await redisClient.hdel(trashType, userId)
+    }
 }
 
-RankSchema.deleteScore = async (userId) => {
-    await redisClient.multi()
-    .zrem(RankSchema.SCORE_WEEKLY, userId)
-    .zrem(RankSchema.SCORE_MONTHLY, userId)
-    .exec()
+RankSchema.deleteScore = async (userId, rankType) => {
+    if (rankType == undefined) {
+        await redisClient.multi()
+        .zrem(RankSchema.SCORE_WEEKLY, userId)
+        .zrem(RankSchema.SCORE_MONTHLY, userId)
+        .exec()
+    } else {
+        await redisClient.zrem(rankType, userId)
+    }
 }
 
 module.exports = RankSchema
