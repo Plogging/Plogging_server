@@ -6,7 +6,7 @@ const userRoutes = require('./routers/user.js');
 const rankingRoutes = require('./routers/ranking')
 const ploggingRoutes = require('./routers/plogging');
 
-const authRoutersV2 = require('./routers/auth.js');
+const authRoutersV2 = require('./routers_v2/auth.js');
 const userRoutesV2 = require('./routers_v2/user.js');
 const rankingRoutesV2 = require('./routers_v2/ranking')
 const ploggingRoutesV2 = require('./routers_v2/plogging');
@@ -70,8 +70,15 @@ const swaggerUi = require('swagger-ui-express');
     app.use("/", function(req, res, next) {
         logger.info(JSON.stringify(req.headers));
         logger.info(`req.session.id : ${req.sessionID}`);
-        // 세션 체크 공통 모듈
-        if((req.path === '/user' && req.method === 'POST') ||
+
+        // 세션 체크 공통 모듈 v2
+        if(req.path === '/auth/sign-in' ||
+            (req.path === '/users' && req.method === 'POST')||
+            (req.path === '/users' && req.method === 'HEAD'))
+            next();
+        
+        // 세션 체크 공통 모듈 v1
+        else if((req.path === '/user' && req.method === 'POST') ||
             (req.path === '/user/password-temp') ||
             (req.path === '/user/sign-in') ||
             (req.path === '/user/social') ||
@@ -93,7 +100,7 @@ const swaggerUi = require('swagger-ui-express');
     app.use('/plogging', ploggingRoutes); // 산책이력 관련 api는 plogging.js로 포워딩        
 
     // v2 api
-    app.use('/auths', authRoutersV2);
+    app.use('/auth', authRoutersV2);
     app.use('/users', userRoutesV2);
     app.use('/ranks', rankingRoutesV2);
     app.use('/ploggings', ploggingRoutesV2)
