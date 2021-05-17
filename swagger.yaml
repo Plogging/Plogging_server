@@ -3,8 +3,199 @@ info:
   title: Plogging
   version: 1.0.0
   description: Plogging API docs
-
 paths:
+  /auth/sign-in:
+    post:
+      summary: 로그인
+      tags: [Auth]
+      parameters:
+        - in: body
+          name: user
+          description: 로그인의 경우 `custom`로그인과 `social`로그인으로 나뉜다.
+            `custom`로그인의 경우 `userId`와 `secretKey`가 있어야 한다. 이메일 주소 뒤에 아무것도 붙이지 않는다.
+            `social`로그인의 경우 `userId`와 `userName`가 있어야 한다. 이메일 주소 뒤에 `apple`, `kakao`, `naver` 중 하나를 반드시 `:` 와 함께 붙여준다.
+            `apple`로그인의 경우에만 `appleIdentifier`를 더 추가하여야 한다.
+            `appleIdentifier`만을 이용해 로그인할 경우 모든 정보를 준다.
+            `social`로그인에서 아이디가 DB에서 찾지 못한 경우 회원가입이 이루어진다.
+          schema:
+            $ref: '#/components/schemes/SignInReq'
+      responses:
+        200:
+          description: 회원 로그인 성공
+          schema:
+            $ref: '#/components/schemes/SignInOK'
+        400:
+          description: Bad Request (body should have required property [userId/ secretKey])
+          schema:
+            $ref: '#/components/schemes/BadRequest'
+        401:
+          description: 가입되지 않은 아이디 입니다. 혹은 현재 비밀번호가 일치하지 않습니다.
+          schema:
+            $ref: '#/components/schemes/SessionError'
+        500:
+          description: 서버에 오류가 발생했습니다. 잠시 후 다시 시도해주세요.
+          schema:
+            $ref: '#/components/schemes/ServerError'
+  /auth/sign-out:
+      get:
+        summary: 사용자 로그아웃
+        tags: [Auth]
+        responses:
+          200:
+            description: OK
+            schema:
+              $ref: '#/components/schemes/OK'
+          401:
+            description: sessionKey 유효하지 않을 때 로그인 후 서비스를 이용해 주세요.
+            schema:
+              $ref: '#/components/schemes/SessionError'
+          500:
+            description: 서버에 오류가 발생했습니다. 잠시 후 다시 시도해주세요.
+            schema:
+              $ref: '#/components/schemes/ServerError'
+  /users:
+    post:
+      summary: 회원가입하기
+      tags: [Users]
+      parameters:
+        - in: body
+          name: user
+          description: userId는 단순히 email만 받는다.
+          schema:
+            $ref: '#/components/schemes/RegisterReq'
+      responses:
+        201:
+          description: 회원가입 성공
+          schema:
+            $ref: '#/components/schemes/CreateUser'
+        400:
+          description: Bad Request (body should have required property [userId])
+          schema:
+            $ref: '#/components/schemes/BadRequest'
+        409:
+          description: Conflict ('Username Conflict')
+          schema:
+            $ref: '#/components/schemes/ConflictName'
+        410:
+          description: Gone ('UserId Conflict')
+          schema:
+            $ref: '#/components/schemes/ConflictId'
+        500:
+          description: Internal Server Error
+          schema:
+            $ref: '#/components/schemes/ServerError'
+    delete:
+      summary: 회원탈퇴
+      tags: [Users]
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/components/schemes/OK'
+        401:
+          description: Unauthorized (sessionKey 유효하지 않을 때)
+          schema:
+            $ref: '#/components/schemes/SessionError'
+        500:
+          description: Internal Server Error
+          schema:
+            $ref: '#/components/schemes/ServerError'
+    put:
+      summary: 사용자 프로필 변경
+      description: 사용자의 정보를 변경합니다.
+      tags: [Users]
+      consumes:
+        - multipart/form-data
+      produces:
+        - application/json
+      parameters:
+        - in: formData
+          name: profileImg
+          type: file
+          description: 사용자의 사진을 업로드 합니다.
+        - in: formData
+          name: userName
+          description: 사용자 이름 받기
+          type: string
+        - in: formData
+          name: email
+          description: 임시 비밀번호를 받을 이메일
+          type: string
+        - in: formData
+          name: newSecretKey
+          description: 새로운 비밀번호
+          type: string
+        - in: formData
+          name: existedSecretKey
+          description: 이전 비밀번호
+          type: string
+      responses:
+        200:
+          description: 사용자 이름 성공적으로 변경
+          schema:
+            $ref: '#/components/schemes/NameChangeOK'
+        400:
+          description: Bad Request
+          schema:
+            $ref: '#/components/schemes/BadRequest'
+        401:
+          description: Unauthorized (sessionKey 유효하지 않을 때)
+          schema:
+            $ref: '#/components/schemes/SessionError'
+        409:
+          description: parameter Conflict
+          schema:
+            $ref: '#/components/schemes/ConflictName'
+        500:
+          description: Internal Server Error
+          schema:
+            $ref: '#/components/schemes/ServerError'
+  /users/{id}:
+    head:
+      summary: 사용자 아이디 가입 확인
+      tags: [Users]
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 조회할 유저 id
+      responses:
+        200:
+          description: OK 가입되지 않은 아이디입니다.
+        201:
+          description: 이미 존재하는 아이디입니다.
+        400:
+          description: Bad Request (body should have required property userId)
+        500:
+          description: Internal Server error
+    get:
+      summary: 사용자 정보 가져오기
+      description: targetUserId의 사용자 닉네임, 프로필 사진, 플로깅 점수, 플로깅 거리, 쓰레기 주운 갯수를 가져온다.
+      tags: [Users]
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 조회할 유저 id
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/components/schemes/GetUserInfoOK'
+        401:
+          description: Unauthorized (sessionKey 유효하지 않을 때)
+          schema:
+            $ref: '#/components/schemes/SessionError'
+        404:
+          description: Not Found (찾는 id가 없을 때)
+          schema:
+            $ref: '#/components/schemes/NotFound'
+        500:
+          description: Internal Server Error
+          schema:
+            $ref: '#/components/schemes/ServerError'
   /user/sign-in:
     post:
       summary: 로그인
@@ -14,68 +205,24 @@ paths:
           name: user
           description: userId는 email만 받는다.
           schema:
-            type: object
-            required:
-              - userId
-              - secretKey
-            properties:
-              userId:
-                type: string
-                example: ganghee@nate.com
-              secretKey:
-                type: string
-                example: 1234qwer
+            $ref: '#/components/schemes/SignInReq'
       responses:
         200:
           description: 회원 로그인 성공
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 200
-              rcmsg:
-                type: string
-                example: OK
-              userImg:
-                type: string
-                example: https://nexters.plogging.kro.kr:20000/profile/base/profile-1.PNG
-              userName:
-                type: string
-                example: 쓰담이
+            $ref: '#/components/schemes/SignInOK'
         400:
           description: Bad Request (body should have required property [userId/ secretKey])
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 400
-              rcmsg:
-                type: string
-                example: body should have required property [userId/ secretKey]
+            $ref: '#/components/schemes/BadRequest'
         401:
           description: 가입되지 않은 아이디 입니다. 혹은 현재 비밀번호가 일치하지 않습니다.
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 401
-              rcmsg:
-                type: string
-                example: 가입되지 않은 아이디 입니다. 혹은 현재 비밀번호가 일치하지 않습니다.
+            $ref: '#/components/schemes/NotMatchIDorPW'
         500:
           description: Internal Server Error
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 500
-              rcmsg:
-                type: string
-                example: 서버에 오류가 발생했습니다. 잠시 후 다시 시도해주세요.
+            $ref: '#/components/schemes/ServerError'
   /user/social:
     post:
       summary: OAuth login
@@ -85,88 +232,28 @@ paths:
           name: user
           description: userId는 email:[type] 으로 구분자 ':'를 사용한다. type은 [kakao, naver, apple] 중 하나다. 409의 에러인 경우 userName 충돌이며 회원가입 실패이다. apple로그인인 경우에 반드시 appleIdentifier를 써주어야 한다.
           schema:
-            type: object
-            required:
-              - userId
-              - userName
-            properties:
-              userId:
-                type: string
-                example: ganghee@naver.com:naver
-              userName:
-                type: string
-                example: 쓰담이
-              appleIdentifier:
-                type: string
-                example: asdf
+            $ref: '#/components/schemes/SocialSignIn'
       responses:
         200:
           description: 기존 회원 로그인 성공
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 200
-              rcmsg:
-                type: string
-                example: OK
-              userImg:
-                type: string
-                example: https://nexters.plogging.kro.kr:20000/profile/base/profile-1.PNG
-              userName:
-                type: string
-                example: 쓰담이
+            $ref: '#/components/schemes/SignInOK'
         201:
           description: OAuth 신규 회원 등록 성공
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 201
-              rcmsg:
-                type: string
-                example: 생성되었습니다.
-              userImg:
-                type: string
-                example: https://nexters.plogging.kro.kr:20000/profile/base/profile-1.PNG
-              userName:
-                type: string
-                example: 쓰담이
+            $ref: '#/components/schemes/CreateUser'
         400:
           description: Bad Request (body should have required property [userId/ userName])
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 400
-              rcmsg:
-                type: string
-                example: body should have required property userId
+            $ref: '#/components/schemes/BadRequest'
         409:
           description: Conflict (user name conflict)
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 409
-              rcmsg:
-                type: string
-                example: 이미 사용중인 닉네임입니다.
+            $ref: '#/components/schemes/ConflictName'
         500:
           description: Internal Server Error
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 500
-              rcmsg:
-                type: string
-                example: 서버에 오류가 발생했습니다. 잠시 후 다시 시도해주세요.
+            $ref: '#/components/schemes/ServerError'
   /user:
     post:
       summary: 회원가입하기
@@ -176,84 +263,28 @@ paths:
           name: user
           description: userId는 단순히 email만 받는다.
           schema:
-            type: object
-            required:
-              - userName
-              - userId
-              - secretKey
-            properties:
-              userId:
-                type: string
-                example: ganghee@naver.com
-              userName:
-                type: string
-                example: 쓰담이
-              secretKey:
-                type: string
-                example: 1234qwer
+            $ref: '#/components/schemes/RegisterReq'
       responses:
         201:
           description: 회원가입 성공
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 201
-              rcmsg:
-                type: string
-                example: 생성되었습니다.
-              userImg:
-                type: string
-                example: https://nexters.plogging.kro.kr:20000/profile/base/profile-1.PNG
-              userName:
-                type: string
-                example: 쓰담이
+            $ref: '#/components/schemes/CreateUser'
         400:
           description: Bad Request (body should have required property [userId])
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 400
-              rcmsg:
-                type: string
-                example: Bad Request
+            $ref: '#/components/schemes/BadRequest'
         409:
           description: Conflict ('Username Conflict')
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 409
-              rcmsg:
-                type: string
-                example: 이미 사용중인 닉네임입니다.
+            $ref: '#/components/schemes/ConflictName'
         410:
           description: Gone ('UserId Conflict')
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 410
-              rcmsg:
-                type: string
-                example: 이미 사용중인 아이디입니다.
-        
+            $ref: '#/components/schemes/ConflictId'
         500:
           description: Internal Server Error
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 500
-              rcmsg:
-                type: string
-                example: 서버에 오류가 발생했습니다. 잠시 후 다시 시도해주세요.
+            $ref: '#/components/schemes/ServerError'
     delete:
       summary: 회원탈퇴
       tags: [User]
@@ -261,36 +292,15 @@ paths:
         200:
           description: OK
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 200
-              rcmsg:
-                type: string
-                example: OK
+            $ref: '#/components/schemes/OK'
         401:
           description: Unauthorized (sessionKey 유효하지 않을 때)
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 401
-              rcmsg:
-                type: string
-                example: 로그인 후 서비스를 이용해 주세요
+            $ref: '#/components/schemes/SessionError'
         500:
           description: Internal Server Error
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 500
-              rcmsg:
-                type: string
-                example: 서버에 오류가 발생했습니다. 잠시 후 다시 시도해주세요.
+            $ref: '#/components/schemes/ServerError'
   /user/check:
     post:
       summary: 사용자 아이디 가입 확인
@@ -311,47 +321,19 @@ paths:
         200:
           description: OK (userId which is not existed)
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 200
-              rcmsg:
-                type: string
-                example: 가입되지 않은 아이디 입니다.
+            $ref: '#/components/schemes/OK'
         201:
           description: userId which is existed
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 201
-              rcmsg:
-                type: string
-                example: 이미 사용중인 아이디입니다.
+            $ref: '#/components/schemes/ImpossibleId'
         400:
           description: Bad Request (body should have required property userId)
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 400
-              rcmsg:
-                type: string
-                example: body should have required property userId
+            $ref: '#/components/schemes/BadRequest'
         500:
           description: Internal Server error
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 500
-              rcmsg:
-                type: string
-                example: 서버에 오류가 발생했습니다. 잠시 후 다시 시도해주세요.
+            $ref: '#/components/schemes/ServerError'
   /user/{id}:
     get:
       summary: 사용자 정보 가져오기
@@ -367,74 +349,19 @@ paths:
         200:
           description: OK
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 200
-              rcmsg:
-                type: string
-                example: OK
-              userId:
-                type: string
-                example: abc@naver.com:naver
-              userImg:
-                type: string
-                example: https://nexters.plogging.kro.kr:20000/profile/base/profile-1.PNG
-              userName:
-                type: string
-                example: 쓰담이
-              scoreMonthly:
-                type: string
-                example: 1000
-              distanceMonthly:
-                type: string
-                example: 12
-              trashMonthly:
-                type: string
-                example: 99
-              scoreWeekly:
-                type: string
-                example: 1000
-              distanceWeekly:
-                type: string
-                example: 12
-              trashWeekly:
-                type: string
-                example: 99
+            $ref: '#/components/schemes/GetUserInfoOK'
         401:
           description: Unauthorized (sessionKey 유효하지 않을 때)
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 401
-              rcmsg:
-                type: string
-                example: 로그인 후 서비스를 이용해 주세요
+            $ref: '#/components/schemes/SessionError'
         404:
           description: Not Found (찾는 id가 없을 때)
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 404
-              rcmsg:
-                type: string
-                example: 가입되지 않은 아이디 입니다.
+            $ref: '#/components/schemes/NotFound'
         500:
           description: Internal Server Error
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 500
-              rcmsg:
-                type: string
-                example: 서버에 오류가 발생했습니다. 잠시 후 다시 시도해주세요.
+            $ref: '#/components/schemes/ServerError'
   /user/apple:
     post:
       summary: 애플 사용자 정보 가져오기
@@ -445,85 +372,24 @@ paths:
           name: user
           description: appleIdentifier를 body로 받는다.
           schema:
-            type: object
-            required:
-              - appleIdentifier
-            properties:
-              appleIdentifier:
-                type: string
-                example: asdf
+            $ref: '#/components/schemes/AppleIdReq'
       responses:
         200:
           description: OK
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 200
-              rcmsg:
-                type: string
-                example: OK
-              userId:
-                type: string
-                example: abc@naver.com:naver
-              userImg:
-                type: string
-                example: https://nexters.plogging.kro.kr:20000/profile/base/profile-1.PNG
-              userName:
-                type: string
-                example: 쓰담이
-              scoreMonthly:
-                type: string
-                example: 1000
-              distanceMonthly:
-                type: string
-                example: 12
-              trashMonthly:
-                type: string
-                example: 99
-              scoreWeekly:
-                type: string
-                example: 1000
-              distanceWeekly:
-                type: string
-                example: 12
-              trashWeekly:
-                type: string
-                example: 99
+            $ref: '#/components/schemes/GetUserInfoOK'
         401:
           description: Unauthorized (sessionKey 유효하지 않을 때)
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 401
-              rcmsg:
-                type: string
-                example: 로그인 후 서비스를 이용해 주세요
+            $ref: '#/components/schemes/SessionError'
         404:
           description: Not Found (찾는 appleIdentifier가 없을 때)
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 404
-              rcmsg:
-                type: string
-                example: 가입되지 않은 아이디 입니다.
+            $ref: '#/components/schemes/NotFound'
         500:
           description: Internal Server Error
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 500
-              rcmsg:
-                type: string
-                example: 서버에 오류가 발생했습니다. 잠시 후 다시 시도해주세요.
+            $ref: '#/components/schemes/ServerError'
   /user/name:
     put:
       summary: 사용자 프로필 이름 변경
@@ -536,72 +402,29 @@ paths:
           name: name
           description: 사용자 이름 받기
           schema:
-            type: object
-            required:
-              - userName
-            properties:
-              userName:
-                type: string
-                example: 쓰담이
+            $ref: '#/components/schemes/ChangeNameReq'
+
       responses:
         200:
           description: 사용자 이름 성공적으로 변경
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 200
-              rcmsg:
-                type: string
-                example: OK
-              userName:
-                type: string
-                example: 쓰담이
+            $ref: '#/components/schemes/NameChangeOK'
         400:
           description: Bad Request (body should have required property name)
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 400
-              rcmsg:
-                type: string
-                example: body should have required property name
+            $ref: '#/components/schemes/BadRequest'
         401:
           description: Unauthorized (sessionKey 유효하지 않을 때)
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 401
-              rcmsg:
-                type: string
-                example: 로그인 후 서비스를 이용해 주세요
+            $ref: '#/components/schemes/SessionError'
         409:
           description: userName Conflict
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 409
-              rcmsg:
-                type: string
-                example: 이미 사용중인 닉네임입니다.
+            $ref: '#/components/schemes/ConflictName'
         500:
           description: Internal Server Error
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 500
-              rcmsg:
-                type: string
-                example: 서버에 오류가 발생했습니다. 잠시 후 다시 시도해주세요.
+            $ref: '#/components/schemes/ServerError'
   /user/image:
     put:
       summary: 사용자 프로필 이미지 변경
@@ -621,39 +444,15 @@ paths:
         200:
           description: 프로필 이미지 성공적으로 변경
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 200
-              rcmsg:
-                type: string
-                example: OK
-              userImg:
-                type: string
-                example: https://nexters.plogging.kro.kr:20000/profile/base/profile-1.PNG
+            $ref: '#/components/schemes/ImgChangeOK'
         401:
           description: Unauthorized (sessionKey 유효하지 않을 때)
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 401
-              rcmsg:
-                type: string
-                example: 로그인 후 서비스를 이용해 주세요
+            $ref: '#/components/schemes/SessionError'
         500:
           description: Internal Server Error
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 500
-              rcmsg:
-                type: string
-                example: 서버에 오류가 발생했습니다. 잠시 후 다시 시도해주세요.
+            $ref: '#/components/schemes/ServerError'
   /user/password:
     put:
       summary: 비밀번호 변경
@@ -663,73 +462,28 @@ paths:
           name: secretKey
           description: Password which was encrypted.
           schema:
-            type: object
-            required:
-              - newSecretKey
-              - existedSecretKey
-            properties:
-              newSecretKey:
-                type: string
-                description: Password which will be changed.
-              existedSecretKey:
-                type: string
-                description: Password witch being.
+            $ref: '#/components/schemes/ChangePasswordReq'
       responses:
         200:
           description: OK
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 200
-              rcmsg:
-                type: string
-                example: OK
+            $ref: '#/components/schemes/OK'
         400:
           description: Bad Request (body should have required property [newSecretKey/ existedSecretKey])
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 400
-              rcmsg:
-                type: string
-                example: body should have required property [newSecretKey/ existedSecretKey]
+            $ref: '#/components/schemes/BadRequest'
         401:
           description: Unauthorized (sessionKey 유효하지 않을 때)
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 401
-              rcmsg:
-                type: string
-                example: 로그인 후 서비스를 이용해 주세요
+            $ref: '#/components/schemes/SessionError'
         402:
           description: No userId or No secretKey from DB
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 402
-              rcmsg:
-                type: string
-                example: 현재 비밀번호가 일치하지 않습니다.
+            $ref: '#/components/schemes/NotMatchPW'
         500:
           description: Internal Server Error
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 500
-              rcmsg:
-                type: string
-                example: 서버에 오류가 발생했습니다. 잠시 후 다시 시도해주세요.
+            $ref: '#/components/schemes/ServerError'
   /user/password-temp:
     put:
       summary: 임시 비밀번호 발급
@@ -739,58 +493,24 @@ paths:
           name: email
           description: 임시 비밀번호를 받는 이메일 주소
           schema:
-            type: object
-            required:
-              - email
-            properties:
-              email:
-                type: string
-                example: heeheewuwu@gmail.com
+            $ref: '#/components/schemes/Email'
       responses:
         200:
           description: OK
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 200
-              rcmsg:
-                type: string
-                example: OK
+            $ref: '#/components/schemes/OK'
         400:
           description: Bad Request (body should have required property email)
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 400
-              rcmsg:
-                type: string
-                example: body should have required property email
+            $ref: '#/components/schemes/BadRequest'
         404:
           description: Not Found (no email)
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 404
-              rcmsg:
-                type: string
-                example: Not Found
+            $ref: '#/components/schemes/NotFound'
         500:
           description: Internal Server Error
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 500
-              rcmsg:
-                type: string
-                example: 서버에 오류가 발생했습니다. 잠시 후 다시 시도해주세요.
+            $ref: '#/components/schemes/ServerError'
   /user/sign-out:
     put:
       summary: 사용자 로그아웃
@@ -799,37 +519,15 @@ paths:
         200:
           description: OK
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 200
-              rcmsg:
-                type: string
-                example: OK
+            $ref: '#/components/schemes/OK'
         401:
           description: Unauthorized (sessionKey 유효하지 않을 때)
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 401
-              rcmsg:
-                type: string
-                example: 로그인 후 서비스를 이용해 주세요.
+            $ref: '#/components/schemes/SessionError'
         500:
           description: Internal Server Error
           schema:
-            type: object
-            properties:
-              rc:
-                type: number
-                example: 500
-              rcmsg:
-                type: string
-                example: 서버에 오류가 발생했습니다. 잠시 후 다시 시도해주세요.
-  
+            $ref: '#/components/schemes/ServerError'
   /plogging/{targetUserId}:
     get:
       summary: 산책이력 가져오기
@@ -1378,3 +1076,276 @@ paths:
               rcmsg:
                 type: string
                 example: 서버 오류.
+
+tags:
+  - name: Auth
+    description:  v2
+  - name: Users
+    description:  v2
+  - name: User
+    description:  v1
+
+components:
+  schemes:
+    SignInReq:
+      type: object
+      properties:
+        userId:
+          type: string
+          example: ganghee@nate.com
+        secretKey:
+          type: string
+          example: 1234qwer
+        userName:
+          type: string
+          example: 나야나
+        appleIdentifier:
+          type: string
+          example: aoiwfemnfpoai
+    SocialSignIn:
+      type: object
+      required:
+        - userId
+        - userName
+      properties:
+        userId:
+          type: string
+          example: ganghee@naver.com:naver
+        userName:
+          type: string
+          example: 쓰담이
+        appleIdentifier:
+          type: string
+          example: asdf
+    RegisterReq:
+      type: object
+      required:
+        - userName
+        - userId
+        - secretKey
+      properties:
+        userId:
+          type: string
+          example: ganghee@naver.com
+        userName:
+          type: string
+          example: 쓰담이
+        secretKey:
+          type: string
+          example: 1234qwer
+    Email:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          example: heeheewuwu@gmail.com
+    ChangePasswordReq:
+      type: object
+      required:
+        - newSecretKey
+        - existedSecretKey
+      properties:
+        newSecretKey:
+          type: string
+          description: Password which will be changed.
+        existedSecretKey:
+          type: string
+          description: Password witch being.
+    ChangeNameReq:
+      type: object
+      required:
+        - userName
+      properties:
+        userName:
+          type: string
+          example: 쓰담이
+    AppleIdReq:
+      type: object
+      required:
+        - appleIdentifier
+      properties:
+        appleIdentifier:
+          type: string
+          example: asdf
+    OK:
+      type: object
+      properties:
+        rc:
+          type: number
+          example: 200
+        rcmsg:
+          type: string
+          example: OK
+    SignInOK:
+      type: object
+      properties:
+        rc:
+          type: number
+          example: 200
+        rcmsg:
+          type: string
+          example: OK
+        userImg:
+          type: string
+          example: https://nexters.plogging.kro.kr:20000/profile/base/profile-1.PNG
+        userName:
+          type: string
+          example: 쓰담이
+    ImgChangeOK:
+      type: object
+      properties:
+        rc:
+          type: number
+          example: 200
+        rcmsg:
+          type: string
+          example: OK
+        userImg:
+          type: string
+          example: https://nexters.plogging.kro.kr:20000/profile/base/profile-1.PNG
+    NameChangeOK:
+      type: object
+      properties:
+        rc:
+          type: number
+          example: 200
+        rcmsg:
+          type: string
+          example: OK
+        userName:
+          type: string
+          example: 쓰담이
+    GetUserInfoOK:
+      type: object
+      properties:
+        rc:
+          type: number
+          example: 200
+        rcmsg:
+          type: string
+          example: OK
+        userId:
+          type: string
+          example: abc@naver.com:naver
+        userImg:
+          type: string
+          example: https://nexters.plogging.kro.kr:20000/profile/base/profile-1.PNG
+        userName:
+          type: string
+          example: 쓰담이
+        scoreMonthly:
+          type: string
+          example: 1000
+        distanceMonthly:
+          type: string
+          example: 12
+        trashMonthly:
+          type: string
+          example: 99
+        scoreWeekly:
+          type: string
+          example: 1000
+        distanceWeekly:
+          type: string
+          example: 12
+        trashWeekly:
+          type: string
+          example: 99
+    CreateUser:
+      type: object
+      properties:
+        rc:
+          type: number
+          example: 201
+        rcmsg:
+          type: string
+          example: 생성되었습니다.
+        userImg:
+          type: string
+          example: https://nexters.plogging.kro.kr:20000/profile/base/profile-1.PNG
+        userName:
+          type: string
+          example: 쓰담이
+    ImpossibleId:
+      type: object
+      properties:
+        rc:
+          type: number
+          example: 201
+        rcmsg:
+          type: string
+          example: 이미 사용중인 아이디입니다.
+    BadRequest:
+      type: object
+      properties:
+        rc:
+          type: number
+          example: 400
+        rcmsg:
+          type: string
+          example: Bad Request
+    SessionError:
+      type: object
+      properties:
+        rc:
+          type: number
+          example: 401
+        rcmsg:
+          type: string
+          example: 로그인 후 서비스를 이용해 주세요.
+    NotMatchIDorPW:
+      type: object
+      properties:
+        rc:
+          type: number
+          example: 401
+        rcmsg:
+          type: string
+          example: 가입되지 않은 아이디 입니다. 혹은 현재 비밀번호가 일치하지 않습니다.
+    NotMatchPW:
+      type: object
+      properties:
+        rc:
+          type: number
+          example: 402
+        rcmsg:
+          type: string
+          example: 현재 비밀번호가 일치하지 않습니다.
+    NotFound:
+      type: object
+      properties:
+        rc:
+          type: number
+          example: 404
+        rcmsg:
+          type: string
+          example: Not Found
+    ConflictName:
+      type: object
+      properties:
+        rc:
+          type: number
+          example: 409
+        rcmsg:
+          type: string
+          example: 이미 사용중인 닉네임입니다.
+    ConflictId:
+      type: object
+      properties:
+        rc:
+          type: number
+          example: 410
+        rcmsg:
+          type: string
+          example: 이미 사용중인 아이디입니다.
+    ServerError:
+      type: object
+      properties:
+        rc:
+          type: number
+          example: 500
+        rcmsg:
+          type: string
+          example: 서버에 오류가 발생했습니다. 잠시 후 다시 시도해주세요.
