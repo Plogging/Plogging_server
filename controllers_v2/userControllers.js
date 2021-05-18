@@ -15,6 +15,7 @@ const RankSchema = require('../models/ranking');
 const PloggingSchema = require('../models/plogging');
 const resString = require('../util/resConstMsg');
 const cryptoHelper = require('../util/cryptoHelper');
+const { response } = require('express');
 
 const register = async(req, res) => {
     let returnResult = {};
@@ -124,11 +125,8 @@ const changeUserInfo = async(req, res) => {
 const checkUserId = async(req, res) => {
     logger.info(`Checking [${req.params.id}]...`);
     const user = await UserSchema.findOneUser(req.params.id + ':custom');
-    if(user){
-        res.status(201).json({rc: 201, rcmsg: resString.EXISTED_ID});
-    }else{
-        res.json({rc: 200, rcmsg: resString.ERR_EMAIL});
-    }
+    if(user) res.sendStatus(201);
+    else res.sendStatus(200);
 }
 
 const getUserInfo = async(req, res) => {
