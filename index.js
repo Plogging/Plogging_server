@@ -6,7 +6,7 @@ const userRoutes = require('./routers/user.js');
 const rankingRoutes = require('./routers/ranking')
 const ploggingRoutes = require('./routers/plogging');
 
-const authRoutersV2 = require('./routers/auth.js');
+const authRoutersV2 = require('./routers_v2/auth.js');
 const userRoutesV2 = require('./routers_v2/user.js');
 const rankingRoutesV2 = require('./routers_v2/ranking')
 const ploggingRoutesV2 = require('./routers_v2/plogging');
