@@ -68,7 +68,7 @@ const swaggerUi = require('swagger-ui-express');
     globalOption.PORT = process.env.PORT;
     app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument)); // node-swaggwer
     app.use("/", function(req, res, next) {
-        logger.info(JSON.stringify(req.headers));
+        logger.info(JSON.stringify(req.headers, null , 2));
         logger.info(`req.session.id : ${req.sessionID}`);
         // 세션 체크 공통 모듈
         if((req.path === '/user' && req.method === 'POST') ||
@@ -102,7 +102,7 @@ const swaggerUi = require('swagger-ui-express');
     // 반드시 라우팅 코드 이후에 위치해야 함
     app.use((err, req, res, next) => {
 
-        logger.error(JSON.stringify({"errorMsg": err.stack}));
+        logger.error(err.stack);
         
         if (err instanceof swaggerValidation.InputValidationError) {
             return res.status(400).json({rc: 400, rcmsg: err.errors.join(', ')})
