@@ -8,7 +8,6 @@ module.exports = ((sequelize,DataTypes)=>{
         },
         user_id:{
             type: DataTypes.STRING(50),
-            unique: true,
             allowNull: false,
         },
         display_name:{
