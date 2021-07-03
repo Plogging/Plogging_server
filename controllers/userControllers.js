@@ -107,7 +107,9 @@ const register = async(req, res) => {
 
 const checkUserId = async(req, res) => {
     logger.info(`Checking [${req.body.userId}]...`);
-    const user = await UserSchema.findOneUser(req.body.userId + ':custom');
+    let userId = req.body.userId;
+    if(!userId.includes(':')) userId = userId + ':custom'
+    const user = await UserSchema.findOneUser(userId);
     if(user){
         res.status(201).json({rc: 201, rcmsg: resString.EXISTED_ID});
     }else{
