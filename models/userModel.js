@@ -8,10 +8,12 @@ module.exports = ((sequelize,DataTypes)=>{
         },
         user_id:{
             type: DataTypes.STRING(50),
+            unique: true,
             allowNull: false,
         },
         display_name:{
             type: DataTypes.STRING(50),
+            unique: true,
             allowNull: false,
         },
         profile_img :{
@@ -38,6 +40,5 @@ module.exports = ((sequelize,DataTypes)=>{
     },{
         timestamps: true,
         // paranoid : true,
-        indexes: [{ unique: true, fields: ['user_id', 'appleIdentifier'] }]
     })
 })
