@@ -43,7 +43,7 @@ const social = async(req, res) => {
         const user = await UserSchema.findOneUser(userId, null, t);
         if(!user){
             try {
-                let userImg = `${process.env.SERVER_REQ_INFO}/profile/base/profile-${Math.floor(( Math.random() * 3) + 1)}.PNG`;
+                let userImg = `base/profile-${Math.floor(( Math.random() * 3) + 1)}.PNG`;
                 const newUser = await UserSchema.createUser(userId, userName, appleIdentifier, userImg, null, null, t);
                 req.session.userId = newUser.user_id;
                 returnResult.rc = 201;
@@ -88,7 +88,7 @@ const register = async(req, res) => {
         try {
             const salt = cryptoHelper.salt();
             const digest = cryptoHelper.digest(secretKey, salt);
-            let userImg = `${process.env.SERVER_REQ_INFO}/profile/base/profile-${Math.floor(( Math.random() * 3) + 1)}.PNG`;
+            let userImg = `base/profile-${Math.floor(( Math.random() * 3) + 1)}.PNG`;
             const newUser = await UserSchema.createUser(userId, userName, null, userImg, digest, salt, t);
             req.session.userId = newUser.user_id;
             returnResult.rc = 201;
@@ -107,7 +107,9 @@ const register = async(req, res) => {
 
 const checkUserId = async(req, res) => {
     logger.info(`Checking [${req.body.userId}]...`);
-    const user = await UserSchema.findOneUser(req.body.userId + ':custom');
+    let userId = req.body.userId;
+    if(!userId.includes(':')) userId = userId + ':custom'
+    const user = await UserSchema.findOneUser(userId);
     if(user){
         res.status(201).json({rc: 201, rcmsg: resString.EXISTED_ID});
     }else{
@@ -182,15 +184,14 @@ const changeUserName = async(req, res) => {
 const changeUserImage = async(req, res) => {
     logger.info(`Changing user's image of [${req.session.userId}] ...`);
     let returnResult = {};
-    const profileImg = process.env.SERVER_REQ_INFO + '/' + req.file.path.split(`${process.env.IMG_FILE_PATH}/`)[1];
-    // TODO: sql 오류에도 파일 이미지는 정상으로 바뀜
+    const profileImg = req.file.path.split(`${process.env.IMG_FILE_PATH}/`)[1];
     const [updatedCnt] = await UserSchema.updateUserImg(req.session.userId, profileImg);
     if(!updatedCnt){
         throw new InternalServerError
     }
     returnResult.rc = 200;
     returnResult.rcmsg = resString.SUCCESS;
-    returnResult.profileImg = profileImg;
+    returnResult.profileImg = process.env.IMG_FILE_PATH + '/' + profileImg;
     res.send(returnResult);
 }
 
