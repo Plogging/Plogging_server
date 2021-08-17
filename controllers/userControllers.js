@@ -6,7 +6,7 @@ const { NotFound, Unauthorized, Conflict, InternalServerError } = require('throw
 const jasypt = require('../util/common_jasypt.js');
 const UserSchema = require('../models/user.js');
 const ploggingFilePath = process.env.IMG_FILE_PATH + "/plogging/";
-const profileFilePath = process.env.IMG_FILE_PATH + "/profile/";
+const profileFilePath = process.env.SERVER_REQ_INFO + "/profile/";
 const adminEmailId = process.env.ADMIN_EMAIL_ID;
 const adminEmailPassword = jasypt.decrypt(process.env.ADMIN_EMAIL_PASSWORD);
 const serverUrl = process.env.SERVER_REQ_INFO;
@@ -64,7 +64,7 @@ const social = async(req, res) => {
             req.session.userId = user.user_id;
             returnResult.rc = 200;
             returnResult.rcmsg = resString.SUCCESS;
-            returnResult.userImg = `${process.env.SERVER_REQ_INFO}/profile/${user.profile_img}`;
+            returnResult.userImg = profileFilePath + user.profile_img;
             returnResult.userName = user.display_name;
             res.json(returnResult);
         }
@@ -251,7 +251,7 @@ const withdrawal = async(req, res) => {
     const t = await sequelize.transaction(); 
     try {   
         await PloggingSchema.deletePloggingsModel(userId);
-        const profileImgPath = `${profileFilePath}${userId}`;
+        const profileImgPath = profileFilePath + userId;
         if(fs.existsSync(profileImgPath)) fs.rmdirSync(profileImgPath, { recursive: true });
         const ploggingImgPath = `${ploggingFilePath}${userId}`;
         if (fs.existsSync(ploggingImgPath)) fs.rmdirSync(ploggingImgPath, { recursive: true });

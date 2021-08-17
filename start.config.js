@@ -49,7 +49,7 @@ module.exports = {
             "MARIADB_INFO": "192.168.0.17:3306",
             "MARIADB_PASSWORD": "JjaoSaoP+IRVDBkXdDR4XMgTmkMut0VM",
             "IMG_FILE_PATH": "/mnt/Plogging_server/images",
-            "SERVER_REQ_INFO": "https://nexters.plogging.kro.kr:20000",
+            "SERVER_REQ_INFO": "https://eco-run.duckdns.org",
             "ADMIN_EMAIL_ID": "ploggingteam@gmail.com",
             "ADMIN_EMAIL_PASSWORD": "IVUVhpHmNGoYLZpy4Ate5OKNH/6hlziQ",
             "LOG_PATH": "/mnt/Plogging_server/images/log"
