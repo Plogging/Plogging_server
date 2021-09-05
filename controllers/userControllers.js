@@ -185,13 +185,14 @@ const changeUserImage = async(req, res) => {
     logger.info(`Changing user's image of [${req.session.userId}] ...`);
     let returnResult = {};
     const profileImg = req.file.path.split(`${process.env.IMG_FILE_PATH}/`)[1];
-    const [updatedCnt] = await UserSchema.updateUserImg(req.session.userId, profileImg);
+    const imagePath = profileImg.split('/')[1] + "/" + profileImg.split('/')[2]
+    const [updatedCnt] = await UserSchema.updateUserImg(req.session.userId, imagePath);
     if(!updatedCnt){
         throw new InternalServerError
     }
     returnResult.rc = 200;
     returnResult.rcmsg = resString.SUCCESS;
-    returnResult.profileImg = process.env.IMG_FILE_PATH + '/' + profileImg;
+    returnResult.profileImg = profileFilePath + imagePath;
     res.send(returnResult);
 }
 
