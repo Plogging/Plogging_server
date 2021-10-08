@@ -6,6 +6,8 @@ const RankSchema = require('../models/ranking')
 const UserSchema = require('../models/user')
 const pagingHelper = require('../util/pagingHelper')
 
+const profileFilePath = process.env.SERVER_REQ_INFO + "/profile/";
+
 const getGlobalRank = async (req, res) => {
     logger.info("getGlobalRank called with req: " + logHelper.reqWrapper(req, "rank"))
     const rankType = (req.query.rankType == "weekly") ? RankSchema.SCORE_WEEKLY : RankSchema.SCORE_MONTHLY
@@ -66,7 +68,7 @@ const getUserInfo = async userId => {
         throw new NotFound("User data doesn't exist in DB.")
     }
     const { user_id, display_name, profile_img } = fetched.dataValues
-    const userInfo = { userId: user_id, displayName: display_name, profileImg: profile_img }
+    const userInfo = { userId: user_id, displayName: display_name, profileImg: profileFilePath + profile_img }
     return userInfo
 }
 
